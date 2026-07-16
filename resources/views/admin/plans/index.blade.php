@@ -1,0 +1,1 @@
+<x-layouts.admin><x-slot:heading>الاشتراكات</x-slot:heading><div class="admin-cards">@foreach($plans as $plan)<article><h3>{{ $plan->name }}</h3><strong>{{ $plan->price }} درهم</strong><p>{{ $plan->duration_days }} يوم · {{ $plan->is_active?'مفعّلة':'موقوفة' }}</p><a href="{{ route('admin.plans.edit',$plan) }}">تعديل الباقة</a></article>@endforeach</div></x-layouts.admin>

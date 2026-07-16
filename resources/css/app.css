@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+@import './home.css';
+@import './admin.css';
+@import './extras.css';

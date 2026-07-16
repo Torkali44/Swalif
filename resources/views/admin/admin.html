@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>لوحة تحكم المشرف — سين جيم الإمارات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="home.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-shell">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="brand">
+      <div class="brand-badge">س</div>
+      <div>
+        <div class="brand-title">سين جيم</div>
+        <div class="brand-sub">لوحة التحكم</div>
+      </div>
+    </div>
+
+    <nav class="admin-nav">
+      <a href="#dashboard" class="nav-link active" data-view="dashboard">
+        <span class="ico">📊</span> نظرة عامة
+      </a>
+      <a href="#categories" class="nav-link" data-view="categories">
+        <span class="ico">🗂️</span> الفئات
+      </a>
+      <a href="#questions" class="nav-link" data-view="questions">
+        <span class="ico">❓</span> الأسئلة
+      </a>
+      <a href="#plans" class="nav-link" data-view="plans">
+        <span class="ico">💎</span> الاشتراكات
+      </a>
+      <a href="#users" class="nav-link" data-view="users">
+        <span class="ico">👥</span> المستخدمون
+      </a>
+    </nav>
+
+    <div class="admin-footer">
+      <div class="user-chip">
+        <div class="avatar">A</div>
+        <div>
+          <div class="u-name">أدمن</div>
+          <div class="u-role">مشرف عام</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <h1 id="viewTitle" class="page-title">نظرة عامة</h1>
+        <p id="viewSub" class="page-sub">ملخص سريع عن اللعبة والمحتوى</p>
+      </div>
+      <div class="top-actions">
+        <input type="search" class="search-inp" placeholder="بحث سريع…" />
+        <button class="btn btn-primary" id="topAddBtn">+ إضافة جديد</button>
+      </div>
+    </header>
+
+    <!-- Dashboard view -->
+    <section class="view active" data-view="dashboard">
+      <div class="stat-grid">
+        <div class="stat-card grad-fire">
+          <div class="stat-label">إجمالي الفئات</div>
+          <div class="stat-value" id="statCats">0</div>
+          <div class="stat-trend">↑ محتوى نشط</div>
+        </div>
+        <div class="stat-card grad-cool">
+          <div class="stat-label">إجمالي الأسئلة</div>
+          <div class="stat-value" id="statQs">0</div>
+          <div class="stat-trend">↑ عبر كل المستويات</div>
+        </div>
+        <div class="stat-card grad-gold">
+          <div class="stat-label">مشتركون فعّالون</div>
+          <div class="stat-value">1,284</div>
+          <div class="stat-trend">↑ 12% هذا الشهر</div>
+        </div>
+        <div class="stat-card grad-emerald">
+          <div class="stat-label">ألعاب اليوم</div>
+          <div class="stat-value">342</div>
+          <div class="stat-trend">↑ ذروة المساء</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>أحدث الأسئلة المضافة</h3>
+          <a href="#questions" class="link-more" data-view="questions">عرض الكل ←</a>
+        </div>
+        <div id="recentQs" class="mini-list"></div>
+      </div>
+    </section>
+
+    <!-- Categories view -->
+    <section class="view" data-view="categories">
+      <div class="toolbar">
+        <div class="chip-tabs">
+          <button class="chip active" data-filter="all">الكل</button>
+          <button class="chip" data-filter="active">مفعّلة</button>
+          <button class="chip" data-filter="inactive">موقوفة</button>
+        </div>
+        <button class="btn btn-primary" id="addCatBtn">+ فئة جديدة</button>
+      </div>
+      <div class="cat-grid" id="catGrid"></div>
+    </section>
+
+    <!-- Questions view -->
+    <section class="view" data-view="questions">
+      <div class="toolbar">
+        <select id="filterCat" class="select"></select>
+        <select id="filterLevel" class="select">
+          <option value="">كل المستويات</option>
+          <option value="200">سهل — 200</option>
+          <option value="400">متوسط — 400</option>
+          <option value="600">صعب — 600</option>
+        </select>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="addQBtn">+ سؤال جديد</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الفئة</th>
+              <th>السؤال</th>
+              <th>الإجابة</th>
+              <th>المستوى</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="qTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Plans placeholder -->
+    <section class="view" data-view="plans">
+      <div class="panel">
+        <h3>الاشتراكات</h3>
+        <p class="muted">أدر باقات أسبوعية / شهرية / سنوية، الأسعار، والحالة.</p>
+        <p class="muted">— قسم مفصّل يُبنى في Laravel Blade داخل <code>admin/plans</code>.</p>
+      </div>
+    </section>
+
+    <section class="view" data-view="users">
+      <div class="panel">
+        <h3>المستخدمون</h3>
+        <p class="muted">قائمة المستخدمين، تاريخ الاشتراك، والحالة (تُبنى مع الـ Backend).</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== Modal: Category ===== -->
+<div class="modal" id="catModal" aria-hidden="true">
+  <div class="modal-card">
+    <button class="modal-x" data-close>✕</button>
+    <h3 id="catModalTitle">فئة جديدة</h3>
+    <form id="catForm" class="form-grid">
+      <input type="hidden" name="id" />
+      <label>الاسم بالعربية
+        <input name="name_ar" required placeholder="مثال: تاريخ الإمارات" />
+      </label>
+      <label>الاسم بالإنجليزية
+        <input name="name_en" placeholder="UAE History" />
+      </label>
+      <label>الأيقونة (إيموجي)
+        <input name="icon" maxlength="4" placeholder="🕌" />
+      </label>
+      <label>اللون الأساسي
+        <input name="color" type="color" value="#FF1744" />
+      </label>
+      <label class="full">وصف مختصر
+        <textarea name="description" rows="2" placeholder="نبذة سريعة عن الفئة"></textarea>
+      </label>
+      <label class="check">
+        <input type="checkbox" name="active" checked /> مفعّلة
+      </label>
+      <div class="form-actions full">
+        <button type="button" class="btn btn-outline" data-close>إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal: Question ===== -->
+<div class="modal" id="qModal" aria-hidden="true">
+  <div class="modal-card">
+    <button class="modal-x" data-close>✕</button>
+    <h3 id="qModalTitle">سؤال جديد</h3>
+    <form id="qForm" class="form-grid">
+      <input type="hidden" name="id" />
+      <label>الفئة
+        <select name="category_id" id="qCatSelect" required></select>
+      </label>
+      <label>المستوى / النقاط
+        <div class="level-picker">
+          <label class="lvl"><input type="radio" name="level" value="200" required><span>سهل · 200</span></label>
+          <label class="lvl"><input type="radio" name="level" value="400"><span>متوسط · 400</span></label>
+          <label class="lvl"><input type="radio" name="level" value="600"><span>صعب · 600</span></label>
+        </div>
+      </label>
+      <label class="full">نص السؤال
+        <textarea name="text" rows="3" required placeholder="اكتب السؤال هنا…"></textarea>
+      </label>
+      <label class="full">الإجابة الصحيحة
+        <input name="answer" required placeholder="الإجابة" />
+      </label>
+      <label class="full">تلميح (اختياري)
+        <input name="hint" placeholder="تلميح يساعد اللاعب" />
+      </label>
+      <label>مدة الإجابة (ثانية)
+        <input name="timer" type="number" value="60" min="10" max="300" />
+      </label>
+      <label class="check">
+        <input type="checkbox" name="active" checked /> مفعّل
+      </label>
+      <div class="form-actions full">
+        <button type="button" class="btn btn-outline" data-close>إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ السؤال</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
