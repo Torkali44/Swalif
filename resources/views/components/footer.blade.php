@@ -2,10 +2,10 @@
   <div class="container foot__inner">
     <div>
       <div class="nav__logo">
-        <span class="logo-badge">س</span>
-        <span class="logo-text">سين جيم <em>الإمارات</em></span>
+        <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="logo-img">
+        <span class="logo-text">سوالف</span>
       </div>
-      <p class="foot__tag">لعبة معلومات جماعية بهوية إماراتية أصيلة</p>
+      <p class="foot__tag">ألعاب • ضحك • فرفشة — بهوية إماراتية</p>
     </div>
     <div>
       <h4>روابط</h4>
@@ -25,8 +25,8 @@
     </div>
     <div>
       <h4>تواصل</h4>
-      <a href="mailto:info@seenjeem.ae">info@seenjeem.ae</a>
+      <a href="mailto:info@swalif.ae">info@swalif.ae</a>
     </div>
   </div>
-  <div class="foot__bottom">© {{ now()->year }} سين جيم الإمارات — جميع الحقوق محفوظة</div>
+  <div class="foot__bottom">© {{ now()->year }} سوالف — جميع الحقوق محفوظة</div>
 </footer>

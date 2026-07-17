@@ -17,7 +17,7 @@ class AuthAndSubscriptionTest extends TestCase
         $this->seed();
 
         $this->post(route('login.store'), [
-            'email' => 'admin@seenjeem.test',
+            'email' => 'admin@swalif.test',
             'password' => 'password',
         ])->assertRedirect(route('admin.dashboard'));
 
@@ -30,7 +30,7 @@ class AuthAndSubscriptionTest extends TestCase
         $this->seed();
 
         $this->post(route('login.store'), [
-            'email' => 'player@seenjeem.test',
+            'email' => 'player@swalif.test',
             'password' => 'password',
         ])->assertRedirect(route('home'));
     }
@@ -40,7 +40,7 @@ class AuthAndSubscriptionTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
-        $player = User::where('email', 'player@seenjeem.test')->firstOrFail();
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
         $plan = Plan::where('type', 'monthly')->firstOrFail();
 
         $this->actingAs($player)

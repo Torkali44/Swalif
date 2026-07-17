@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>إدارة سين جيم</title>
+  <title>إدارة سوالف</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,9 +13,9 @@
 <div class="admin-shell">
   <aside class="admin-sidebar">
     <a class="brand" href="{{ route('admin.dashboard') }}">
-      <div class="brand-badge">س</div>
+      <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="brand-logo">
       <div>
-        <div class="brand-title">سين جيم</div>
+        <div class="brand-title">سوالف</div>
         <div class="brand-sub">لوحة التحكم</div>
       </div>
     </a>
@@ -56,7 +56,7 @@
     <header class="admin-topbar">
       <div>
         <h1 class="page-title">{{ $heading ?? 'لوحة التحكم' }}</h1>
-        <p class="page-sub">{{ $subheading ?? 'إدارة محتوى سين جيم' }}</p>
+        <p class="page-sub">{{ $subheading ?? 'إدارة محتوى سوالف' }}</p>
       </div>
       <div class="top-actions">
         <a class="btn btn-outline" href="{{ route('home') }}">عرض الموقع</a>

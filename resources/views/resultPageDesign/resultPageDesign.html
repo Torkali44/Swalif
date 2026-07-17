@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>النتيجة — سوالف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="resultPageDesign.css">
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div class="stage">
+
+  <!-- ===== WINNER HERO ===== -->
+  <section class="winner">
+    <div class="winner__crown">
+      <svg viewBox="0 0 100 60" width="120" height="72">
+        <path d="M10 55 L20 20 L35 40 L50 10 L65 40 L80 20 L90 55 Z" fill="url(#crownGrad)" stroke="#8A6D1B" stroke-width="1.5"/>
+        <circle cx="50" cy="10" r="4" fill="#FF1744"/>
+        <circle cx="20" cy="20" r="3" fill="#00E5FF"/>
+        <circle cx="80" cy="20" r="3" fill="#00C853"/>
+        <defs>
+          <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#F4C842"/>
+            <stop offset="100%" stop-color="#8A6D1B"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <p class="winner__label">الفريق الفائز</p>
+    <h1 class="winner__name">فريق الصقور</h1>
+
+    <div class="winner__trophy">🏆</div>
+
+    <div class="winner__score">
+      <span>مجموع النقاط</span>
+      <b>2,400</b>
+    </div>
+
+    <div class="winner__badges">
+      <span class="badge">🔥 4 إجابات متتالية</span>
+      <span class="badge">⚡ أسرع فريق</span>
+      <span class="badge">🎯 دقة 80%</span>
+    </div>
+  </section>
+
+  <!-- ===== SCOREBOARD ===== -->
+  <section class="scoreboard">
+    <div class="team-card team-card--winner">
+      <div class="team-card__rank">1</div>
+      <div class="team-card__avatar" style="background:linear-gradient(135deg,#FF1744,#7C3AED)">A</div>
+      <div class="team-card__info">
+        <b>فريق الصقور</b>
+        <div class="team-card__stats">
+          <span class="stat stat--correct">✔ 8 صحيحة</span>
+          <span class="stat stat--wrong">✕ 2 خاطئة</span>
+        </div>
+      </div>
+      <div class="team-card__score">
+        <b>2,400</b>
+        <small>نقطة</small>
+      </div>
+    </div>
+
+    <div class="team-card">
+      <div class="team-card__rank">2</div>
+      <div class="team-card__avatar" style="background:linear-gradient(135deg,#00E5FF,#00843D)">B</div>
+      <div class="team-card__info">
+        <b>فريق النخيل</b>
+        <div class="team-card__stats">
+          <span class="stat stat--correct">✔ 6 صحيحة</span>
+          <span class="stat stat--wrong">✕ 4 خاطئة</span>
+        </div>
+      </div>
+      <div class="team-card__score">
+        <b>1,800</b>
+        <small>نقطة</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SUMMARY STATS ===== -->
+  <section class="summary">
+    <div class="summary__card">
+      <div class="summary__icon" style="background:linear-gradient(135deg,#00C853,#1B5E20)">✔</div>
+      <div>
+        <small>إجابات صحيحة</small>
+        <b>14</b>
+      </div>
+    </div>
+    <div class="summary__card">
+      <div class="summary__icon" style="background:linear-gradient(135deg,#FF1744,#B00020)">✕</div>
+      <div>
+        <small>إجابات خاطئة</small>
+        <b>6</b>
+      </div>
+    </div>
+    <div class="summary__card">
+      <div class="summary__icon" style="background:linear-gradient(135deg,#00E5FF,#0064B7)">⏱</div>
+      <div>
+        <small>مدة اللعبة</small>
+        <b>12:34</b>
+      </div>
+    </div>
+    <div class="summary__card">
+      <div class="summary__icon" style="background:linear-gradient(135deg,#F4C842,#8A6D1B)">🎯</div>
+      <div>
+        <small>دقة عامة</small>
+        <b>70%</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ACTIONS ===== -->
+  <section class="actions">
+    <button class="btn btn--fire btn--lg">🔁 لعبة جديدة</button>
+    <button class="btn btn--ghost">📊 مراجعة الأسئلة</button>
+    <button class="btn btn--ghost">🔗 مشاركة النتيجة</button>
+    <button class="btn btn--ghost">🏠 الرئيسية</button>
+  </section>
+
+</div>
+
+<script src="resultPageDesign.js"></script>
+</body>
+</html>

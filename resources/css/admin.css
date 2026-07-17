@@ -36,6 +36,14 @@
   color: #fff;
 }
 
+.admin-sidebar .brand-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: var(--glow-red);
+  flex-shrink: 0;
+}
 .admin-sidebar .brand-badge {
   width: 44px;
   height: 44px;
@@ -571,23 +579,130 @@
   color: var(--primary);
 }
 
+/* Validation Errors Block */
+.admin-body .error {
+  background: #fde8e8 !important;
+  border: 1px solid #f8b4b4 !important;
+  color: #9b1c1c !important;
+  padding: 12px 18px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+  font-size: 14px !important;
+}
+
+/* Premium pill style action buttons in admin tables */
+.admin-body td a {
+  display: inline-block !important;
+  padding: 6px 12px !important;
+  background: rgba(124, 58, 237, 0.08) !important;
+  color: #7C3AED !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  transition: .2s !important;
+}
+.admin-body td a:hover {
+  background: rgba(124, 58, 237, 0.15) !important;
+}
+.admin-body td button,
+.admin-body td .inline button {
+  display: inline-block !important;
+  padding: 6px 12px !important;
+  background: rgba(255, 23, 68, 0.08) !important;
+  color: #FF1744 !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  transition: .2s !important;
+}
+.admin-body td button:hover,
+.admin-body td .inline button:hover {
+  background: rgba(255, 23, 68, 0.15) !important;
+}
+
+/* Media previews in form */
+.admin-body .media-preview {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.admin-body .media-preview img {
+  max-width: 140px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+/* Symmetrical grids for circle design cards */
+.admin-circle-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  gap: 24px !important;
+  width: 100% !important;
+}
+.admin-circle-card {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 24px !important;
+  padding: 24px 16px !important;
+  text-align: center !important;
+  position: relative !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+.admin-circle-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
 @media (max-width: 900px) {
-  .admin-shell { grid-template-columns: 1fr; }
+  .admin-shell {
+    grid-template-columns: 1fr !important;
+  }
   .admin-sidebar {
-    position: static;
-    height: auto;
-    flex-direction: column;
-    padding: 15px;
+    position: static !important;
+    height: auto !important;
+    flex-direction: column !important;
+    padding: 16px !important;
   }
   .admin-sidebar .brand,
-  .admin-footer { display: none; }
-  .admin-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 4px;
+  .admin-footer {
+    display: none !important;
   }
-  .admin-nav a { white-space: nowrap; }
-  .admin-main { padding: 20px; }
-  .admin-body .admin-form { grid-template-columns: 1fr; }
-  .admin-body .search-inp { min-width: 0; flex: 1; }
+  .admin-nav {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+  .admin-nav a {
+    white-space: nowrap !important;
+  }
+  .admin-main {
+    padding: 20px !important;
+  }
+  .admin-body .admin-form {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+  }
+  .admin-body .search-inp {
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+  .admin-topbar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .admin-topbar .top-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
 }

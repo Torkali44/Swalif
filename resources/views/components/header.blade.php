@@ -1,12 +1,12 @@
 <header class="nav">
   <div class="nav__inner">
     <a href="{{ route('home') }}" class="nav__logo">
-      <span class="logo-badge">س</span>
-      <span class="logo-text">سين جيم <em>الإمارات</em></span>
+      <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="logo-img">
+      <span class="logo-text">سوالف</span>
     </a>
 
     <nav class="nav__links" id="navLinks">
-      <a href="{{ route('categories.index') }}">الفئات</a>
+      <a href="{{ route('categories.index') }}" @class(['is-active' => request()->routeIs('categories.*')])>الفئات</a>
       <a href="{{ route('home') }}#how">كيف تلعب</a>
       <a href="{{ route('subscription.index') }}">الاشتراكات</a>
       @auth

@@ -95,6 +95,14 @@ body {
   gap: 20px;
 }
 .nav__logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.logo-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: var(--shadow-hot);
+  flex-shrink: 0;
+}
 .logo-badge {
   width: 42px; height: 42px; border-radius: 12px;
   background: var(--grad-fire);
@@ -586,6 +594,7 @@ body {
 
 /* ============ FOOTER ============ */
 .foot { background: var(--uae-black); color: #fff; padding: 60px 0 0; }
+.foot .logo-text { color: #fff; }
 .foot__inner {
   display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 40px; padding-bottom: 40px;

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>الفئات — سوالف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="categoryPageDesign.css">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<header class="nav">
+  <div class="container nav__inner">
+    <a href="#" class="brand">
+      <img src="/images/logo.jpg" alt="سوالف" class="brand__logo-img">
+      <span class="brand__name">سوالف</span>
+    </a>
+    <nav class="nav__links">
+      <a href="#">الرئيسية</a>
+      <a href="#" class="active">الفئات</a>
+      <a href="#">الاشتراكات</a>
+      <a href="#">حسابي</a>
+    </nav>
+    <button class="btn btn--fire">ابدأ لعبة جديدة</button>
+  </div>
+</header>
+
+<!-- ===== HERO STRIP ===== -->
+<section class="hero-strip">
+  <div class="hero-strip__glow"></div>
+  <div class="container">
+    <div class="crumb">الرئيسية <span>›</span> الفئات</div>
+    <h1 class="hero-strip__title">
+      <span>اختر <em>فئتك</em></span>
+      <span class="hero-strip__title--gradient">وابدأ التحدي</span>
+    </h1>
+    <p class="hero-strip__sub">أكثر من ٣٠ فئة • ٣ مستويات • آلاف الأسئلة الحصرية عن الإمارات والمعرفة العامة</p>
+
+    <!-- Stats -->
+    <div class="hero-stats">
+      <div class="stat"><b>32</b><span>فئة</span></div>
+      <div class="stat"><b>4.2k</b><span>سؤال</span></div>
+      <div class="stat"><b>3</b><span>مستويات</span></div>
+      <div class="stat"><b>15k+</b><span>لاعب</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTROLS ===== -->
+<section class="controls">
+  <div class="container controls__inner">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="ابحث عن فئة… مثلاً: كوفيهات، ديزني، معالم" />
+    </div>
+
+    <div class="filters" id="filters">
+      <button class="pill pill--all active" data-filter="all">الكل</button>
+      <button class="pill pill--uae" data-filter="uae">🇦🇪 إمارات</button>
+      <button class="pill pill--general" data-filter="general">🌍 عامة</button>
+      <button class="pill pill--religion" data-filter="religion">📖 دينية</button>
+      <button class="pill pill--sport" data-filter="sport">⚽ رياضة</button>
+      <button class="pill pill--fun" data-filter="fun">🎭 ترفيه</button>
+      <button class="pill pill--media" data-filter="media">🎬 صور وصوت</button>
+    </div>
+
+    <div class="sort">
+      <label>ترتيب:</label>
+      <select id="sortSelect">
+        <option value="popular">الأكثر شعبية</option>
+        <option value="new">الأحدث</option>
+        <option value="az">أ — ي</option>
+        <option value="questions">عدد الأسئلة</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CATEGORY GRID ===== -->
+<main class="container">
+  <div class="grid" id="categoryGrid">
+    <!-- Populated by JS -->
+  </div>
+
+  <div class="empty" id="emptyState" hidden>
+    <div class="empty__icon">🔎</div>
+    <h3>لا توجد فئات مطابقة</h3>
+    <p>جرّب كلمة بحث أخرى أو أزل الفلاتر</p>
+  </div>
+</main>
+
+<!-- ===== CTA ===== -->
+<section class="cta">
+  <div class="container cta__inner">
+    <div>
+      <h2>جاهز تتحدى أصحابك؟</h2>
+      <p>كوّن فريقين، اختر فئتك المفضلة، وخلي المتعة تبدأ.</p>
+    </div>
+    <button class="btn btn--fire btn--lg">🔥 إنشاء لعبة</button>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">© 2026 سوالف — جميع الحقوق محفوظة</div>
+</footer>
+
+<script src="categoryPageDesign.js"></script>
+</body>
+</html>

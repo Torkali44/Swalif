@@ -16,7 +16,7 @@
     @error('email')<small class="error">{{ $message }}</small>@enderror
     <button class="btn btn--primary btn--block" type="submit">تسجيل الدخول</button>
     <p style="margin-top:14px">ليس لديك حساب؟ <a href="{{ route('register') }}" style="color:var(--uae-red);font-weight:800">أنشئ حسابًا</a></p>
-    <p class="demo">تجريبي: player@seenjeem.test / password<br>مدير: admin@seenjeem.test / password</p>
+    <p class="demo">تجريبي: player@swalif.test / password<br>مدير: admin@swalif.test / password</p>
   </form>
 </section>
 </x-layouts.app>

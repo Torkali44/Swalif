@@ -25,6 +25,6 @@ class RegisterController extends Controller
         $user = User::create($data);
         Auth::login($user);
 
-        return redirect()->route('home')->with('success', 'أهلًا بك في سين جيم!');
+        return redirect()->route('home')->with('success', 'أهلًا بك في سوالف!');
     }
 }

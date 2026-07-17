@@ -42,7 +42,7 @@
   <div class="hero__content">
     <span class="chip chip--pulse">🇦🇪 لعبة معلومات إماراتية</span>
     <h1 class="hero__title">
-      <span class="title-line">العب سين جيم</span>
+      <span class="title-line">العب سوالف</span>
       <span class="title-line title-line--accent">بروح الإمارات</span>
     </h1>
     <p class="hero__subtitle">

@@ -19,7 +19,7 @@ class GameFlowTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
-        $player = User::where('email', 'player@seenjeem.test')->firstOrFail();
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
         $category = Category::where('slug', 'uae-malls')->firstOrFail();
         $question = Question::where('category_id', $category->id)->firstOrFail();
 
@@ -42,8 +42,8 @@ class GameFlowTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
-        $player = User::where('email', 'player@seenjeem.test')->firstOrFail();
-        $admin = User::where('email', 'admin@seenjeem.test')->firstOrFail();
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $admin = User::where('email', 'admin@swalif.test')->firstOrFail();
 
         $this->actingAs($player)->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
@@ -54,7 +54,7 @@ class GameFlowTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
-        $player = User::where('email', 'player@seenjeem.test')->firstOrFail();
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
         $category = Category::where('slug', 'uae-malls')->firstOrFail();
         $question = Question::where('category_id', $category->id)->firstOrFail();
 
@@ -78,5 +78,75 @@ class GameFlowTest extends TestCase
             ->assertRedirect(route('game.board', $game));
 
         $this->assertSame((int) $question->points, (int) $team->fresh()->score);
+    }
+
+    public function test_player_can_use_lifeline(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $category = Category::where('slug', 'uae-malls')->firstOrFail();
+
+        $this->actingAs($player)->post(route('game.start'), [
+            'category_id' => $category->id,
+            'name' => 'جولة مساعدة',
+            'team_one' => 'أ',
+            'team_two' => 'ب',
+        ]);
+
+        $game = Game::firstOrFail();
+        $team = $game->fresh()->teams()->firstOrFail();
+
+        // Initially helper is 1
+        $this->assertSame(1, $team->helpers_left['swap'] ?? 0);
+
+        // Call the useHelper endpoint
+        $response = $this->post(route('game.useHelper', [$game, $team, 'swap']));
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        // Helper count should be 0
+        $this->assertSame(0, $team->fresh()->helpers_left['swap'] ?? 1);
+
+        // Calling it again should fail
+        $response = $this->post(route('game.useHelper', [$game, $team, 'swap']));
+        $response->assertStatus(400);
+        $response->assertJsonPath('success', false);
+    }
+
+    public function test_player_can_adjust_score(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $category = Category::where('slug', 'uae-malls')->firstOrFail();
+
+        $this->actingAs($player)->post(route('game.start'), [
+            'category_id' => $category->id,
+            'name' => 'جولة نقاط',
+            'team_one' => 'أ',
+            'team_two' => 'ب',
+        ]);
+
+        $game = Game::firstOrFail();
+        $team = $game->fresh()->teams()->firstOrFail();
+
+        $this->assertSame(0, (int) $team->score);
+
+        // Increase score by 100
+        $response = $this->post(route('game.adjustScore', [$game, $team]), ['amount' => 100]);
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('score', 100);
+        $this->assertSame(100, (int) $team->fresh()->score);
+
+        // Decrease score by 100
+        $response = $this->post(route('game.adjustScore', [$game, $team]), ['amount' => -100]);
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('score', 0);
+        $this->assertSame(0, (int) $team->fresh()->score);
     }
 }

@@ -17,12 +17,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => 'admin@seenjeem.test'],
-            ['name' => 'مدير سين جيم', 'password' => 'password', 'is_admin' => true]
+            ['email' => 'admin@swalif.test'],
+            ['name' => 'مدير سوالف', 'password' => 'password', 'is_admin' => true]
         );
 
         User::updateOrCreate(
-            ['email' => 'player@seenjeem.test'],
+            ['email' => 'player@swalif.test'],
             ['name' => 'لاعب تجريبي', 'password' => 'password', 'is_admin' => false]
         );
 

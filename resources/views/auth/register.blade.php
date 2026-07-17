@@ -2,7 +2,7 @@
 <section class="auth-wrap">
   <form class="auth-card" method="POST" action="{{ route('register.store') }}">
     @csrf
-    <h1>انضم إلى سين جيم</h1>
+    <h1>انضم إلى سوالف</h1>
     <p>أنشئ حسابك وابدأ أول تحدٍ.</p>
     <label>الاسم<input name="name" value="{{ old('name') }}" required></label>
     <label>البريد الإلكتروني<input name="email" type="email" value="{{ old('email') }}" required></label>

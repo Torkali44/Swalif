@@ -1,1 +1,42 @@
-<x-layouts.admin><x-slot:heading>تعديل {{ $plan->name }}</x-slot:heading><form class="admin-form" method="POST" action="{{ route('admin.plans.update',$plan) }}">@csrf @method('PUT')<label>اسم الباقة<input name="name" value="{{ $plan->name }}"></label><label>السعر<input type="number" step=".01" name="price" value="{{ $plan->price }}"></label><label>المدة بالأيام<input type="number" name="duration_days" value="{{ $plan->duration_days }}"></label><label class="check"><input type="checkbox" name="is_active" @checked($plan->is_active)> مفعّلة</label><label class="check"><input type="checkbox" name="is_recommended" @checked($plan->is_recommended)> موصى بها</label><button class="btn btn-primary">حفظ</button></form></x-layouts.admin>
+<x-layouts.admin>
+  <x-slot:heading>تعديل الباقة: {{ $plan->name }}</x-slot:heading>
+  <x-slot:subheading>تحديث معلومات باقة الاشتراك والأسعار</x-slot:subheading>
+
+  <form class="admin-form" method="POST" action="{{ route('admin.plans.update', $plan) }}">
+    @csrf
+    @method('PUT')
+
+    <label>
+      اسم الباقة
+      <input name="name" value="{{ old('name', $plan->name) }}" required>
+    </label>
+
+    <label>
+      السعر (بالدرهم)
+      <input type="number" step="0.01" name="price" value="{{ old('price', $plan->price) }}" required>
+    </label>
+
+    <label class="wide">
+      المدة بالأيام
+      <input type="number" name="duration_days" value="{{ old('duration_days', $plan->duration_days) }}" required>
+    </label>
+
+    <div class="wide" style="display:flex;gap:20px;margin:12px 0">
+      <label class="check">
+        <input type="checkbox" name="is_active" @checked(old('is_active', $plan->is_active))>
+        مفعّلة
+      </label>
+
+      <label class="check">
+        <input type="checkbox" name="is_recommended" @checked(old('is_recommended', $plan->is_recommended))>
+        موصى بها (باقة مميزة)
+      </label>
+    </div>
+
+    @if($errors->any())
+      <p class="error wide">{{ $errors->first() }}</p>
+    @endif
+
+    <button class="btn btn-primary" type="submit">حفظ الباقة</button>
+  </form>
+</x-layouts.admin>

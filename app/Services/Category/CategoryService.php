@@ -11,6 +11,7 @@ class CategoryService
     {
         return Category::query()
             ->where('is_active', true)
+            ->withCount(['questions' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

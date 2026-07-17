@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/{game}/answer/{gameQuestion}', [Site\GameController::class, 'answer'])->name('answer');
         Route::post('/{game}/assign/{gameQuestion}', [Site\GameController::class, 'assign'])->name('assign');
         Route::get('/{game}/result', [Site\GameController::class, 'result'])->name('result');
+        Route::post('/{game}/team/{team}/use-helper/{helper}', [Site\GameController::class, 'useHelper'])->name('useHelper');
+        Route::post('/{game}/team/{team}/adjust-score', [Site\GameController::class, 'adjustScore'])->name('adjustScore');
     });
 
     Route::get('/subscribe', [Site\SubscriptionController::class, 'index'])->name('subscription.index');
