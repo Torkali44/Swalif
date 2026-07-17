@@ -12,7 +12,7 @@
       $slug = strtolower($category->slug ?? '');
       $name = $category->name_ar ?? '';
       if ($category->group === 'uae') return 'uae';
-      if (str_contains($slug, 'quran') || str_contains($slug, 'verse') || str_contains($name, 'آية') || str_contains($name, 'سيرة') || str_contains($name, 'إسلام')) return 'religion';
+      if (str_contains($slug, 'quran') || str_contains($slug, 'verse') || str_contains($slug, 'hadith') || str_contains($name, 'آية') || str_contains($name, 'سيرة') || str_contains($name, 'إسلام') || str_contains($name, 'حديث')) return 'religion';
       if (str_contains($slug, 'football') || str_contains($name, 'كرة') || str_contains($name, 'رياض')) return 'sport';
       if (str_contains($slug, 'guess') || str_contains($name, 'خمّن') || str_contains($name, 'خمن') || str_contains($name, 'صورة') || str_contains($name, 'صوت')) return 'media';
       if (str_contains($slug, 'disney') || str_contains($name, 'ألغاز') || str_contains($name, 'ترفيه')) return 'fun';
@@ -35,13 +35,16 @@
 <div class="categories-design">
   <section class="hero-strip">
     <div class="hero-strip__glow"></div>
-    <div class="container">
-      <div class="crumb">الرئيسية <span>›</span> الفئات</div>
-      <h1 class="hero-strip__title">
-        <span>اختر <em>فئتك</em></span>
-        <span class="hero-strip__title--gradient">وابدأ التحدي</span>
-      </h1>
-      <p class="hero-strip__sub">فئات متنوعة • ٣ مستويات • أسئلة حصرية عن الإمارات والمعرفة العامة</p>
+    <div class="container hero-strip__inner">
+      <div class="hero-strip__text">
+        <x-back-button :href="route('home')" />
+        <div class="crumb">الرئيسية <span>›</span> الفئات</div>
+        <h1 class="hero-strip__title">
+          <span>اختر <em>فئتك</em></span>
+          <span class="hero-strip__title--gradient">وابدأ التحدي</span>
+        </h1>
+        <p class="hero-strip__sub">فئات متنوعة • ٣ مستويات • أسئلة حصرية عن الإمارات والمعرفة العامة</p>
+      </div>
 
       <div class="hero-stats">
         <div class="stat"><b>{{ $categories->count() }}</b><span>فئة</span></div>
@@ -60,13 +63,13 @@
       </div>
 
       <div class="filters" id="categoryFilters">
-        <button type="button" class="pill active" data-filter="all">الكل</button>
-        <button type="button" class="pill" data-filter="uae">🇦🇪 إمارات</button>
-        <button type="button" class="pill" data-filter="general">🌍 عامة</button>
-        <button type="button" class="pill" data-filter="religion">📖 دينية</button>
-        <button type="button" class="pill" data-filter="sport">⚽ رياضة</button>
-        <button type="button" class="pill" data-filter="fun">🎭 ترفيه</button>
-        <button type="button" class="pill" data-filter="media">🎬 صور وصوت</button>
+        <button type="button" class="pill pill--all active" data-filter="all">الكل</button>
+        <button type="button" class="pill pill--uae" data-filter="uae">🇦🇪 إمارات</button>
+        <button type="button" class="pill pill--general" data-filter="general">🌍 عامة</button>
+        <button type="button" class="pill pill--religion" data-filter="religion">📖 دينية</button>
+        <button type="button" class="pill pill--sport" data-filter="sport">⚽ رياضة</button>
+        <button type="button" class="pill pill--fun" data-filter="fun">🎭 ترفيه</button>
+        <button type="button" class="pill pill--media" data-filter="media">🎬 صور وصوت</button>
       </div>
 
       <div class="sort">

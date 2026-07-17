@@ -1,5 +1,8 @@
 <x-layouts.admin>
   <x-slot:heading>{{ $category->exists ? 'تعديل الفئة' : 'فئة جديدة' }}</x-slot:heading>
+  <x-slot:subheading>{{ $category->exists ? 'تحديث بيانات الفئة وصورتها' : 'إضافة فئة جديدة للعبة' }}</x-slot:subheading>
+
+  <x-back-button :href="route('admin.categories.index')" label="رجوع للفئات" />
 
   <form class="admin-form" method="POST" action="{{ $category->exists ? route('admin.categories.update', $category) : route('admin.categories.store') }}" enctype="multipart/form-data">
     @csrf

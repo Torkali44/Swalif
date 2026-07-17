@@ -12,7 +12,7 @@
   <x-slot:heading>الفئات</x-slot:heading>
   <x-slot:subheading>إدارة موضوعات اللعبة وتصنيفها</x-slot:subheading>
 
-  <form class="toolbar" method="GET" action="{{ route('admin.categories.index') }}">
+  <form class="toolbar toolbar--tight" method="GET" action="{{ route('admin.categories.index') }}">
     <input class="search-inp" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث بالاسم…">
     <select class="select" name="group">
       <option value="">كل التصنيفات</option>
@@ -30,7 +30,7 @@
     <a class="btn btn-primary" href="{{ route('admin.categories.create') }}">+ فئة جديدة</a>
   </form>
 
-  <div class="admin-circle-grid">
+  <div class="admin-circle-grid admin-circle-grid--compact">
     @forelse($categories as $index => $category)
       @php $palette = $palettes[$index % count($palettes)]; @endphp
       <article class="admin-circle-card" style="--c1:{{ $palette[0] }};--c2:{{ $palette[1] }}">
@@ -53,15 +53,19 @@
         <p class="admin-circle-meta">
           {{ $category->group === 'uae' ? 'إمارات' : 'عامة' }}
           · {{ $category->questions_count }} سؤال
-          · {{ $category->is_active ? 'مفعّلة' : 'موقوفة' }}
         </p>
 
         <div class="cat-actions">
-          <a href="{{ route('admin.categories.edit', $category) }}">تعديل</a>
-          <form method="POST" action="{{ route('admin.categories.destroy', $category) }}">
+          <a class="btn btn-sm btn-outline" href="{{ route('admin.categories.edit', $category) }}">تعديل</a>
+          <form method="POST" action="{{ route('admin.categories.toggle', $category) }}" class="inline">
+            @csrf
+            @method('PATCH')
+            <button class="btn btn-sm btn-ghost" type="submit">{{ $category->is_active ? 'إيقاف' : 'تفعيل' }}</button>
+          </form>
+          <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" class="inline">
             @csrf
             @method('DELETE')
-            <button type="submit" onclick="return confirm('حذف الفئة؟')">حذف</button>
+            <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('حذف الفئة؟')">حذف</button>
           </form>
         </div>
       </article>

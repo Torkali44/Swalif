@@ -2,18 +2,28 @@
   <x-slot:heading>الباقات والاشتراكات</x-slot:heading>
   <x-slot:subheading>إدارة باقات الاشتراك وسعرها ومدة صلاحيتها</x-slot:subheading>
 
-  <div class="admin-cards">
-    @foreach($plans as $plan)
-      <article style="position: relative">
+  <div class="plans-admin-grid">
+    @forelse($plans as $plan)
+      <article class="plan-admin-card">
         <span class="status-dot {{ $plan->is_active ? '' : 'off' }}"></span>
         <h3>{{ $plan->name }}</h3>
-        <strong style="display:block;font-size:24px;color:var(--primary);margin:8px 0">{{ $plan->price }} درهم</strong>
-        <p>{{ $plan->duration_days }} يوم · {{ $plan->is_active ? 'مفعّلة' : 'موقوفة' }}</p>
-        
-        <div style="margin-top:16px">
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px;color:var(--text);border-color:var(--border)" href="{{ route('admin.plans.edit', $plan) }}">تعديل الباقة</a>
-        </div>
+        <div class="price">{{ number_format($plan->price) }} درهم</div>
+        <p class="meta">
+          {{ $plan->duration_days }} يوم
+          · {{ $plan->is_active ? 'مفعّلة' : 'موقوفة' }}
+          @if($plan->is_recommended) · مميزة @endif
+        </p>
+        @if(!empty($plan->features))
+          <ul class="features">
+            @foreach($plan->features as $feature)
+              <li>✓ {{ $feature }}</li>
+            @endforeach
+          </ul>
+        @endif
+        <a class="btn" href="{{ route('admin.plans.edit', $plan) }}">تعديل الباقة</a>
       </article>
-    @endforeach
+    @empty
+      <p class="muted">لا توجد باقات بعد.</p>
+    @endforelse
   </div>
 </x-layouts.admin>

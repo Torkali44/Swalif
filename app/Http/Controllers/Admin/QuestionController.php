@@ -6,40 +6,58 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Models\Category;
 use App\Models\Question;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class QuestionController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
-        $query = Question::with('category')->latest();
+        $categoriesQuery = Category::query()
+            ->orderBy('sort_order')
+            ->orderBy('id');
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->integer('category_id'));
+            $categoriesQuery->whereKey($request->integer('category_id'));
         }
 
-        if ($request->filled('level')) {
-            $query->where('level', $request->string('level'));
+        if ($request->filled('group')) {
+            $categoriesQuery->where('group', $request->string('group'));
         }
 
-        if ($request->filled('points')) {
-            $query->where('points', $request->integer('points'));
-        }
+        $categories = $categoriesQuery
+            ->with(['questions' => function ($query) use ($request) {
+                $query->orderBy('level')->orderBy('points')->orderBy('id');
 
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->string('status') === 'active');
-        }
+                if ($request->filled('level')) {
+                    $query->where('level', $request->string('level'));
+                }
 
-        if ($request->filled('q')) {
-            $q = $request->string('q');
-            $query->where('question_text', 'like', "%{$q}%");
+                if ($request->filled('points')) {
+                    $query->where('points', $request->integer('points'));
+                }
+
+                if ($request->filled('status')) {
+                    $query->where('is_active', $request->string('status') === 'active');
+                }
+
+                if ($request->filled('q')) {
+                    $q = $request->string('q');
+                    $query->where('question_text', 'like', "%{$q}%");
+                }
+            }])
+            ->withCount('questions')
+            ->get();
+
+        if ($request->filled('q') || $request->filled('level') || $request->filled('points') || $request->filled('status')) {
+            $categories = $categories->filter(fn (Category $category) => $category->questions->isNotEmpty())->values();
         }
 
         return view('admin.questions.index', [
-            'questions' => $query->paginate(20)->withQueryString(),
-            'categories' => Category::orderBy('sort_order')->get(['id', 'name_ar', 'icon']),
-            'filters' => $request->only(['category_id', 'level', 'points', 'status', 'q']),
+            'groupedCategories' => $categories,
+            'categories' => Category::orderBy('sort_order')->get(['id', 'name_ar', 'icon', 'group']),
+            'filters' => $request->only(['category_id', 'group', 'level', 'points', 'status', 'q']),
         ]);
     }
 

@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/subscribe/{plan}', [Site\SubscriptionController::class, 'checkout'])->name('subscription.checkout');
 
     Route::get('/profile', [User\ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [User\ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [User\ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::get('/history', [User\HistoryController::class, 'index'])->name('history');
 });
 

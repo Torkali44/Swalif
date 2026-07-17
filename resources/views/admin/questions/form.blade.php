@@ -1,5 +1,8 @@
 <x-layouts.admin>
   <x-slot:heading>{{ $question->exists ? 'تعديل السؤال' : 'سؤال جديد' }}</x-slot:heading>
+  <x-slot:subheading>{{ $question->exists ? 'تحديث نص السؤال والخيارات' : 'إضافة سؤال جديد' }}</x-slot:subheading>
+
+  <x-back-button :href="route('admin.questions.index')" label="رجوع للأسئلة" />
 
   <form class="admin-form" method="POST" action="{{ $question->exists ? route('admin.questions.update', $question) : route('admin.questions.store') }}" enctype="multipart/form-data">
     @csrf
@@ -9,7 +12,7 @@
       الفئة
       <select name="category_id">
         @foreach($categories as $category)
-          <option value="{{ $category->id }}" @selected(old('category_id', $question->category_id) == $category->id)>{{ $category->name_ar }}</option>
+          <option value="{{ $category->id }}" @selected(old('category_id', $question->category_id ?: request('category_id')) == $category->id)>{{ $category->name_ar }}</option>
         @endforeach
       </select>
     </label>

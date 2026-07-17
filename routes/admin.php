@@ -19,4 +19,10 @@ Route::patch('questions/{question}/toggle', [QuestionController::class, 'toggle'
 Route::resource('plans', PlanController::class)->only(['index', 'edit', 'update']);
 
 Route::get('subscribers', [SubscriberController::class, 'index'])->name('subscribers.index');
+Route::patch('subscribers/{subscription}/cancel', [SubscriberController::class, 'cancel'])->name('subscribers.cancel');
+Route::patch('subscribers/{subscription}/activate', [SubscriberController::class, 'activate'])->name('subscribers.activate');
+Route::patch('subscribers/{subscription}/extend', [SubscriberController::class, 'extend'])->name('subscribers.extend');
+
 Route::get('users', [UserController::class, 'index'])->name('users.index');
+Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
+Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');

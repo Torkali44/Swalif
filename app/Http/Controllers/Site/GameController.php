@@ -42,14 +42,33 @@ class GameController extends Controller
     public function board(Game $game, Request $request)
     {
         $this->sessions->ensureOwned($game, $request->user());
-        $game->load(['category', 'teams', 'gameQuestions']);
+        $game->load(['category', 'teams', 'gameQuestions.question']);
 
-        $questions = $game->category->questions()
-            ->where('is_active', true)
-            ->orderBy('id')
-            ->get();
+        $perLevel = (int) config('game.questions_per_level', 6);
+        $expected = $perLevel * 3;
 
-        $mapCell = function (Question $question) use ($game) {
+        // Prefer the fixed set locked when the game started (18 questions)
+        $boardQuestions = collect();
+        if ($game->gameQuestions->count() >= $expected) {
+            $boardQuestions = $game->gameQuestions
+                ->filter(fn ($gq) => $gq->question)
+                ->map(fn ($gq) => $gq->question)
+                ->values();
+        }
+
+        // Legacy / incomplete boards: use category pool (still capped at 6/level)
+        if ($boardQuestions->count() < $expected) {
+            $boardQuestions = $game->category->questions()
+                ->where('is_active', true)
+                ->orderBy('id')
+                ->get();
+        }
+
+        $mapCell = function ($question) use ($game) {
+            if (! $question) {
+                return null;
+            }
+
             $gq = $game->gameQuestions->firstWhere('question_id', $question->id);
 
             return [
@@ -59,13 +78,24 @@ class GameController extends Controller
             ];
         };
 
-        $easyQuestions = $questions->where('points', 200)->values();
-        $mediumQuestions = $questions->where('points', 400)->values();
-        $hardQuestions = $questions->where('points', 600)->values();
+        $byLevel = function (string $level, int $points) use ($boardQuestions, $mapCell, $perLevel) {
+            $items = $boardQuestions
+                ->filter(function ($q) use ($level, $points) {
+                    $qLevel = $q->level instanceof \BackedEnum ? $q->level->value : (string) $q->level;
 
-        $easyCells = $easyQuestions->map($mapCell)->pad(6, null);
-        $mediumCells = $mediumQuestions->map($mapCell)->pad(6, null);
-        $hardCells = $hardQuestions->map($mapCell)->pad(6, null);
+                    return $qLevel === $level || (int) $q->points === $points;
+                })
+                ->unique('id')
+                ->take($perLevel)
+                ->values()
+                ->map($mapCell);
+
+            return $items->pad($perLevel, null);
+        };
+
+        $easyCells = $byLevel('easy', 200);
+        $mediumCells = $byLevel('medium', 400);
+        $hardCells = $byLevel('hard', 600);
 
         $answeredQuestions = $game->gameQuestions->whereNotNull('answered_at')->count();
         $teams = $game->teams->values();
@@ -97,7 +127,11 @@ class GameController extends Controller
         $game->load(['category', 'teams', 'gameQuestions']);
         $timeLimit = $this->timer->limitFor($question);
 
-        $totalQuestions = $game->category->questions()->where('is_active', true)->count();
+        $perLevel = (int) config('game.questions_per_level', 6);
+        $expected = $perLevel * 3;
+        $totalQuestions = $game->gameQuestions->count() >= $expected
+            ? $expected
+            : max($expected, $game->category->questions()->where('is_active', true)->count());
         $answeredQuestions = $game->gameQuestions->whereNotNull('answered_at')->count();
 
         return view('site.game.question', compact(
@@ -178,12 +212,33 @@ class GameController extends Controller
 
         $rankedTeams = $game->teams->sortByDesc('score')->values()->map(function ($team, $index) use ($answered) {
             $teamAnswers = $answered->where('assigned_team_id', $team->id);
+            $correct = $teamAnswers->where('answered_correctly', true)->count();
 
             return [
                 'team' => $team,
                 'rank' => $index + 1,
-                'correct' => $teamAnswers->count(),
+                'correct' => $correct,
+                'wrong' => 0,
             ];
+        });
+
+        // Attribute unanswered (no points) rounds to alternating turns by answer order
+        $teamsByOrder = $game->teams->values();
+        $wrongByTeam = $teamsByOrder->mapWithKeys(fn ($t) => [$t->id => 0])->all();
+        $answered->sortBy('answered_at')->values()->each(function ($gq, $i) use ($teamsByOrder, &$wrongByTeam) {
+            if ($gq->answered_correctly) {
+                return;
+            }
+            $turnTeam = $teamsByOrder->get($i % max(1, $teamsByOrder->count()));
+            if ($turnTeam) {
+                $wrongByTeam[$turnTeam->id] = ($wrongByTeam[$turnTeam->id] ?? 0) + 1;
+            }
+        });
+
+        $rankedTeams = $rankedTeams->map(function ($row) use ($wrongByTeam) {
+            $row['wrong'] = (int) ($wrongByTeam[$row['team']->id] ?? 0);
+
+            return $row;
         });
 
         return view('site.game.result', compact(

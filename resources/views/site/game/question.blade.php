@@ -17,7 +17,7 @@
   $activeTeam = ($answeredQuestions % 2 === 0) ? 'a' : 'b';
 @endphp
 
-<x-layouts.game>
+<x-layouts.game :show-nav="true">
 <div class="play-stage">
   <header class="topbar">
     <div class="category-badge">
@@ -32,6 +32,14 @@
         <small>الفئة</small>
         <b>{{ $game->category->name_ar }}</b>
       </div>
+    </div>
+
+    <div>
+      @if(session('success'))
+        <span class="header-notice-badge success">{{ session('success') }}</span>
+      @elseif(session('error'))
+        <span class="header-notice-badge error">{{ session('error') }}</span>
+      @endif
     </div>
 
     <div class="level-chip level-chip--{{ $levelClass }}">

@@ -11,14 +11,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <script>
-    if (localStorage.getItem('theme') === 'dark') {
+    if (document.documentElement.classList.contains('dark')) {
       document.body.classList.add('dark');
     }
   </script>
-  <button id="themeToggle" class="theme-toggle-btn" title="تبديل المظهر">🌙</button>
   <x-header />
   @if(session('success'))
     <div class="flash container">{{ session('success') }}</div>

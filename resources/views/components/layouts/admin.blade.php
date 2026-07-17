@@ -4,12 +4,27 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>إدارة سوالف</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="admin-body">
+<script>
+  if (document.documentElement.classList.contains('dark')) {
+    document.body.classList.add('dark');
+  }
+</script>
 <div class="admin-shell">
   <aside class="admin-sidebar">
     <a class="brand" href="{{ route('admin.dashboard') }}">
@@ -43,7 +58,11 @@
 
     <div class="admin-footer">
       <div class="user-chip">
-        <div class="avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</div>
+        @if(auth()->user()->avatarUrl())
+          <img class="avatar avatar-img" src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}">
+        @else
+          <div class="avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</div>
+        @endif
         <div>
           <div class="u-name">{{ auth()->user()->name }}</div>
           <div class="u-role">مشرف عام</div>
@@ -59,6 +78,7 @@
         <p class="page-sub">{{ $subheading ?? 'إدارة محتوى سوالف' }}</p>
       </div>
       <div class="top-actions">
+        <button type="button" id="themeToggle" class="nav-theme-btn theme-toggle" title="تبديل المظهر" aria-label="تبديل المظهر">🌙</button>
         <a class="btn btn-outline" href="{{ route('home') }}">عرض الموقع</a>
         <form method="POST" action="{{ route('logout') }}">@csrf
           <button class="btn btn-primary" type="submit">خروج</button>

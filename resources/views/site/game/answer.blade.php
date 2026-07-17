@@ -7,7 +7,7 @@
   $activeTeam = ($answeredQuestions % 2 === 0) ? 'a' : 'b';
 @endphp
 
-<x-layouts.game>
+<x-layouts.game :show-nav="true">
 <div class="play-stage">
   <header class="topbar">
     <div class="category-badge">
@@ -85,8 +85,13 @@
           — بدون نقاط
         @endif
       </p>
-      <a class="btn btn--fire btn--lg" href="{{ route('game.board', $game) }}">العودة للوحة</a>
+      <div class="action-bar" style="justify-content:center">
+        <a class="btn btn--fire btn--lg" href="{{ route('game.board', $game) }}">العودة للوحة</a>
+      </div>
     @else
+      <div class="action-bar" style="justify-content:center;margin-bottom:18px">
+        <a class="btn btn--ghost" href="{{ route('game.question', [$game, $question]) }}">← الرجوع للسؤال</a>
+      </div>
       <h3>من الفريق اللي أجاب صح؟</h3>
       <form method="POST" action="{{ route('game.assign', [$game, $gameQuestion]) }}" id="assignForm">
         @csrf

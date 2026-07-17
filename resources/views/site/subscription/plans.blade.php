@@ -1,6 +1,7 @@
 <x-layouts.app>
 <section class="page-hero">
   <div class="container">
+    <x-back-button :href="route('home')" />
     <span class="chip">💎 اشتراكات</span>
     <h1>افتح كل التحديات</h1>
     <p>جرّب أول {{ config('game.free_trial_limit') }} أسئلة مجانًا، ثم اختر الباقة المناسبة.</p>

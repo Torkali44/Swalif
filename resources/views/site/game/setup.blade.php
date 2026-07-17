@@ -30,6 +30,7 @@
 
       <a href="{{ route('categories.show', $category) }}" class="setup-modal-close" title="إغلاق">✕</a>
 
+      <x-back-button :href="route('categories.show', $category)" label="رجوع للفئة" />
       <h1 class="setup-modal-title">{{ $category->name_ar }}</h1>
       <p class="setup-modal-sub">حدد معلومات الفرق</p>
 
@@ -37,7 +38,7 @@
         <!-- Team 1 -->
         <div class="setup-modal-col">
           <h3>الفريق الأول</h3>
-          <input name="team_one" class="setup-modal-input" placeholder="اسم الفريق" value="فريق الصقور" required>
+          <input name="team_one" class="setup-modal-input" placeholder="مثال: فريق الصقور" value="{{ old('team_one') }}" required>
           <div class="setup-modal-counter">
             <button type="button" class="counter-btn minus">—</button>
             <span class="counter-val">1</span>
@@ -48,7 +49,7 @@
         <!-- Team 2 -->
         <div class="setup-modal-col">
           <h3>الفريق الثاني</h3>
-          <input name="team_two" class="setup-modal-input" placeholder="اسم الفريق" value="فريق النجوم" required>
+          <input name="team_two" class="setup-modal-input" placeholder="مثال: فريق النجوم" value="{{ old('team_two') }}" required>
           <div class="setup-modal-counter">
             <button type="button" class="counter-btn minus">—</button>
             <span class="counter-val">1</span>

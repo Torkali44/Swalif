@@ -57,7 +57,7 @@ body.game-body {
 
 button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
 
-.play-stage{max-width:1200px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:22px}
+.play-stage{max-width:1440px;margin:0 auto;padding:28px 32px;display:flex;flex-direction:column;gap:26px}
 
 /* ===== TOP BAR ===== */
 .play-stage .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -127,20 +127,20 @@ button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit
 svg defs{display:block}
 
 /* ===== QUESTION CARD ===== */
-.play-stage .question-card{position:relative;background:var(--theme-card-bg);border:1px solid var(--theme-card-border);border-radius:28px;padding:36px;overflow:hidden;box-shadow: 0 10px 30px var(--theme-card-glow);transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;}
+.play-stage .question-card{position:relative;background:var(--theme-card-bg);border:1px solid var(--theme-card-border);border-radius:28px;padding:48px 56px;overflow:hidden;box-shadow: 0 10px 30px var(--theme-card-glow);transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;}
 .play-stage .question-card__glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(500px 250px at 50% 0%,rgba(255,109,0,.15),transparent 60%)}
 body.dark.game-body .play-stage .question-card__glow{background:radial-gradient(500px 250px at 50% 0%,rgba(255,109,0,.25),transparent 60%)}
 .play-stage .question-card__label{position:relative;display:inline-block;background:var(--gradient-fire);color:#fff;font-weight:900;font-size:12px;padding:6px 16px;border-radius:999px;letter-spacing:1px;margin-bottom:16px}
-.play-stage .question-card__text{position:relative;font-family:'Cairo';font-size:clamp(22px,2.6vw,32px);font-weight:900;line-height:1.5;margin-bottom:28px;color:var(--theme-text);transition: color 0.3s;}
-.play-stage .question-card__media{margin-bottom:24px;border-radius:16px;overflow:hidden;max-width:520px;margin-left:auto;margin-right:auto}
+.play-stage .question-card__text{position:relative;font-family:'Cairo';font-size:clamp(26px,3vw,40px);font-weight:900;line-height:1.5;margin-bottom:32px;color:var(--theme-text);transition: color 0.3s;}
+.play-stage .question-card__media{margin-bottom:28px;border-radius:16px;overflow:hidden;max-width:620px;margin-left:auto;margin-right:auto}
 .play-stage .question-card__media img{width:100%;display:block}
 
 /* ===== ANSWERS ===== */
-.play-stage .answers{display:grid;grid-template-columns:1fr 1fr;gap:14px;position:relative}
-.play-stage .answer{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;background:var(--theme-card-bg);border:2px solid var(--theme-card-border);padding:18px 20px;border-radius:18px;text-align:right;transition:transform .2s, border-color .2s, background .2s, color 0.3s;color:var(--theme-text);box-shadow: 0 4px 12px var(--theme-card-glow);}
+.play-stage .answers{display:grid;grid-template-columns:1fr 1fr;gap:18px;position:relative}
+.play-stage .answer{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;background:var(--theme-card-bg);border:2px solid var(--theme-card-border);padding:22px 26px;border-radius:18px;text-align:right;transition:transform .2s, border-color .2s, background .2s, color 0.3s;color:var(--theme-text);box-shadow: 0 4px 12px var(--theme-card-glow);}
 .play-stage .answer:hover{transform:translateY(-3px);border-color:var(--theme-muted);background:var(--theme-input-bg)}
 .play-stage .answer__key{width:42px;height:42px;border-radius:12px;background:var(--gradient-fire);display:grid;place-items:center;font-family:'Cairo';font-weight:900;font-size:20px;color:#fff}
-.play-stage .answer__text{font-family:'Cairo';font-size:19px;font-weight:700}
+.play-stage .answer__text{font-family:'Cairo';font-size:21px;font-weight:700}
 .play-stage .answer__mark{width:26px;height:26px;border-radius:50%;border:2px solid var(--theme-card-border);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:900;transition: border-color 0.3s;}
 
 .play-stage .answer.selected{border-color:var(--uae-gold-light);background:rgba(244,200,66,.12);box-shadow:0 0 0 3px rgba(244,200,66,.2)}

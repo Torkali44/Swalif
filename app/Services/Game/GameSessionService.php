@@ -5,10 +5,13 @@ namespace App\Services\Game;
 use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\User;
+use App\Services\Category\QuestionPickerService;
 use Illuminate\Support\Facades\DB;
 
 class GameSessionService
 {
+    public function __construct(private QuestionPickerService $picker) {}
+
     public function start(User $user, array $data): Game
     {
         return DB::transaction(function () use ($user, $data) {
@@ -25,6 +28,15 @@ class GameSessionService
                     'name' => $name,
                     'score' => 0,
                     'helpers_left' => config('game.default_helpers'),
+                ]);
+            }
+
+            $game->load('category');
+            $questions = $this->picker->forBoard($game->category);
+
+            foreach ($questions as $question) {
+                $game->gameQuestions()->create([
+                    'question_id' => $question->id,
                 ]);
             }
 

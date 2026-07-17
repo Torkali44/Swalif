@@ -120,10 +120,10 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Sample questions for remaining categories
+        // Sample questions for remaining categories — 6 per difficulty
         foreach (Category::whereNotIn('slug', array_keys($questionBank))->get() as $category) {
             foreach (['easy' => 200, 'medium' => 400, 'hard' => 600] as $level => $points) {
-                for ($i = 1; $i <= 3; $i++) {
+                for ($i = 1; $i <= 6; $i++) {
                     $text = "سؤال {$category->name_ar} — مستوى {$level} رقم {$i}؟";
                     $question = Question::updateOrCreate(
                         ['question_text' => $text],

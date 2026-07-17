@@ -21,9 +21,10 @@
       $slug = strtolower($category->slug ?? '');
       $name = $category->name_ar ?? '';
       if ($category->group === 'uae') return 'uae';
-      if (str_contains($slug, 'quran') || str_contains($slug, 'verse') || str_contains($name, 'آية') || str_contains($name, 'سيرة') || str_contains($name, 'إسلام')) return 'religion';
+      if (str_contains($slug, 'quran') || str_contains($slug, 'verse') || str_contains($slug, 'hadith') || str_contains($name, 'آية') || str_contains($name, 'سيرة') || str_contains($name, 'إسلام') || str_contains($name, 'حديث')) return 'religion';
       if (str_contains($slug, 'football') || str_contains($name, 'كرة') || str_contains($name, 'رياض')) return 'sports';
       if (str_contains($slug, 'guess') || str_contains($name, 'خمّن') || str_contains($name, 'خمن') || str_contains($name, 'ألغاز')) return 'guess';
+      if ($category->group === 'general') return 'general';
       return 'fun';
   };
 @endphp
@@ -67,21 +68,6 @@
     <div class="float-card float-card--2">☕<span>كوفيهات</span></div>
     <div class="float-card float-card--3">🕌<span>مساجد</span></div>
     <div class="float-card float-card--4">🌴<span>تراث</span></div>
-  </div>
-</section>
-
-{{-- FILTERS --}}
-<section class="filters">
-  <div class="container">
-    <div class="filters__row">
-      <button type="button" class="pill pill--all is-active" data-filter="all">كل الفئات</button>
-      <button type="button" class="pill pill--red" data-filter="uae">إمارات 🇦🇪</button>
-      <button type="button" class="pill pill--gold" data-filter="general">عامة</button>
-      <button type="button" class="pill pill--green" data-filter="religion">إسلاميات</button>
-      <button type="button" class="pill pill--blue" data-filter="sports">رياضة</button>
-      <button type="button" class="pill pill--purple" data-filter="fun">ترفيه</button>
-      <button type="button" class="pill pill--pink" data-filter="guess">خمّن</button>
-    </div>
   </div>
 </section>
 
@@ -178,6 +164,35 @@
             {{ $plan->is_recommended ? 'اشترك الآن' : 'اشترك' }}
           </a>
         </article>
+      @endforeach
+    </div>
+  </div>
+</section>
+
+{{-- FAQ --}}
+<section class="faq" id="faq">
+  <div class="container">
+    <header class="section-head">
+      <h2>الأسئلة <span class="grad-text">الشائعة</span></h2>
+      <p>أجوبة سريعة لأكثر الأسئلة اللي بتوصّلنا</p>
+    </header>
+
+    <div class="faq-list">
+      @foreach([
+        ['كيف ألعب سوالف؟', 'اختار فئة، سمّ فريقين، وبعدين اختار خانات النقاط من اللوحة. كل خانة تفتح سؤالًا حسب المستوى (سهل / متوسط / صعب).'],
+        ['كم سؤال في اللعبة الواحدة؟', 'كل لعبة ثابتة على ١٨ سؤال: ٦ سهلة، ٦ متوسطة، و٦ صعبة، مع صورة الفئة في منتصف اللوحة.'],
+        ['هل فيه تجربة مجانية؟', 'نعم — تقدر تجرب أول '.config('game.free_trial_limit').' أسئلة مجانًا، وبعدها تحتاج اشتراك فعّال.'],
+        ['إيه وسائل المساعدة؟', 'لكل فريق ٣ وسائل: تبديل السؤال، اتصال بصديق، وإجابتين فقط. كل وسيلة تُستخدم مرة واحدة في اللعبة.'],
+        ['كيف أحدد الفائز؟', 'لما تخلّص الأسئلة أو تضغط «إنهاء اللعبة»، يظهر مجموع نقاط كل فريق والفريق الفائز.'],
+        ['هل أقدر ألعب على الجوال؟', 'أيوه — الموقع متجاوب مع الجوال والتابلت، وتقدر تلعب من أي متصفح حديث.'],
+      ] as [$q, $a])
+        <details class="faq-item">
+          <summary>
+            <span>{{ $q }}</span>
+            <i aria-hidden="true">+</i>
+          </summary>
+          <p>{{ $a }}</p>
+        </details>
       @endforeach
     </div>
   </div>

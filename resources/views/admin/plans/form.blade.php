@@ -2,6 +2,8 @@
   <x-slot:heading>تعديل الباقة: {{ $plan->name }}</x-slot:heading>
   <x-slot:subheading>تحديث معلومات باقة الاشتراك والأسعار</x-slot:subheading>
 
+  <x-back-button :href="route('admin.plans.index')" label="رجوع للباقات" />
+
   <form class="admin-form" method="POST" action="{{ route('admin.plans.update', $plan) }}">
     @csrf
     @method('PUT')
@@ -21,7 +23,7 @@
       <input type="number" name="duration_days" value="{{ old('duration_days', $plan->duration_days) }}" required>
     </label>
 
-    <div class="wide" style="display:flex;gap:20px;margin:12px 0">
+    <div class="wide" style="display:flex;gap:20px;margin:12px 0;flex-wrap:wrap">
       <label class="check">
         <input type="checkbox" name="is_active" @checked(old('is_active', $plan->is_active))>
         مفعّلة

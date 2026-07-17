@@ -26,6 +26,14 @@ class LoginController extends Controller
                 ->onlyInput('email');
         }
 
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+
+            return back()
+                ->withErrors(['email' => 'تم إيقاف هذا الحساب. تواصل مع الإدارة.'])
+                ->onlyInput('email');
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(

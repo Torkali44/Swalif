@@ -23,6 +23,11 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'is_active',
+        'phone',
+        'phone_code',
+        'birth_date',
+        'avatar',
     ];
 
     /**
@@ -46,7 +51,32 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_active' => 'boolean',
+            'birth_date' => 'date',
         ];
+    }
+
+    public function avatarUrl(): ?string
+    {
+        if (! $this->avatar) {
+            return null;
+        }
+
+        return '/storage/'.ltrim($this->avatar, '/');
+    }
+
+    public function firstName(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name), 2);
+
+        return $parts[0] ?? '';
+    }
+
+    public function lastName(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name), 2);
+
+        return $parts[1] ?? '';
     }
 
     public function games()

@@ -11,6 +11,7 @@
 <x-layouts.app>
 <section class="page-hero category-show-hero">
   <div class="container category-show-wrap">
+    <x-back-button :href="route('categories.index')" />
     <div class="cat-circle cat-circle--lg" style="--c1:{{ $palette[0] }};--c2:{{ $palette[1] }}">
       <div class="cat-circle__ring">
         @if($category->imageUrl())

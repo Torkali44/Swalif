@@ -5,12 +5,15 @@
   ];
   $winnerRow = $winner ? $rankedTeams->firstWhere('team.id', $winner->id) : null;
   $winnerCorrect = $winnerRow ? $winnerRow['correct'] : 0;
+  $winnerWrong = $winnerRow ? $winnerRow['wrong'] : 0;
 @endphp
 
-<x-layouts.game>
+<x-layouts.game :show-nav="true">
 <canvas id="confetti"></canvas>
 
 <div class="result-stage">
+  <x-back-button :href="route('game.board', $game)" label="رجوع للوحة" />
+
   <section class="winner">
     <div class="winner__crown">
       <svg viewBox="0 0 100 60" width="120" height="72">
@@ -37,7 +40,8 @@
         <b>{{ number_format($winner->score) }}</b>
       </div>
       <div class="winner__badges">
-        <span class="badge">🔥 {{ $winnerCorrect }} إجابة صحيحة</span>
+        <span class="badge">🔥 {{ $winnerCorrect }} صحيحة</span>
+        <span class="badge">✕ {{ $winnerWrong }} خاطئة</span>
         <span class="badge">🎯 دقة {{ $accuracy }}%</span>
       </div>
     @endif
@@ -58,6 +62,7 @@
           <b>{{ $team->name }}</b>
           <div class="team-card__stats">
             <span class="stat stat--correct">✔ {{ $row['correct'] }} صحيحة</span>
+            <span class="stat stat--wrong">✕ {{ $row['wrong'] }} خاطئة</span>
           </div>
         </div>
         <div class="team-card__score">
@@ -79,7 +84,7 @@
     <div class="summary__card">
       <div class="summary__icon" style="background:linear-gradient(135deg,#FF1744,#B00020)">✕</div>
       <div>
-        <small>بدون نقاط</small>
+        <small>إجابات خاطئة</small>
         <b>{{ $wrongCount }}</b>
       </div>
     </div>

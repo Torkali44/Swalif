@@ -2,6 +2,7 @@
 
 return [
     'free_trial_limit' => 5,
+    'questions_per_level' => 6,
     'points_map' => [
         'easy' => 200,
         'medium' => 400,

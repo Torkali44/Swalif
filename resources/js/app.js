@@ -47,27 +47,36 @@ if (navToggle && navLinks) {
 }
 
 /* Home category filter pills */
-const homePills = document.querySelectorAll('.filters .pill[data-filter], .filters__row .pill[data-filter]');
-const homeCats = document.querySelectorAll('.cat[data-cat], .cat[data-group], .cat-circle[data-cat], .cat-circle[data-group]');
+(() => {
+  const homeRoot = document.querySelector('.filters__row') || document.querySelector('section.filters');
+  if (!homeRoot || homeRoot.closest('.categories-design')) return;
 
-homePills.forEach((pill) => {
-  pill.addEventListener('click', () => {
-    if (pill.closest('.categories-design')) return;
-    homePills.forEach((p) => p.classList.remove('is-active'));
-    pill.classList.add('is-active');
-    const filter = pill.dataset.filter;
+  const pills = homeRoot.querySelectorAll('.pill[data-filter]');
+  const cats = document.querySelectorAll('.cat-circle[data-cat], .cat-circle[data-group], .cat[data-cat], .cat[data-group]');
 
-    homeCats.forEach((cat) => {
-      const group = cat.dataset.group;
-      const tag = cat.dataset.cat;
-      let match = filter === 'all';
-      if (filter === 'uae') match = group === 'uae' || tag === 'uae';
-      else if (filter === 'general') match = group === 'general';
-      else match = tag === filter;
-      cat.classList.toggle('is-hidden', !match);
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      pills.forEach((p) => p.classList.remove('is-active', 'active'));
+      pill.classList.add('is-active');
+      const filter = pill.dataset.filter || 'all';
+
+      cats.forEach((cat) => {
+        const group = cat.dataset.group || '';
+        const tag = cat.dataset.cat || '';
+        let match = filter === 'all';
+        if (filter === 'uae') match = group === 'uae' || tag === 'uae';
+        else if (filter === 'general') match = group === 'general' || tag === 'general';
+        else if (filter === 'sports' || filter === 'sport') match = tag === 'sports' || tag === 'sport';
+        else match = tag === filter;
+        cat.classList.toggle('is-hidden', !match);
+        if (match) {
+          cat.style.opacity = '1';
+          cat.style.transform = 'translateY(0)';
+        }
+      });
     });
   });
-});
+})();
 
 /* Categories page — search + filters */
 (() => {
@@ -93,10 +102,14 @@ homePills.forEach((pill) => {
       let match = activeFilter === 'all';
       if (activeFilter === 'uae') match = group === 'uae' || filter === 'uae';
       else if (activeFilter === 'general') match = filter === 'general' || group === 'general';
-      else match = filter === activeFilter;
+      else match = filter === activeFilter || filter === activeFilter.replace(/s$/, '');
       if (term && !name.includes(term)) match = false;
       card.classList.toggle('is-hidden', !match);
-      if (match) visible += 1;
+      if (match) {
+        visible += 1;
+        card.style.opacity = '1';
+        card.style.transform = 'none';
+      }
     });
 
     const sorted = [...cards].sort((a, b) => {
@@ -257,6 +270,40 @@ if ('IntersectionObserver' in window) {
     io.observe(el);
   });
 }
+
+/* Account tabs + avatar preview */
+(() => {
+  const tabs = document.querySelectorAll('.account-tab[data-tab]');
+  if (!tabs.length) return;
+
+  const panels = {
+    profile: document.getElementById('tab-profile'),
+    password: document.getElementById('tab-password'),
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      Object.entries(panels).forEach(([key, panel]) => {
+        if (!panel) return;
+        panel.hidden = key !== tab.dataset.tab;
+      });
+    });
+  });
+
+  const input = document.getElementById('avatarInput');
+  const preview = document.getElementById('avatarPreview');
+  const placeholder = document.getElementById('avatarPlaceholder');
+  input?.addEventListener('change', () => {
+    const file = input.files?.[0];
+    if (!file || !preview) return;
+    const url = URL.createObjectURL(file);
+    preview.src = url;
+    preview.hidden = false;
+    if (placeholder) placeholder.hidden = true;
+  });
+})();
 
 /* ==========================================
    Game Play Interactivity & AJAX helpers
@@ -430,34 +477,33 @@ window.showConfirm = function(message) {
   });
 };
 
-/* Init Theme */
-document.addEventListener('DOMContentLoaded', () => {
-  const themeToggle = document.getElementById('themeToggle');
-  if (themeToggle) {
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    if (currentTheme === 'dark') {
-      document.body.classList.add('dark');
-      themeToggle.textContent = '☀️';
-    } else {
-      document.body.classList.remove('dark');
-      themeToggle.textContent = '🌙';
-    }
-
-    themeToggle.addEventListener('click', () => {
-      if (document.body.classList.contains('dark')) {
-        document.body.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-        themeToggle.textContent = '🌙';
-      } else {
-        document.body.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-        themeToggle.textContent = '☀️';
-      }
+/* Init Theme — sync across site + admin */
+(() => {
+  const applyTheme = (dark) => {
+    document.body.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle('dark', dark);
+    document.querySelectorAll('#themeToggle, .theme-toggle').forEach((btn) => {
+      btn.textContent = dark ? '☀️' : '🌙';
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
     });
-  }
+  };
+
+  const storedDark = localStorage.getItem('theme') === 'dark';
+  applyTheme(storedDark);
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#themeToggle, .theme-toggle');
+    if (!btn) return;
+    const nextDark = !document.body.classList.contains('dark');
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    applyTheme(nextDark);
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
 
   /* Board manual score adjustment */
-  document.querySelectorAll('.board-score-control').forEach(container => {
+  document.querySelectorAll('.board-score-control, .board-team__score').forEach(container => {
     const teamId = container.dataset.teamId;
     const gameId = container.dataset.gameId;
     const scoreVal = container.querySelector('.score-val');
@@ -492,12 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* Board lifeline helper usage */
-  document.querySelectorAll('.board-lifelines-control .lifeline-btn').forEach(btn => {
+  document.querySelectorAll('.board-lifelines-control .lifeline-btn, .board-team__tools .board-helper').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      if (btn.classList.contains('used')) return;
+      if (btn.classList.contains('used') || btn.classList.contains('is-used')) return;
 
       const helper = btn.dataset.helper;
-      const container = btn.closest('.board-lifelines-control');
+      const container = btn.closest('.board-lifelines-control, .board-team__tools');
       if (!container) return;
 
       const teamId = container.dataset.teamId;
@@ -527,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => response.json())
       .then(async (data) => {
         if (data.success) {
-          btn.classList.add('used');
+          btn.classList.add('used', 'is-used');
           btn.disabled = true;
           btn.title = `${helperName}: مستخدم`;
           await window.showPopup(data.message || 'تم استخدام وسيلة المساعدة.', 'success');
