@@ -78,6 +78,20 @@ if (navToggle && navLinks) {
   });
 })();
 
+/* Normalize Arabic text so search ignores diacritics & letter variants */
+const normalizeAr = (value) => (value || '')
+  .toString()
+  .toLowerCase()
+  .replace(/[\u064B-\u065F\u0670]/g, '') // tashkeel/diacritics
+  .replace(/\u0640/g, '')                 // tatweel
+  .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627') // آ أ إ ٱ -> ا
+  .replace(/\u0649/g, '\u064A')           // ى -> ي
+  .replace(/\u0629/g, '\u0647')           // ة -> ه
+  .replace(/\u0624/g, '\u0648')           // ؤ -> و
+  .replace(/\u0626/g, '\u064A')           // ئ -> ي
+  .replace(/\s+/g, ' ')
+  .trim();
+
 /* Categories page — search + filters */
 (() => {
   const root = document.querySelector('.categories-design');
@@ -98,7 +112,7 @@ if (navToggle && navLinks) {
     cards.forEach((card) => {
       const filter = card.dataset.filter;
       const group = card.dataset.group;
-      const name = (card.dataset.name || '').toLowerCase();
+      const name = normalizeAr(card.dataset.name);
       let match = activeFilter === 'all';
       if (activeFilter === 'uae') match = group === 'uae' || filter === 'uae';
       else if (activeFilter === 'general') match = filter === 'general' || group === 'general';
@@ -145,7 +159,7 @@ if (navToggle && navLinks) {
   });
 
   search?.addEventListener('input', (e) => {
-    term = e.target.value.trim().toLowerCase();
+    term = normalizeAr(e.target.value);
     apply();
   });
 
@@ -169,6 +183,30 @@ document.querySelectorAll('a[href^="#"]').forEach((a) => {
     }
   });
 });
+
+/* Home — daily challenge countdown */
+(() => {
+  const el = document.querySelector('.hp-countdown[data-countdown]');
+  if (!el) return;
+  const h = el.querySelector('[data-cd="h"]');
+  const m = el.querySelector('[data-cd="m"]');
+  const s = el.querySelector('[data-cd="s"]');
+  let remaining = Math.max(0, parseInt(el.dataset.countdown, 10) || 0);
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const tick = () => {
+    const hrs = Math.floor(remaining / 3600);
+    const mins = Math.floor((remaining % 3600) / 60);
+    const secs = remaining % 60;
+    if (h) h.textContent = pad(hrs);
+    if (m) m.textContent = pad(mins);
+    if (s) s.textContent = pad(secs);
+    if (remaining > 0) remaining -= 1;
+  };
+
+  tick();
+  setInterval(tick, 1000);
+})();
 
 /* Assign points — set team_id then submit once */
 const assignForm = document.getElementById('assignForm');
@@ -261,7 +299,7 @@ if ('IntersectionObserver' in window) {
         io.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.12 });
+  }, { threshold: 0.10 });
 
   document.querySelectorAll('.cat, .cat-circle, .cat-card, .step, .plan').forEach((el, i) => {
     el.style.opacity = '0';
@@ -269,7 +307,16 @@ if ('IntersectionObserver' in window) {
     el.style.transition = `opacity .55s ease ${i * 0.03}s, transform .55s ease ${i * 0.03}s`;
     io.observe(el);
   });
+
+  /* Home page — hp-reveal elements */
+  document.querySelectorAll('.hp-reveal').forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(28px)';
+    el.style.transition = `opacity .6s cubic-bezier(.16,1,.3,1) ${i * 0.08}s, transform .6s cubic-bezier(.16,1,.3,1) ${i * 0.08}s`;
+    io.observe(el);
+  });
 }
+
 
 /* Account tabs + avatar preview */
 (() => {

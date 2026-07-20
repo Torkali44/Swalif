@@ -86,12 +86,9 @@
       </div>
     </header>
 
-    @if(session('success'))
-      <div class="flash">{{ session('success') }}</div>
-    @endif
-
     {{ $slot }}
   </main>
 </div>
+<x-toast />
 </body>
 </html>

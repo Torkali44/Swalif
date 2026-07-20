@@ -51,9 +51,12 @@ class CategoryController extends Controller
             $data['image'] = $request->file('image')->store('categories', 'public');
         }
 
-        Category::create($data);
+        $category = Category::create($data);
 
-        return redirect()->route('admin.categories.index')->with('success', 'تمت إضافة الفئة.');
+        $desired = (int) $request->input('sort_order', 0);
+        $this->applyOrdering($category, $desired >= 1 ? $desired : PHP_INT_MAX);
+
+        return redirect()->route('admin.categories.index')->with('success', 'تمت إضافة الفئة بنجاح.');
     }
 
     public function edit(Category $category)
@@ -77,7 +80,10 @@ class CategoryController extends Controller
 
         $category->update($data);
 
-        return redirect()->route('admin.categories.index')->with('success', 'تم حفظ التعديلات.');
+        $desired = (int) $request->input('sort_order', 0);
+        $this->applyOrdering($category, $desired >= 1 ? $desired : PHP_INT_MAX);
+
+        return redirect()->route('admin.categories.index')->with('success', 'تم حفظ التعديلات بنجاح.');
     }
 
     public function destroy(Category $category)
@@ -93,6 +99,31 @@ class CategoryController extends Controller
         $category->update(['is_active' => ! $category->is_active]);
 
         return back()->with('success', 'تم تحديث حالة الفئة.');
+    }
+
+    /**
+     * Place the given category at the desired 1-based position and
+     * re-sequence every category so each one holds a unique order (1..N).
+     */
+    private function applyOrdering(Category $saved, int $desired): void
+    {
+        $others = Category::where('id', '!=', $saved->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $position = max(1, min($desired, $others->count() + 1));
+
+        $ordered = $others->values();
+        $ordered->splice($position - 1, 0, [$saved]);
+
+        foreach ($ordered->values() as $i => $category) {
+            $newOrder = $i + 1;
+            if ((int) $category->sort_order !== $newOrder) {
+                $category->sort_order = $newOrder;
+                $category->saveQuietly();
+            }
+        }
     }
 
     private function deleteImage(?string $path): void

@@ -14,7 +14,7 @@
   <header class="board-bar">
     <div class="board-bar__start">
       <a href="{{ route('home') }}" class="board-bar__logo" title="سوالف">
-        <img src="{{ asset('images/logo.jpg') }}" alt="سوالف">
+        <img src="{{ asset('images/logo.png') }}" alt="سوالف">
       </a>
       @if($activeTeam)
         <span class="board-bar__turn">دور فريق: {{ $activeTeam->name }}</span>

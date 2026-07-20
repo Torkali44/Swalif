@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './theme.css';
 @import './home.css';
+@import './home-page.css';
 @import './admin.css';
 @import './extras.css';
 @import './categories-page.css';
@@ -8,3 +9,4 @@
 @import './result-page.css';
 @import './account.css';
 @import './board-page.css';
+@import './landing.css';

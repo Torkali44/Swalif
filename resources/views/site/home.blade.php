@@ -1,200 +1,277 @@
 @php
-  $palettes = [
-    ['#FF3B4E', '#C8102E'],
-    ['#FF6B35', '#E8501A'],
-    ['#8B5A2B', '#5C3317'],
-    ['#D4AF37', '#B8860B'],
-    ['#00A86B', '#00843D'],
-    ['#A67B5B', '#6F4E37'],
-    ['#0F9D58', '#0B6E3D'],
-    ['#00B4D8', '#0077B6'],
-    ['#7C3AED', '#5B21B6'],
-    ['#F59E0B', '#D97706'],
-    ['#EC4899', '#BE185D'],
-    ['#EF4444', '#B91C1C'],
-    ['#06B6D4', '#0E7490'],
-    ['#F97316', '#C2410C'],
-    ['#8B5CF6', '#6D28D9'],
+  $catTiles = [
+    ['#EDE7FF', '#7C3AED'], // purple
+    ['#DCFBEF', '#0E9F6E'], // green
+    ['#FFEAD9', '#FF6B2C'], // orange
+    ['#FFE1EF', '#EC4899'], // pink
+    ['#FFE1E1', '#EF4444'], // red
+    ['#FFF3D1', '#E0A500'], // yellow
+  ];
+  $homeCats = $categories->take(6);
+  $secondsLeft = now()->endOfDay()->diffInSeconds(now());
+
+  $leaders = [
+    ['name' => 'أحمد',  'score' => 15250, 'c' => '#FF6B2C'],
+    ['name' => 'سارة',  'score' => 12840, 'c' => '#7C3AED'],
+    ['name' => 'محمد',  'score' => 11600, 'c' => '#0E9F6E'],
+    ['name' => 'خالد',  'score' => 10230, 'c' => '#EC4899'],
+    ['name' => 'نور',   'score' => 9870,  'c' => '#00B4D8'],
   ];
 
-  $filterOf = function ($category) {
-      $slug = strtolower($category->slug ?? '');
-      $name = $category->name_ar ?? '';
-      if ($category->group === 'uae') return 'uae';
-      if (str_contains($slug, 'quran') || str_contains($slug, 'verse') || str_contains($slug, 'hadith') || str_contains($name, 'آية') || str_contains($name, 'سيرة') || str_contains($name, 'إسلام') || str_contains($name, 'حديث')) return 'religion';
-      if (str_contains($slug, 'football') || str_contains($name, 'كرة') || str_contains($name, 'رياض')) return 'sports';
-      if (str_contains($slug, 'guess') || str_contains($name, 'خمّن') || str_contains($name, 'خمن') || str_contains($name, 'ألغاز')) return 'guess';
-      if ($category->group === 'general') return 'general';
-      return 'fun';
-  };
+  $nowPlaying = [
+    ['name' => 'Ahmed',  'cat' => 'تحدي إماراتي', 'c' => '#FF6B2C'],
+    ['name' => 'Aya',    'cat' => 'الجغرافيا',    'c' => '#0E9F6E'],
+    ['name' => 'Omar',   'cat' => 'الرياضة',      'c' => '#7C3AED'],
+    ['name' => 'Sara',   'cat' => 'العلوم',        'c' => '#00B4D8'],
+    ['name' => 'Khaled', 'cat' => 'التاريخ',      'c' => '#EC4899'],
+  ];
 @endphp
 
-<x-layouts.app>
-{{-- HERO --}}
-<section class="hero">
-  <div class="hero__bg">
-    <div class="hero__glow hero__glow--1"></div>
-    <div class="hero__glow hero__glow--2"></div>
-    <svg class="hero__skyline" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0,220 L0,140 L60,140 L60,110 L100,110 L100,150 L150,150 L150,90 L180,70 L210,90 L210,150 L260,150 L260,60 L285,40 L310,60 L310,150 L360,150 L360,120 L420,120 L420,80 L470,80 L470,150 L520,150 L520,100 L580,100 L580,140 L640,140 L640,50 L670,30 L700,50 L700,150 L760,150 L760,110 L820,110 L820,130 L880,130 L880,90 L940,90 L940,150 L1000,150 L1000,70 L1030,50 L1060,70 L1060,150 L1120,150 L1120,120 L1180,120 L1180,150 L1240,150 L1240,100 L1300,100 L1300,140 L1360,140 L1360,120 L1440,120 L1440,220 Z" fill="rgba(255,255,255,0.08)"/>
-    </svg>
-  </div>
+<x-layouts.app title="سوالف — العب، تعلّم، واربح">
+<div class="home">
 
-  <div class="hero__content">
-    <span class="chip chip--pulse">🇦🇪 لعبة معلومات إماراتية</span>
-    <h1 class="hero__title">
-      <span class="title-line">العب سوالف</span>
-      <span class="title-line title-line--accent">بروح الإمارات</span>
-    </h1>
-    <p class="hero__subtitle">
-      لعبة جماعية حماسية بين فريقين — فئات مستوحاة من الإمارات، مؤقت، وسائل مساعدة، ونقاط تحسم الفائز.
-    </p>
-    <div class="hero__cta">
-      <a href="{{ route('categories.index') }}" class="btn btn--primary btn--lg">
-        <span>ابدأ اللعب الآن</span>
-        <span class="btn-arrow">←</span>
-      </a>
-      <a href="#how" class="btn btn--outline btn--lg">شاهد كيف تلعب</a>
-    </div>
-    <div class="hero__stats">
-      <div class="stat"><b>{{ $categories->count() }}+</b><span>فئة متنوعة</span></div>
-      <div class="stat stat--divider"><b>3</b><span>مستويات صعوبة</span></div>
-      <div class="stat"><b>∞</b><span>ألعاب للمشتركين</span></div>
-    </div>
-  </div>
+  {{-- ============ HERO ============ --}}
+  <section class="hp-hero">
+    <div class="hp-hero__blob hp-hero__blob--1"></div>
+    <div class="hp-hero__blob hp-hero__blob--2"></div>
+    <div class="container hp-hero__inner">
 
-  <div class="hero__cards">
-    <div class="float-card float-card--1">🏛️<span>معالم</span></div>
-    <div class="float-card float-card--2">☕<span>كوفيهات</span></div>
-    <div class="float-card float-card--3">🕌<span>مساجد</span></div>
-    <div class="float-card float-card--4">🌴<span>تراث</span></div>
-  </div>
-</section>
+      <div class="hp-hero__text">
+        <h1 class="hp-hero__title">
+          العب، تعلّم،<br>
+          واربح مع <span>سوالف</span>
+        </h1>
+        <p class="hp-hero__sub">منصة ألعاب معلوماتية ممتعة وتفاعلية تجمع بين التحدي والمعرفة. آلاف الأسئلة في مختلف المجالات بانتظارك.</p>
 
-{{-- CATEGORIES --}}
-<section class="categories categories--circles" id="categories">
-  <div class="container">
-    <header class="section-head">
-      <h2>اختر فئتك <span class="grad-text">المفضلة</span></h2>
-      <p>فئات مستوحاة من الإمارات وفئات عامة — كل فئة بثلاث مستويات: سهل، متوسط، صعب</p>
-    </header>
-
-    <div class="cat-circle-grid">
-      @foreach($categories as $index => $category)
-        <x-category-circle
-          :category="$category"
-          :index="$index"
-          :filter="$filterOf($category)"
-          :group="$category->group"
-        />
-      @endforeach
-    </div>
-
-    <div class="center">
-      <a class="btn btn--outline" href="{{ route('categories.index') }}">عرض كل الفئات</a>
-    </div>
-  </div>
-</section>
-
-{{-- HOW --}}
-<section class="how" id="how">
-  <div class="container">
-    <header class="section-head section-head--light">
-      <h2>كيف <span class="grad-text">تلعب؟</span></h2>
-      <p>4 خطوات بسيطة لبدء أول لعبة</p>
-    </header>
-    <div class="steps">
-      @foreach([
-        ['1','اختر فئة','من الفئات الإماراتية أو العامة'],
-        ['2','أنشئ فريقين','سمّ الفرق وحدد اللاعبين'],
-        ['3','العب واستخدم الوسائل','مؤقت، خيارات، ووسائل مساعدة'],
-        ['4','الفريق الفائز','يظهر مجموع النقاط والفائز 🏆'],
-      ] as $step)
-        <div class="step">
-          <div class="step__num">{{ $step[0] }}</div>
-          <h3>{{ $step[1] }}</h3>
-          <p>{{ $step[2] }}</p>
+        <div class="hp-hero__cta">
+          <a href="{{ route('categories.index') }}" class="btn btn--primary btn--lg">🎮 ابدأ اللعب الآن</a>
+          <a href="{{ route('categories.index') }}" class="btn btn--soft btn--lg">استكشف الألعاب</a>
         </div>
-      @endforeach
-    </div>
-  </div>
-</section>
 
-{{-- PLANS --}}
-<section class="plans" id="plans">
-  <div class="container">
-    <header class="section-head">
-      <h2>باقات <span class="grad-text">الاشتراك</span></h2>
-      <p>جرّب أول {{ config('game.free_trial_limit') }} أسئلة مجانًا، ثم اختر ما يناسبك</p>
-    </header>
-
-    <div class="plan-grid">
-      @foreach($plans as $plan)
-        @php
-          $medal = match($plan->type) {
-            'weekly' => '🥉',
-            'monthly' => '🥈',
-            'yearly' => '🥇',
-            default => '💎',
-          };
-          $period = match($plan->type) {
-            'weekly' => 'أسبوع',
-            'monthly' => 'شهر',
-            'yearly' => 'سنة',
-            default => 'مدة الاشتراك',
-          };
-        @endphp
-        <article class="plan {{ $plan->is_recommended ? 'plan--featured' : '' }}">
-          @if($plan->is_recommended)
-            <div class="plan__badge">⭐ الأكثر شعبية</div>
-          @endif
-          <div class="plan__medal">{{ $medal }}</div>
-          <h3>{{ $plan->name }}</h3>
-          <div class="plan__price">
-            <b>{{ number_format($plan->price) }}</b>
-            <span>درهم / {{ $period }}</span>
+        <div class="hp-hero__players">
+          <div class="hp-avatars">
+            <span style="background:linear-gradient(135deg,#FF6B2C,#EC4899)">A</span>
+            <span style="background:linear-gradient(135deg,#7C3AED,#00B4D8)">S</span>
+            <span style="background:linear-gradient(135deg,#0E9F6E,#F5C542)">M</span>
+            <span style="background:linear-gradient(135deg,#EC4899,#7C3AED)">N</span>
           </div>
-          <ul>
-            @foreach($plan->features ?? [] as $feature)
-              <li>{{ $feature }}</li>
-            @endforeach
-          </ul>
-          <a href="{{ route('subscription.index') }}"
-             class="btn {{ $plan->is_recommended ? 'btn--primary' : 'btn--outline' }} btn--block">
-            {{ $plan->is_recommended ? 'اشترك الآن' : 'اشترك' }}
-          </a>
-        </article>
-      @endforeach
-    </div>
-  </div>
-</section>
+          <div class="hp-hero__live"><i></i> +25,430 لاعب نشط الآن</div>
+        </div>
+      </div>
 
-{{-- FAQ --}}
-<section class="faq" id="faq">
-  <div class="container">
-    <header class="section-head">
-      <h2>الأسئلة <span class="grad-text">الشائعة</span></h2>
-      <p>أجوبة سريعة لأكثر الأسئلة اللي بتوصّلنا</p>
-    </header>
-
-    <div class="faq-list">
-      @foreach([
-        ['كيف ألعب سوالف؟', 'اختار فئة، سمّ فريقين، وبعدين اختار خانات النقاط من اللوحة. كل خانة تفتح سؤالًا حسب المستوى (سهل / متوسط / صعب).'],
-        ['كم سؤال في اللعبة الواحدة؟', 'كل لعبة ثابتة على ١٨ سؤال: ٦ سهلة، ٦ متوسطة، و٦ صعبة، مع صورة الفئة في منتصف اللوحة.'],
-        ['هل فيه تجربة مجانية؟', 'نعم — تقدر تجرب أول '.config('game.free_trial_limit').' أسئلة مجانًا، وبعدها تحتاج اشتراك فعّال.'],
-        ['إيه وسائل المساعدة؟', 'لكل فريق ٣ وسائل: تبديل السؤال، اتصال بصديق، وإجابتين فقط. كل وسيلة تُستخدم مرة واحدة في اللعبة.'],
-        ['كيف أحدد الفائز؟', 'لما تخلّص الأسئلة أو تضغط «إنهاء اللعبة»، يظهر مجموع نقاط كل فريق والفريق الفائز.'],
-        ['هل أقدر ألعب على الجوال؟', 'أيوه — الموقع متجاوب مع الجوال والتابلت، وتقدر تلعب من أي متصفح حديث.'],
-      ] as [$q, $a])
-        <details class="faq-item">
-          <summary>
-            <span>{{ $q }}</span>
-            <i aria-hidden="true">+</i>
-          </summary>
-          <p>{{ $a }}</p>
-        </details>
-      @endforeach
+      <div class="hp-hero__art">
+        <img src="{{ asset('images/hero-character.png') }}" alt="العب سوالف" loading="eager">
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  {{-- ============ STATS ============ --}}
+  <section class="hp-stats">
+    <div class="container hp-stats__grid">
+      <div class="hp-stat">
+        <span class="hp-stat__ic hp-stat__ic--orange">🏆</span>
+        <div><b>2.5M+</b><span>إجابة صحيحة</span></div>
+      </div>
+      <div class="hp-stat">
+        <span class="hp-stat__ic hp-stat__ic--green">👥</span>
+        <div><b>350K+</b><span>لاعب مسجّل</span></div>
+      </div>
+      <div class="hp-stat">
+        <span class="hp-stat__ic hp-stat__ic--red">🔥</span>
+        <div><b>45K+</b><span>لعبة اليوم</span></div>
+      </div>
+      <div class="hp-stat">
+        <span class="hp-stat__ic hp-stat__ic--blue">🛡️</span>
+        <div><b>98%</b><span>رضا المستخدمين</span></div>
+      </div>
+    </div>
+  </section>
+
+  {{-- ============ CATEGORIES ============ --}}
+  <section class="hp-section" id="categories">
+    <div class="container">
+      <div class="hp-head hp-head--center">
+        <div>
+          <h2>اختر فئتك المفضلة</h2>
+          <p>تصفّح أكثر الفئات شعبية وابدأ التحدي فورًا</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;"><a href="{{ route('categories.index') }}" class="hp-head__link">عرض الكل ←</a></div>
+
+      <div class="hp-cats">
+        @foreach($homeCats as $i => $category)
+          @php $tile = $catTiles[$i % count($catTiles)]; @endphp
+          <article class="hp-cat">
+            <div class="hp-cat__icon" style="background:{{ $tile[0] }};color:{{ $tile[1] }}">
+              @if($category->imageUrl())
+                <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}">
+              @else
+                {{ $category->icon ?: '🎯' }}
+              @endif
+            </div>
+            <h3>{{ $category->name_ar }}</h3>
+            <p>{{ number_format($category->questions_count) }} سؤال</p>
+            <a href="{{ route('categories.show', $category) }}"
+               class="hp-cat__btn"
+               style="--tc:{{ $tile[1] }}">ابدأ اللعب</a>
+          </article>
+        @endforeach
+      </div>
+    </div>
+  </section>
+
+  {{-- ============ PANELS: leaderboard / daily / now playing ============ --}}
+  <section class="hp-section hp-section--soft" id="leaderboard">
+    <div class="container hp-panels">
+
+      {{-- Leaderboard --}}
+      <div class="hp-panel">
+        <div class="hp-panel__head">
+          <h3>🏅 المتصدرون هذا الأسبوع</h3>
+        </div>
+        <ul class="hp-lead">
+          @foreach($leaders as $i => $l)
+            <li>
+              <span class="hp-lead__rank hp-lead__rank--{{ $i + 1 }}">{{ $i + 1 }}</span>
+              <span class="hp-lead__ava" style="background:{{ $l['c'] }}">{{ mb_substr($l['name'], 0, 1) }}</span>
+              <span class="hp-lead__name">{{ $l['name'] }}</span>
+              <span class="hp-lead__score">{{ number_format($l['score']) }}</span>
+            </li>
+          @endforeach
+        </ul>
+        <a href="{{ route('categories.index') }}" class="btn btn--soft btn--block">عرض الترتيب الكامل</a>
+      </div>
+
+      {{-- Daily challenge --}}
+      <div class="hp-panel hp-panel--challenge">
+        <div class="hp-panel__head hp-panel__head--center">
+          <h3>⚡ تحدّي اليوم</h3>
+        </div>
+        <div class="hp-challenge">
+          <div class="hp-challenge__trophy">🏆</div>
+          <p>جاوب على سؤال صعب على مدار اليوم واكسب نقاطًا مضاعفة!</p>
+          <div class="hp-countdown" data-countdown="{{ $secondsLeft }}">
+            <div><b data-cd="h">00</b><small>ساعة</small></div>
+            <span>:</span>
+            <div><b data-cd="m">00</b><small>دقيقة</small></div>
+            <span>:</span>
+            <div><b data-cd="s">00</b><small>ثانية</small></div>
+          </div>
+          <a href="{{ route('categories.index') }}" class="btn btn--primary btn--block">شارك الآن</a>
+        </div>
+      </div>
+
+      {{-- Now playing --}}
+      <div class="hp-panel">
+        <div class="hp-panel__head">
+          <h3>🎮 الآن يلعب</h3>
+        </div>
+        <ul class="hp-live">
+          @foreach($nowPlaying as $p)
+            <li>
+              <span class="hp-live__ava" style="background:{{ $p['c'] }}">{{ mb_substr($p['name'], 0, 1) }}</span>
+              <span class="hp-live__name">{{ $p['name'] }}</span>
+              <span class="hp-live__tag" style="color:{{ $p['c'] }};background:{{ $p['c'] }}1a">{{ $p['cat'] }}</span>
+            </li>
+          @endforeach
+        </ul>
+        <a href="{{ route('categories.index') }}" class="btn btn--soft btn--block">عرض جميع اللاعبين</a>
+      </div>
+    </div>
+  </section>
+
+  {{-- ============ PLANS ============ --}}
+  <section class="hp-section" id="plans">
+    <div class="container">
+      <div class="hp-head hp-head--center">
+        <div>
+          <h2>باقات الاشتراك</h2>
+          <p>اختر الخطة التي تناسبك وابدأ رحلتك نحو القمة</p>
+        </div>
+      </div>
+
+      @php
+        $hpPlans = [
+          ['name' => 'يومي',   'icon' => '🎯', 'old' => 3,   'new' => 1,   'period' => 'يوم',   'featured' => false],
+          ['name' => 'أسبوعي', 'icon' => '⭐', 'old' => 10,  'new' => 5,   'period' => 'أسبوع', 'featured' => false],
+          ['name' => 'شهري',   'icon' => '💎', 'old' => 29,  'new' => 15,  'period' => 'شهر',   'featured' => true],
+          ['name' => 'سنوي',   'icon' => '👑', 'old' => 149, 'new' => 99,  'period' => 'سنة',   'featured' => false],
+        ];
+      @endphp
+
+      <div class="hp-plans hp-plans--4">
+        @foreach($hpPlans as $hp)
+          <article class="hp-plan {{ $hp['featured'] ? 'is-featured' : '' }}">
+            @if($hp['featured'])
+              <span class="hp-plan__badge">الأكثر شعبية</span>
+            @endif
+            <span class="hp-plan__icon">{{ $hp['icon'] }}</span>
+            <h3>{{ $hp['name'] }}</h3>
+            <div class="hp-plan__price">
+              <b>{{ $hp['new'] }}</b>
+              <s class="hp-plan__old">{{ $hp['old'] }}</s>
+              <span>درهم / {{ $hp['period'] }}</span>
+            </div>
+            <ul>
+              <li>فتح جميع الفئات</li>
+              <li>لعب غير محدود</li>
+              <li>جميع المستويات</li>
+              <li>تحديثات مستمرة</li>
+            </ul>
+            <a href="{{ route('subscription.index') }}"
+               class="btn {{ $hp['featured'] ? 'btn--primary' : 'btn--soft' }} btn--block">
+              اختر الخطة
+            </a>
+          </article>
+        @endforeach
+      </div>
+    </div>
+  </section>
+
+  {{-- ============ FAQ ============ --}}
+  <section class="hp-section hp-section--soft" id="faq">
+    <div class="container hp-faq">
+      <div class="hp-faq__art">
+        <img src="{{ asset('images/faq-bubbles.png') }}" alt="الأسئلة الشائعة" loading="lazy">
+        <h2>الأسئلة الشائعة</h2>
+        <p>كل ما تريد معرفته عن سوالف في مكان واحد</p>
+      </div>
+
+      <div class="hp-faq__list">
+        @foreach([
+          ['كيف أبدأ اللعب؟',
+           'اختر فئة من صفحة التصنيفات، كوّن فريقين، ثم اختر خانات النقاط من اللوحة. كل خانة تفتح سؤالًا حسب المستوى (سهل / متوسط / صعب).'],
+          ['هل يمكنني اللعب مع أصدقائي؟',
+           'نعم! سوالف لعبة جماعية بين فريقين، اجمع أصدقاءك وتحدّوا بعضكم على النقاط والفوز.'],
+          ['كيف يتم احتساب النقاط؟',
+           'كل سؤال له نقاط حسب صعوبته: سهل 200، متوسط 400، وصعب 600. الفريق صاحب أعلى مجموع يفوز.'],
+          ['هل هناك تجربة مجانية؟',
+           'نعم — تقدر تجرّب أول '.config('game.free_trial_limit').' أسئلة مجانًا، وبعدها تختار الباقة التي تناسبك.'],
+          ['هل يمكنني اللعب على الجوال؟',
+           'بالتأكيد، الموقع متجاوب بالكامل مع الجوال والتابلت ويعمل على أي متصفح حديث.'],
+        ] as [$q, $a])
+          <details class="hp-faq__item">
+            <summary><span>{{ $q }}</span><i aria-hidden="true">+</i></summary>
+            <p>{{ $a }}</p>
+          </details>
+        @endforeach
+      </div>
+    </div>
+  </section>
+
+  {{-- ============ CTA ============ --}}
+  <section class="hp-cta">
+    <div class="container hp-cta__inner">
+      <div class="hp-cta__text">
+        <h2>هل أنت مستعد للتحدّي؟</h2>
+        <p>انضم إلى آلاف اللاعبين وابدأ الآن — مجانًا بالكامل.</p>
+        <a href="{{ route('categories.index') }}" class="btn btn--white btn--lg">🚀 ابدأ مجانًا</a>
+      </div>
+      <div class="hp-cta__art">
+        <img src="{{ asset('images/game-controller.png') }}" alt="ابدأ التحدي" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+</div>
 </x-layouts.app>

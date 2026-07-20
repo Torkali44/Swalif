@@ -28,13 +28,8 @@
     }
   </script>
   <x-header />
-  @if(session('success'))
-    <div class="flash container">{{ session('success') }}</div>
-  @endif
-  @if(session('error'))
-    <div class="flash flash-error container">{{ session('error') }}</div>
-  @endif
   <main>{{ $slot }}</main>
   <x-footer />
+  <x-toast />
 </body>
 </html>

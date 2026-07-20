@@ -28,6 +28,17 @@
     'media' => 'صور/صوت',
   ];
 
+  // Only show filter pills for types that actually exist among the categories
+  $pillDefs = [
+    'uae' => '🇦🇪 إمارات',
+    'general' => '🌍 عامة',
+    'religion' => '📖 دينية',
+    'sport' => '⚽ رياضة',
+    'fun' => '🎭 ترفيه',
+    'media' => '🎬 صور وصوت',
+  ];
+  $presentFilters = collect($categories)->map($filterOf)->unique()->all();
+
   $totalQuestions = $categories->sum('questions_count');
 @endphp
 
@@ -64,12 +75,11 @@
 
       <div class="filters" id="categoryFilters">
         <button type="button" class="pill pill--all active" data-filter="all">الكل</button>
-        <button type="button" class="pill pill--uae" data-filter="uae">🇦🇪 إمارات</button>
-        <button type="button" class="pill pill--general" data-filter="general">🌍 عامة</button>
-        <button type="button" class="pill pill--religion" data-filter="religion">📖 دينية</button>
-        <button type="button" class="pill pill--sport" data-filter="sport">⚽ رياضة</button>
-        <button type="button" class="pill pill--fun" data-filter="fun">🎭 ترفيه</button>
-        <button type="button" class="pill pill--media" data-filter="media">🎬 صور وصوت</button>
+        @foreach($pillDefs as $key => $label)
+          @if(in_array($key, $presentFilters, true))
+            <button type="button" class="pill pill--{{ $key }}" data-filter="{{ $key }}">{{ $label }}</button>
+          @endif
+        @endforeach
       </div>
 
       <div class="sort">

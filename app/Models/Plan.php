@@ -8,8 +8,10 @@ class Plan extends Model
 {
     protected $fillable = [
         'name',
+        'icon',
         'type',
         'price',
+        'old_price',
         'currency',
         'duration_days',
         'features',
@@ -25,8 +27,10 @@ class Plan extends Model
             'is_active' => 'boolean',
             'is_recommended' => 'boolean',
             'price' => 'decimal:2',
+            'old_price' => 'decimal:2',
         ];
     }
+
 
     public function subscriptions()
     {
