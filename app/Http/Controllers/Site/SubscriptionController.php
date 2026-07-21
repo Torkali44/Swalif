@@ -30,6 +30,10 @@ class SubscriptionController extends Controller
     {
         abort_unless($plan->is_active, 404);
 
+        if (filled($plan->stripe_checkout_url)) {
+            return redirect()->away($plan->stripe_checkout_url);
+        }
+
         $user = $request->user();
 
         DB::transaction(function () use ($user, $plan) {

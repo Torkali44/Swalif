@@ -1,6 +1,6 @@
 <x-layouts.admin>
   <x-slot:heading>{{ $category->exists ? 'تعديل الفئة' : 'فئة جديدة' }}</x-slot:heading>
-  <x-slot:subheading>{{ $category->exists ? 'تحديث بيانات الفئة وصورتها' : 'إضافة فئة جديدة للعبة' }}</x-slot:subheading>
+  <x-slot:subheading>{{ $category->exists ? 'تحديث بيانات الفئة وصورتها' : 'إضافة فئة جديدة واختيار التصنيف التابع لها' }}</x-slot:subheading>
 
   <x-back-button :href="route('admin.categories.index')" label="رجوع للفئات" />
 
@@ -15,16 +15,24 @@
       <input name="name_en" value="{{ old('name_en', $category->name_en) }}">
     </label>
     <label>التصنيف
-      <select name="group">
-        <option value="uae" @selected(old('group', $category->group) === 'uae')>إمارات</option>
-        <option value="general" @selected(old('group', $category->group) === 'general')>عام</option>
+      <select name="classification_id" required>
+        <option value="" disabled @selected(! old('classification_id', $category->classification_id))>اختر التصنيف</option>
+        @foreach($classifications as $classification)
+          <option value="{{ $classification->id }}" @selected((string) old('classification_id', $category->classification_id) === (string) $classification->id)>
+            {{ $classification->icon }} {{ $classification->name_ar }}
+          </option>
+        @endforeach
       </select>
+      <small class="muted">
+        لإضافة تصنيف جديد:
+        <a href="{{ route('admin.classifications.create') }}">افتح صفحة التصنيفات</a>
+      </small>
     </label>
     <label>الأيقونة (إيموجي)
       <input name="icon" value="{{ old('icon', $category->icon) }}">
     </label>
     <label>ترتيب الظهور
-      <input type="number" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}">
+      <input type="number" name="sort_order" min="1" value="{{ old('sort_order', $category->sort_order ?: 1) }}" required>
     </label>
     <label class="wide">الوصف
       <textarea name="description">{{ old('description', $category->description) }}</textarea>

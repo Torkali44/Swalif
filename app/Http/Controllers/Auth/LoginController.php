@@ -28,6 +28,8 @@ class LoginController extends Controller
 
         if (! Auth::user()->is_active) {
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
             return back()
                 ->withErrors(['email' => 'تم إيقاف هذا الحساب. تواصل مع الإدارة.'])

@@ -5,14 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
-class Category extends Model
+class Classification extends Model
 {
     protected $fillable = [
         'name_ar',
         'name_en',
         'slug',
-        'group',
-        'classification_id',
         'icon',
         'image',
         'description',
@@ -27,24 +25,9 @@ class Category extends Model
         ];
     }
 
-    public function questions()
+    public function categories()
     {
-        return $this->hasMany(Question::class);
-    }
-
-    public function classification()
-    {
-        return $this->belongsTo(Classification::class);
-    }
-
-    public function games()
-    {
-        return $this->hasMany(Game::class);
-    }
-
-    public function classificationName(): string
-    {
-        return $this->classification?->name_ar ?: ($this->group ?: 'بدون تصنيف');
+        return $this->hasMany(Category::class);
     }
 
     public function imageUrl(): ?string

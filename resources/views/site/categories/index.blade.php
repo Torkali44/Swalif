@@ -8,38 +8,11 @@
     ['#F57C00', '#6D4C1B'], ['#00E5FF', '#0064B7'],
   ];
 
-  $filterOf = function ($category) {
-      $slug = strtolower($category->slug ?? '');
-      $name = $category->name_ar ?? '';
-      if ($category->group === 'uae') return 'uae';
-      if (str_contains($slug, 'quran') || str_contains($slug, 'verse') || str_contains($slug, 'hadith') || str_contains($name, 'آية') || str_contains($name, 'سيرة') || str_contains($name, 'إسلام') || str_contains($name, 'حديث')) return 'religion';
-      if (str_contains($slug, 'football') || str_contains($name, 'كرة') || str_contains($name, 'رياض')) return 'sport';
-      if (str_contains($slug, 'guess') || str_contains($name, 'خمّن') || str_contains($name, 'خمن') || str_contains($name, 'صورة') || str_contains($name, 'صوت')) return 'media';
-      if (str_contains($slug, 'disney') || str_contains($name, 'ألغاز') || str_contains($name, 'ترفيه')) return 'fun';
-      return 'general';
-  };
-
-  $typeLabel = [
-    'uae' => 'إمارات',
-    'general' => 'عامة',
-    'religion' => 'دينية',
-    'sport' => 'رياضة',
-    'fun' => 'ترفيه',
-    'media' => 'صور/صوت',
-  ];
-
-  // Only show filter pills for types that actually exist among the categories
-  $pillDefs = [
-    'uae' => '🇦🇪 إمارات',
-    'general' => '🌍 عامة',
-    'religion' => '📖 دينية',
-    'sport' => '⚽ رياضة',
-    'fun' => '🎭 ترفيه',
-    'media' => '🎬 صور وصوت',
-  ];
-  $presentFilters = collect($categories)->map($filterOf)->unique()->all();
-
   $totalQuestions = $categories->sum('questions_count');
+  $usedClassificationIds = $categories->pluck('classification_id')->filter()->unique()->all();
+  $filterClassifications = collect($classifications ?? [])
+      ->filter(fn ($c) => in_array($c->id, $usedClassificationIds, true))
+      ->values();
 @endphp
 
 <x-layouts.app title="الفئات — سوالف">
@@ -54,14 +27,14 @@
           <span>اختر <em>فئتك</em></span>
           <span class="hero-strip__title--gradient">وابدأ التحدي</span>
         </h1>
-        <p class="hero-strip__sub">فئات متنوعة • ٣ مستويات • أسئلة حصرية عن الإمارات والمعرفة العامة</p>
+        <p class="hero-strip__sub">فئات متنوعة • ٣ مستويات • أسئلة حصرية ومتنوعة</p>
       </div>
 
       <div class="hero-stats">
         <div class="stat"><b>{{ $categories->count() }}</b><span>فئة</span></div>
         <div class="stat"><b>{{ $totalQuestions }}+</b><span>سؤال</span></div>
         <div class="stat"><b>3</b><span>مستويات</span></div>
-        <div class="stat"><b>∞</b><span>متعة</span></div>
+        <div class="stat"><b>{{ $filterClassifications->count() }}</b><span>تصنيف</span></div>
       </div>
     </div>
   </section>
@@ -70,15 +43,15 @@
     <div class="container controls__inner">
       <div class="search">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="categorySearch" placeholder="ابحث عن فئة… مثلاً: كوفيهات، معالم، قرآن" />
+        <input type="text" id="categorySearch" placeholder="ابحث عن فئة… مثلاً: تاريخ، رياضة، سياحة" />
       </div>
 
       <div class="filters" id="categoryFilters">
         <button type="button" class="pill pill--all active" data-filter="all">الكل</button>
-        @foreach($pillDefs as $key => $label)
-          @if(in_array($key, $presentFilters, true))
-            <button type="button" class="pill pill--{{ $key }}" data-filter="{{ $key }}">{{ $label }}</button>
-          @endif
+        @foreach($filterClassifications as $classification)
+          <button type="button" class="pill" data-filter="c{{ $classification->id }}">
+            {{ $classification->icon ? $classification->icon.' ' : '' }}{{ $classification->name_ar }}
+          </button>
         @endforeach
       </div>
 
@@ -98,19 +71,19 @@
     <div class="grid" id="categoryGrid">
       @foreach($categories as $index => $category)
         @php
-          $filter = $filterOf($category);
           $palette = $palettes[$index % count($palettes)];
+          $filterKey = $category->classification_id ? 'c'.$category->classification_id : 'general';
         @endphp
         <a href="{{ route('categories.show', $category) }}"
            class="card"
-           data-filter="{{ $filter }}"
-           data-group="{{ $category->group }}"
+           data-filter="{{ $filterKey }}"
+           data-group="{{ $filterKey }}"
            data-name="{{ $category->name_ar }}"
            data-questions="{{ $category->questions_count }}"
            data-created="{{ $category->created_at ? $category->created_at->timestamp : 0 }}"
            data-order="{{ $category->sort_order ?? 0 }}"
            style="--c1:{{ $palette[0] }};--c2:{{ $palette[1] }}">
-          <span class="card__tag">{{ $typeLabel[$filter] ?? 'عامة' }}</span>
+          <span class="card__tag">{{ $category->classificationName() }}</span>
           <div class="card__icon">
             @if($category->imageUrl())
               <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}">

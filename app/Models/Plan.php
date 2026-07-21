@@ -10,6 +10,7 @@ class Plan extends Model
         'name',
         'icon',
         'type',
+        'stripe_checkout_url',
         'price',
         'old_price',
         'currency',

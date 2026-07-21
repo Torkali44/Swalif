@@ -4,6 +4,10 @@
 
   <x-back-button :href="route('admin.dashboard')" label="رجوع" />
 
+  <div class="toolbar toolbar--tight">
+    <a class="btn btn-primary" href="{{ route('admin.subscribers.create') }}">+ منح اشتراك جديد</a>
+  </div>
+
   <form class="toolbar toolbar--tight" method="GET" action="{{ route('admin.subscribers.index') }}">
     <input class="search-inp" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث بالاسم أو البريد…">
     <select class="select" name="plan_id">
@@ -52,6 +56,7 @@
             <td>{{ optional($subscription->starts_at)->format('Y-m-d') }}</td>
             <td>{{ optional($subscription->ends_at)->format('Y-m-d') }}</td>
             <td class="row-actions">
+              <a class="btn btn-sm btn-outline" href="{{ route('admin.subscribers.edit', $subscription) }}">إدارة</a>
               @if($isActive)
                 <form class="inline" method="POST" action="{{ route('admin.subscribers.cancel', $subscription) }}">
                   @csrf

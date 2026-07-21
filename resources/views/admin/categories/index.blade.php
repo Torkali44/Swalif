@@ -10,14 +10,17 @@
 
 <x-layouts.admin>
   <x-slot:heading>الفئات</x-slot:heading>
-  <x-slot:subheading>إدارة موضوعات اللعبة وتصنيفها</x-slot:subheading>
+  <x-slot:subheading>إدارة الفئات وصورها وربطها بالتصنيفات</x-slot:subheading>
 
   <form class="toolbar toolbar--tight" method="GET" action="{{ route('admin.categories.index') }}">
     <input class="search-inp" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث بالاسم…">
-    <select class="select" name="group">
+    <select class="select" name="classification_id">
       <option value="">كل التصنيفات</option>
-      <option value="uae" @selected(($filters['group'] ?? '') === 'uae')>إمارات</option>
-      <option value="general" @selected(($filters['group'] ?? '') === 'general')>عامة</option>
+      @foreach($classifications as $classification)
+        <option value="{{ $classification->id }}" @selected((string) ($filters['classification_id'] ?? '') === (string) $classification->id)>
+          {{ $classification->icon }} {{ $classification->name_ar }}
+        </option>
+      @endforeach
     </select>
     <select class="select" name="status">
       <option value="">كل الحالات</option>
@@ -51,7 +54,7 @@
         </div>
 
         <p class="admin-circle-meta">
-          {{ $category->group === 'uae' ? 'إمارات' : 'عامة' }}
+          {{ $category->classificationName() }}
           · {{ $category->questions_count }} سؤال
         </p>
 

@@ -15,6 +15,20 @@
     : 0;
   $currentIndex = min($answeredQuestions + 1, max($totalQuestions, 1));
   $activeTeam = ($answeredQuestions % 2 === 0) ? 'a' : 'b';
+  $questionType = $question->type ?? 'standard';
+  $orderItems = collect($question->orderItems())
+    ->map(fn ($text, $index) => ['key' => (string) $index, 'text' => $text])
+    ->shuffle()
+    ->values();
+  $matchPairs = collect($question->matchPairs());
+  $matchLeftItems = $matchPairs
+    ->map(fn ($pair, $index) => ['key' => (string) $index, 'text' => $pair['left']])
+    ->shuffle()
+    ->values();
+  $matchRightItems = $matchPairs
+    ->map(fn ($pair, $index) => ['key' => (string) $index, 'text' => $pair['right']])
+    ->shuffle()
+    ->values();
 @endphp
 
 <x-layouts.game :show-nav="true">
@@ -121,7 +135,60 @@
       </div>
     @endif
 
-    @if($question->hasChoices())
+    @if($questionType === 'order' && $orderItems->isNotEmpty())
+      <section class="interactive-answer interactive-answer--order" data-order-game>
+        <div class="interactive-answer__head">
+          <b>رتّب الجمل بالترتيب الصحيح</b>
+          <span>اسحب العنصر أو استخدم الأسهم</span>
+        </div>
+        <div class="order-list" data-order-list>
+          @foreach($orderItems as $item)
+            <div class="order-item" draggable="true" data-order-key="{{ $item['key'] }}">
+              <span class="order-item__handle">↕</span>
+              <span class="order-item__text">{{ $item['text'] }}</span>
+              <span class="order-item__tools">
+                <button type="button" data-order-up title="رفع">↑</button>
+                <button type="button" data-order-down title="نزول">↓</button>
+              </span>
+            </div>
+          @endforeach
+        </div>
+        <div class="interactive-answer__actions">
+          <button class="btn btn--fire" type="button" data-check-order>تحقق من الترتيب</button>
+          <span class="interactive-answer__result" data-order-result></span>
+        </div>
+      </section>
+    @elseif($questionType === 'match' && $matchPairs->isNotEmpty())
+      <section class="interactive-answer interactive-answer--match" data-match-game>
+        <div class="interactive-answer__head">
+          <b>وصّل كل عنصر بما يناسبه</b>
+          <span>اختر من العمود الأول ثم اختر المقابل من العمود الثاني</span>
+        </div>
+        <div class="match-board">
+          <div class="match-column">
+            @foreach($matchLeftItems as $item)
+              <button class="match-choice" type="button" data-match-left data-match-key="{{ $item['key'] }}">
+                <span class="match-choice__mark"></span>
+                <span>{{ $item['text'] }}</span>
+              </button>
+            @endforeach
+          </div>
+          <div class="match-column">
+            @foreach($matchRightItems as $item)
+              <button class="match-choice" type="button" data-match-right data-match-key="{{ $item['key'] }}">
+                <span class="match-choice__mark"></span>
+                <span>{{ $item['text'] }}</span>
+              </button>
+            @endforeach
+          </div>
+        </div>
+        <div class="interactive-answer__actions">
+          <button class="btn btn--fire" type="button" data-check-match>تحقق من التوصيل</button>
+          <button class="btn btn--ghost" type="button" data-reset-match>إعادة التوصيل</button>
+          <span class="interactive-answer__result" data-match-result></span>
+        </div>
+      </section>
+    @elseif($question->hasChoices())
       <div class="answers">
         @foreach($question->options as $i => $option)
           @continue(!filled($option->option_text))

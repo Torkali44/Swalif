@@ -21,7 +21,7 @@
         @endif
       </div>
       <div class="cat-circle__label">
-        <span class="cat-circle__num">{{ $category->group === 'uae' ? '🇦🇪' : '#' }}</span>
+        <span class="cat-circle__num">{{ $category->classificationName() }}</span>
         <span class="cat-circle__name">{{ $category->name_ar }}</span>
       </div>
     </div>

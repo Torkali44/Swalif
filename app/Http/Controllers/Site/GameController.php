@@ -192,11 +192,13 @@ class GameController extends Controller
         $game->load(['teams', 'gameQuestions', 'category']);
         $winner = $this->winners->determine($game);
 
-        $game->update([
-            'status' => GameStatus::Finished,
-            'winner_team_id' => $winner?->id,
-            'ended_at' => now(),
-        ]);
+        if ($game->status !== GameStatus::Finished) {
+            $game->update([
+                'status' => GameStatus::Finished,
+                'winner_team_id' => $winner?->id,
+                'ended_at' => now(),
+            ]);
+        }
 
         $answered = $game->gameQuestions->whereNotNull('answered_at');
         $correctCount = $answered->where('answered_correctly', true)->count();

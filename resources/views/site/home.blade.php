@@ -199,6 +199,31 @@
         ];
       @endphp
 
+      @php
+        if ($plans->isNotEmpty()) {
+          $hpPlans = $plans->map(function ($plan) {
+            $period = match ((int) $plan->duration_days) {
+              1 => 'يوم',
+              7 => 'أسبوع',
+              30 => 'شهر',
+              365 => 'سنة',
+              default => $plan->duration_days.' يوم',
+            };
+
+            return [
+              'name' => $plan->name,
+              'icon' => $plan->icon ?: '💎',
+              'old' => $plan->old_price,
+              'new' => $plan->price,
+              'period' => $period,
+              'currency' => $plan->currency === 'AED' ? 'درهم' : $plan->currency,
+              'featured' => $plan->is_recommended,
+              'features' => $plan->features,
+            ];
+          })->values()->all();
+        }
+      @endphp
+
       <div class="hp-plans hp-plans--4">
         @foreach($hpPlans as $hp)
           <article class="hp-plan {{ $hp['featured'] ? 'is-featured' : '' }}">
@@ -209,14 +234,22 @@
             <h3>{{ $hp['name'] }}</h3>
             <div class="hp-plan__price">
               <b>{{ $hp['new'] }}</b>
-              <s class="hp-plan__old">{{ $hp['old'] }}</s>
-              <span>درهم / {{ $hp['period'] }}</span>
+              @if(!empty($hp['old']) && (float) $hp['old'] > (float) $hp['new'])
+                <s class="hp-plan__old">{{ $hp['old'] }}</s>
+              @endif
+              <span>{{ $hp['currency'] ?? 'درهم' }} / {{ $hp['period'] }}</span>
             </div>
             <ul>
+              @if(!empty($hp['features']))
+                @foreach($hp['features'] as $feature)
+                  <li>{{ $feature }}</li>
+                @endforeach
+              @else
               <li>فتح جميع الفئات</li>
               <li>لعب غير محدود</li>
               <li>جميع المستويات</li>
               <li>تحديثات مستمرة</li>
+              @endif
             </ul>
             <a href="{{ route('subscription.index') }}"
                class="btn {{ $hp['featured'] ? 'btn--primary' : 'btn--soft' }} btn--block">

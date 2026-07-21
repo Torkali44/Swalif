@@ -11,6 +11,7 @@ class CategoryService
     {
         return Category::query()
             ->where('is_active', true)
+            ->with('classification')
             ->withCount(['questions' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -19,6 +20,6 @@ class CategoryService
 
     public function activeGrouped(): Collection
     {
-        return $this->activeOrdered()->groupBy('group');
+        return $this->activeOrdered()->groupBy(fn (Category $category) => $category->classificationName());
     }
 }

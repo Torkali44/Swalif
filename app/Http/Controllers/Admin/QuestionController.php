@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\QuestionType;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Models\Category;
+use App\Models\Classification;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,16 +24,21 @@ class QuestionController extends Controller
             $categoriesQuery->whereKey($request->integer('category_id'));
         }
 
-        if ($request->filled('group')) {
-            $categoriesQuery->where('group', $request->string('group'));
+        if ($request->filled('classification_id')) {
+            $categoriesQuery->where('classification_id', $request->integer('classification_id'));
         }
 
         $categories = $categoriesQuery
+            ->with('classification')
             ->with(['questions' => function ($query) use ($request) {
                 $query->orderBy('level')->orderBy('points')->orderBy('id');
 
                 if ($request->filled('level')) {
                     $query->where('level', $request->string('level'));
+                }
+
+                if ($request->filled('type')) {
+                    $query->where('type', $request->string('type'));
                 }
 
                 if ($request->filled('points')) {
@@ -50,14 +57,16 @@ class QuestionController extends Controller
             ->withCount('questions')
             ->get();
 
-        if ($request->filled('q') || $request->filled('level') || $request->filled('points') || $request->filled('status')) {
+        if ($request->filled('q') || $request->filled('level') || $request->filled('type') || $request->filled('points') || $request->filled('status')) {
             $categories = $categories->filter(fn (Category $category) => $category->questions->isNotEmpty())->values();
         }
 
         return view('admin.questions.index', [
             'groupedCategories' => $categories,
-            'categories' => Category::orderBy('sort_order')->get(['id', 'name_ar', 'icon', 'group']),
-            'filters' => $request->only(['category_id', 'group', 'level', 'points', 'status', 'q']),
+            'categories' => Category::orderBy('sort_order')->get(['id', 'name_ar', 'icon', 'group', 'classification_id']),
+            'classifications' => Classification::orderBy('sort_order')->get(['id', 'name_ar', 'icon']),
+            'questionTypes' => QuestionType::options(),
+            'filters' => $request->only(['category_id', 'classification_id', 'level', 'type', 'points', 'status', 'q']),
         ]);
     }
 
@@ -65,7 +74,8 @@ class QuestionController extends Controller
     {
         return view('admin.questions.form', [
             'question' => new Question,
-            'categories' => Category::where('is_active', true)->orderBy('sort_order')->get(),
+            'categories' => Category::with('classification')->where('is_active', true)->orderBy('sort_order')->get(),
+            'questionTypes' => QuestionType::options(),
         ]);
     }
 
@@ -82,7 +92,8 @@ class QuestionController extends Controller
 
         return view('admin.questions.form', [
             'question' => $question,
-            'categories' => Category::where('is_active', true)->orderBy('sort_order')->get(),
+            'categories' => Category::with('classification')->where('is_active', true)->orderBy('sort_order')->get(),
+            'questionTypes' => QuestionType::options(),
         ]);
     }
 
@@ -116,8 +127,10 @@ class QuestionController extends Controller
         DB::transaction(function () use ($request, $question, $data) {
             $payload = [
                 'category_id' => $data['category_id'],
+                'type' => $data['type'],
                 'question_text' => $data['question_text'],
                 'answer_text' => $data['answer_text'] ?? null,
+                'meta' => $this->buildMeta($data),
                 'level' => $data['level'],
                 'points' => $data['points'],
                 'time_limit' => $data['time_limit'] ?? 60,
@@ -148,18 +161,46 @@ class QuestionController extends Controller
 
             $question->options()->delete();
 
-            $options = collect($data['options'] ?? [])
-                ->map(fn ($text) => trim((string) $text))
-                ->filter()
-                ->values();
+            if ($data['type'] === 'standard') {
+                $options = collect($data['options'] ?? [])
+                    ->map(fn ($text) => trim((string) $text))
+                    ->filter()
+                    ->values();
 
-            foreach ($options as $index => $optionText) {
-                $question->options()->create([
-                    'option_text' => $optionText,
-                    'is_correct' => (int) $index === (int) ($data['correct_option'] ?? -1),
-                ]);
+                foreach ($options as $index => $optionText) {
+                    $question->options()->create([
+                        'option_text' => $optionText,
+                        'is_correct' => (int) $index === (int) ($data['correct_option'] ?? -1),
+                    ]);
+                }
             }
         });
+    }
+
+    private function buildMeta(array $data): ?array
+    {
+        return match ($data['type']) {
+            'order' => [
+                'order_items' => collect($data['order_items'] ?? [])
+                    ->map(fn ($item) => trim((string) $item))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ],
+            'match' => [
+                'match_pairs' => collect($data['match_pairs'] ?? [])
+                    ->map(function ($pair) {
+                        return [
+                            'left' => trim((string) data_get($pair, 'left', '')),
+                            'right' => trim((string) data_get($pair, 'right', '')),
+                        ];
+                    })
+                    ->filter(fn ($pair) => filled($pair['left']) && filled($pair['right']))
+                    ->values()
+                    ->all(),
+            ],
+            default => null,
+        };
     }
 
     private function deleteImage(?string $path): void

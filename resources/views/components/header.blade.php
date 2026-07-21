@@ -4,7 +4,7 @@
 <header class="nav">
   <div class="nav__inner">
     <a href="{{ route('home') }}" class="nav__logo">
-      <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="logo-img">
+      <img src="{{ asset('images/logo.png') }}" alt="سوالف" class="logo-img">
       <span class="logo-text">سوالف</span>
     </a>
 

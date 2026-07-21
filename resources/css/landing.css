@@ -120,6 +120,25 @@
 .hp-head p { color: var(--hp-muted); font-size: 16px; margin-top: 6px; }
 .hp-head__link { color: var(--hp-orange); font-weight: 800; text-decoration: none; white-space: nowrap; }
 .hp-head__link:hover { text-decoration: underline; }
+.home .hp-head--center {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.home .hp-head--center > div {
+  width: min(100%, 760px);
+}
+.home .hp-head--center h2 {
+  font-size: clamp(32px, 3rem, 48px);
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.home .hp-head--center p {
+  margin-inline: auto;
+  font-size: clamp(16px, 1.125rem, 18px);
+  line-height: 1.8;
+}
 
 /* ============ CATEGORY CARDS ============ */
 .hp-cats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
@@ -215,6 +234,20 @@
   content: "✓"; position: absolute; inset-inline-end: 0; top: 1px;
   width: 20px; height: 20px; border-radius: 50%; background: #DCFBEF; color: #0E9F6E;
   display: grid; place-items: center; font-size: 12px; font-weight: 900;
+}
+.home .hp-plan ul li {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  line-height: 1.6;
+  text-align: right;
+}
+.home .hp-plan ul li::before {
+  position: static;
+  inset: auto;
+  flex: 0 0 20px;
 }
 
 /* ============ FAQ ============ */
@@ -312,3 +345,102 @@
 
 /* Hide legacy mobile toggle by default (shown via media query) */
 .nav__toggle { display: none; }
+
+/* ============ SUBSCRIBE PAGE ============ */
+.subscribe-page .subscribe-hero { padding-bottom: 30px; }
+.subscribe-page .subscribe-hero__text { max-width: 720px; margin: 18px auto 0; text-align: center; }
+.subscribe-page .chip--soft {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 999px;
+  background: #FFF3EC; color: var(--hp-orange); font-weight: 800; font-size: 14px;
+  margin-bottom: 16px;
+}
+.subscribe-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.hp-plan__old {
+  display: block;
+  color: #9CA3AF;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+@media (max-width: 900px) {
+  .subscribe-grid { grid-template-columns: 1fr; max-width: 420px; }
+}
+
+/* ============ DARK MODE (landing + shared chrome) ============ */
+body.dark {
+  --hp-ink: #F5F7FF;
+  --hp-muted: #A8B0C4;
+  --hp-line: rgba(255,255,255,.12);
+  --hp-soft: #12172A;
+  --hp-card-shadow: 0 18px 45px -20px rgba(0,0,0,.55);
+}
+body.dark .nav {
+  background: rgba(11, 16, 32, .92) !important;
+  border-bottom-color: rgba(255,255,255,.1) !important;
+}
+body.dark .nav .logo-text,
+body.dark .nav__links a { color: #E8ECF8; }
+body.dark .nav__links a:hover,
+body.dark .nav__links a.is-active {
+  color: #FF8A3D;
+  background: rgba(255,107,44,.12);
+}
+body.dark .nav-icon-btn {
+  background: #151B32;
+  border-color: rgba(255,255,255,.12);
+  color: #E8ECF8;
+}
+body.dark .btn--soft { background: rgba(255,255,255,.08); color: #F5F7FF; }
+body.dark .btn--soft:hover { background: rgba(255,255,255,.14); }
+body.dark .btn--ghost { background: rgba(255,255,255,.06); color: #F5F7FF; }
+body.dark .home { background: #0B1020; }
+body.dark .hp-hero {
+  background: linear-gradient(180deg, #12172A 0%, #0B1020 70%, #0B1020 100%);
+}
+body.dark .hp-hero__title { color: #F5F7FF; }
+body.dark .hp-hero__sub,
+body.dark .hp-hero__live { color: #A8B0C4; }
+body.dark .hp-stats__grid,
+body.dark .hp-cat,
+body.dark .hp-panel,
+body.dark .hp-plan,
+body.dark .hp-faq__item {
+  background: #151B32;
+  border-color: rgba(255,255,255,.12);
+}
+body.dark .hp-stat b,
+body.dark .hp-head h2,
+body.dark .hp-cat h3,
+body.dark .hp-panel__head h3,
+body.dark .hp-lead__name,
+body.dark .hp-live__name,
+body.dark .hp-plan h3,
+body.dark .hp-faq__art h2,
+body.dark .hp-faq__item summary { color: #F5F7FF; }
+body.dark .hp-stat span,
+body.dark .hp-head p,
+body.dark .hp-cat p,
+body.dark .hp-challenge p,
+body.dark .hp-faq__art p,
+body.dark .hp-faq__item p,
+body.dark .hp-plan__price span { color: #A8B0C4; }
+body.dark .hp-section--soft { background: #10162A; }
+body.dark .hp-cat__btn { background: rgba(255,255,255,.08); color: #F5F7FF; }
+body.dark .hp-countdown > div { background: #1A2140; border-color: rgba(255,255,255,.12); }
+body.dark .hp-countdown b { color: #F5F7FF; }
+body.dark .hp-panel--challenge {
+  background: linear-gradient(160deg, #1A2140, #151B32);
+  border-color: rgba(255,107,44,.35);
+}
+body.dark .subscribe-page .chip--soft {
+  background: rgba(255,107,44,.15);
+  color: #FFB07A;
+}
+body.dark .foot { background: #070A14; }

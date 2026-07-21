@@ -113,10 +113,9 @@ const normalizeAr = (value) => (value || '')
       const filter = card.dataset.filter;
       const group = card.dataset.group;
       const name = normalizeAr(card.dataset.name);
-      let match = activeFilter === 'all';
-      if (activeFilter === 'uae') match = group === 'uae' || filter === 'uae';
-      else if (activeFilter === 'general') match = filter === 'general' || group === 'general';
-      else match = filter === activeFilter || filter === activeFilter.replace(/s$/, '');
+      let match = activeFilter === 'all'
+        || filter === activeFilter
+        || group === activeFilter;
       if (term && !name.includes(term)) match = false;
       card.classList.toggle('is-hidden', !match);
       if (match) {
@@ -381,6 +380,174 @@ document.addEventListener('DOMContentLoaded', () => {
         a.classList.remove('selected');
       });
       answer.classList.add('selected');
+    });
+  });
+
+  /* Interactive order questions */
+  document.querySelectorAll('[data-order-game]').forEach((game) => {
+    const list = game.querySelector('[data-order-list]');
+    const result = game.querySelector('[data-order-result]');
+    if (!list) return;
+
+    const clearState = () => {
+      list.querySelectorAll('[data-order-key]').forEach((item) => {
+        item.classList.remove('is-correct', 'is-wrong');
+      });
+      result?.classList.remove('is-correct', 'is-wrong');
+      if (result) result.textContent = '';
+    };
+
+    const moveItem = (item, direction) => {
+      clearState();
+      if (direction < 0 && item.previousElementSibling) {
+        list.insertBefore(item, item.previousElementSibling);
+      }
+      if (direction > 0 && item.nextElementSibling) {
+        list.insertBefore(item.nextElementSibling, item);
+      }
+    };
+
+    let dragged = null;
+    list.querySelectorAll('[data-order-key]').forEach((item) => {
+      item.addEventListener('dragstart', () => {
+        dragged = item;
+        item.classList.add('is-dragging');
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('is-dragging');
+        dragged = null;
+      });
+      item.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!dragged || dragged === item) return;
+        clearState();
+        const rect = item.getBoundingClientRect();
+        const before = event.clientY < rect.top + rect.height / 2;
+        list.insertBefore(dragged, before ? item : item.nextSibling);
+      });
+      item.querySelector('[data-order-up]')?.addEventListener('click', () => moveItem(item, -1));
+      item.querySelector('[data-order-down]')?.addEventListener('click', () => moveItem(item, 1));
+    });
+
+    game.querySelector('[data-check-order]')?.addEventListener('click', () => {
+      let correct = 0;
+      const items = [...list.querySelectorAll('[data-order-key]')];
+      items.forEach((item, index) => {
+        const isCorrect = item.dataset.orderKey === String(index);
+        item.classList.toggle('is-correct', isCorrect);
+        item.classList.toggle('is-wrong', !isCorrect);
+        if (isCorrect) correct += 1;
+      });
+
+      if (!result) return;
+      const allCorrect = correct === items.length;
+      result.textContent = allCorrect
+        ? 'الترتيب صحيح بالكامل'
+        : `في ${items.length - correct} عنصر محتاج يتراجع`;
+      result.classList.toggle('is-correct', allCorrect);
+      result.classList.toggle('is-wrong', !allCorrect);
+    });
+  });
+
+  /* Interactive matching questions */
+  document.querySelectorAll('[data-match-game]').forEach((game) => {
+    const leftItems = [...game.querySelectorAll('[data-match-left]')];
+    const rightItems = [...game.querySelectorAll('[data-match-right]')];
+    const result = game.querySelector('[data-match-result]');
+    const pairs = new Map();
+    let selectedLeft = null;
+
+    const resetResult = () => {
+      result?.classList.remove('is-correct', 'is-wrong');
+      if (result) result.textContent = '';
+      [...leftItems, ...rightItems].forEach((item) => {
+        item.classList.remove('is-correct', 'is-wrong');
+      });
+    };
+
+    const refreshMarks = () => {
+      leftItems.forEach((left) => {
+        const pairNumber = [...pairs.keys()].indexOf(left) + 1;
+        left.classList.toggle('is-paired', pairs.has(left));
+        left.querySelector('.match-choice__mark').textContent = pairNumber > 0 ? pairNumber : '';
+      });
+
+      rightItems.forEach((right) => {
+        const pairNumber = [...pairs.values()].indexOf(right) + 1;
+        right.classList.toggle('is-paired', pairNumber > 0);
+        right.querySelector('.match-choice__mark').textContent = pairNumber > 0 ? pairNumber : '';
+      });
+    };
+
+    const clearPairs = () => {
+      pairs.clear();
+      selectedLeft = null;
+      [...leftItems, ...rightItems].forEach((item) => {
+        item.classList.remove('is-selected', 'is-paired', 'is-correct', 'is-wrong');
+        item.querySelector('.match-choice__mark').textContent = '';
+      });
+      resetResult();
+    };
+
+    leftItems.forEach((left) => {
+      left.addEventListener('click', () => {
+        resetResult();
+        selectedLeft = left;
+        leftItems.forEach((item) => item.classList.toggle('is-selected', item === left));
+      });
+    });
+
+    rightItems.forEach((right) => {
+      right.addEventListener('click', () => {
+        if (!selectedLeft) {
+          if (result) {
+            result.textContent = 'اختار عنصر من العمود الأول';
+            result.classList.add('is-wrong');
+          }
+          return;
+        }
+
+        resetResult();
+        for (const [left, pairedRight] of pairs.entries()) {
+          if (pairedRight === right || left === selectedLeft) {
+            pairs.delete(left);
+          }
+        }
+        pairs.set(selectedLeft, right);
+        selectedLeft.classList.remove('is-selected');
+        selectedLeft = null;
+        refreshMarks();
+      });
+    });
+
+    game.querySelector('[data-reset-match]')?.addEventListener('click', clearPairs);
+
+    game.querySelector('[data-check-match]')?.addEventListener('click', () => {
+      if (pairs.size < leftItems.length) {
+        if (result) {
+          result.textContent = `كمل التوصيل: باقي ${leftItems.length - pairs.size}`;
+          result.classList.add('is-wrong');
+        }
+        return;
+      }
+
+      let correct = 0;
+      for (const [left, right] of pairs.entries()) {
+        const isCorrect = left.dataset.matchKey === right.dataset.matchKey;
+        left.classList.toggle('is-correct', isCorrect);
+        right.classList.toggle('is-correct', isCorrect);
+        left.classList.toggle('is-wrong', !isCorrect);
+        right.classList.toggle('is-wrong', !isCorrect);
+        if (isCorrect) correct += 1;
+      }
+
+      if (!result) return;
+      const allCorrect = correct === leftItems.length;
+      result.textContent = allCorrect
+        ? 'كل التوصيلات صحيحة'
+        : `في ${leftItems.length - correct} توصيلة غلط`;
+      result.classList.toggle('is-correct', allCorrect);
+      result.classList.toggle('is-wrong', !allCorrect);
     });
   });
 

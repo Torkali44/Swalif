@@ -2,6 +2,10 @@
   <x-slot:heading>الباقات والاشتراكات</x-slot:heading>
   <x-slot:subheading>إدارة باقات الاشتراك وسعرها ومدة صلاحيتها</x-slot:subheading>
 
+  <div class="toolbar toolbar--tight">
+    <a class="btn btn-primary" href="{{ route('admin.plans.create') }}">+ إضافة باقة</a>
+  </div>
+
   <div class="plans-admin-grid">
     @forelse($plans as $plan)
       <article class="plan-admin-card">

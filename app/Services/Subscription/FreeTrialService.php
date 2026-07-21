@@ -11,6 +11,7 @@ class FreeTrialService
     {
         return GameQuestion::query()
             ->whereHas('game', fn ($q) => $q->where('user_id', $user->id))
+            ->whereNotNull('answered_at')
             ->count();
     }
 

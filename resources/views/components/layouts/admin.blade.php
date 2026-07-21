@@ -28,7 +28,7 @@
 <div class="admin-shell">
   <aside class="admin-sidebar">
     <a class="brand" href="{{ route('admin.dashboard') }}">
-      <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="brand-logo">
+      <img src="{{ asset('images/logo.png') }}" alt="سوالف" class="brand-logo">
       <div>
         <div class="brand-title">سوالف</div>
         <div class="brand-sub">لوحة التحكم</div>
@@ -39,11 +39,14 @@
       <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
         <span class="ico">📊</span> نظرة عامة
       </a>
+      <a href="{{ route('admin.classifications.index') }}" class="nav-link {{ request()->routeIs('admin.classifications.*') ? 'active' : '' }}">
+        <span class="ico">🏷️</span> التصنيفات
+      </a>
       <a href="{{ route('admin.categories.index') }}" class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
         <span class="ico">🗂️</span> الفئات
       </a>
       <a href="{{ route('admin.questions.index') }}" class="nav-link {{ request()->routeIs('admin.questions.*') ? 'active' : '' }}">
-        <span class="ico">❓</span> الأسئلة
+        <span class="ico">❓</span> أنواع الأسئلة
       </a>
       <a href="{{ route('admin.plans.index') }}" class="nav-link {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}">
         <span class="ico">💎</span> الاشتراكات

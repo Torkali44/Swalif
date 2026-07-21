@@ -29,7 +29,7 @@
 <a href="{{ route('categories.show', $category) }}"
    {{ $attributes->class(['cat-circle'])->merge([
        'data-cat' => $filter,
-       'data-group' => $group ?? $category->group,
+       'data-group' => $group ?? $category->classificationName(),
        'style' => '--c1:'.$palette[0].';--c2:'.$palette[1],
    ]) }}>
   <div class="cat-circle__ring">

@@ -18,7 +18,6 @@
       <h4>روابط سريعة</h4>
       <a href="{{ route('home') }}">الرئيسية</a>
       <a href="{{ route('categories.index') }}">الألعاب</a>
-      <!-- <a href="{{ route('categories.index') }}">الألعاب</a> -->
       <a href="{{ route('home') }}#leaderboard">الترتيب</a>
       <a href="{{ route('home') }}#plans">الاشتراكات</a>
     </div>

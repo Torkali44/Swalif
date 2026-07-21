@@ -3,11 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\Classification;
 use App\Models\Plan;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -18,12 +20,12 @@ class DatabaseSeeder extends Seeder
     {
         User::updateOrCreate(
             ['email' => 'admin@swalif.test'],
-            ['name' => 'مدير سوالف', 'password' => 'password', 'is_admin' => true]
+            ['name' => 'مدير سوالف', 'password' => Hash::make('password'), 'is_admin' => true]
         );
 
         User::updateOrCreate(
             ['email' => 'player@swalif.test'],
-            ['name' => 'لاعب تجريبي', 'password' => 'password', 'is_admin' => false]
+            ['name' => 'لاعب تجريبي', 'password' => Hash::make('password'), 'is_admin' => false]
         );
 
         $categories = [
@@ -39,14 +41,58 @@ class DatabaseSeeder extends Seeder
             ['ألغاز', 'Riddles', '🧩', 'general'],
         ];
 
+        $uaeClassification = Classification::firstOrCreate(
+            ['name_en' => 'UAE'],
+            [
+                'name_ar' => 'إمارات',
+                'slug' => 'uae-'.Str::random(4),
+                'icon' => '🇦🇪',
+                'description' => 'تصنيف خاص بالمحتوى الإماراتي.',
+                'is_active' => true,
+                'sort_order' => 1,
+            ]
+        );
+        $uaeClassification->fill([
+            'name_ar' => 'إمارات',
+            'icon' => '🇦🇪',
+            'is_active' => true,
+            'sort_order' => 1,
+        ])->save();
+
+        $generalClassification = Classification::firstOrCreate(
+            ['name_en' => 'General'],
+            [
+                'name_ar' => 'عامة',
+                'slug' => 'general-'.Str::random(4),
+                'icon' => '🌍',
+                'description' => 'تصنيف للمحتوى العام والمتنوع.',
+                'is_active' => true,
+                'sort_order' => 2,
+            ]
+        );
+        $generalClassification->fill([
+            'name_ar' => 'عامة',
+            'icon' => '🌍',
+            'is_active' => true,
+            'sort_order' => 2,
+        ])->save();
+
+        $classificationMap = [
+            'uae' => $uaeClassification,
+            'general' => $generalClassification,
+        ];
+
         foreach ($categories as $index => $item) {
+            $classification = $classificationMap[$item[3]];
+
             Category::updateOrCreate(
                 ['slug' => Str::slug($item[1])],
                 [
                     'name_ar' => $item[0],
                     'name_en' => $item[1],
                     'icon' => $item[2],
-                    'group' => $item[3],
+                    'group' => $classification->name_ar,
+                    'classification_id' => $classification->id,
                     'description' => 'أسئلة ممتعة تناسب العائلة والأصدقاء.',
                     'is_active' => true,
                     'sort_order' => $index + 1,

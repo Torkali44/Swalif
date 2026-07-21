@@ -12,10 +12,19 @@
         </option>
       @endforeach
     </select>
-    <select class="select" name="group">
+    <select class="select" name="classification_id">
       <option value="">كل التصنيفات</option>
-      <option value="uae" @selected(($filters['group'] ?? '') === 'uae')>إمارات</option>
-      <option value="general" @selected(($filters['group'] ?? '') === 'general')>عامة</option>
+      @foreach($classifications as $classification)
+        <option value="{{ $classification->id }}" @selected((string) ($filters['classification_id'] ?? '') === (string) $classification->id)>
+          {{ $classification->icon }} {{ $classification->name_ar }}
+        </option>
+      @endforeach
+    </select>
+    <select class="select" name="type">
+      <option value="">كل الأنواع</option>
+      @foreach($questionTypes as $questionType)
+        <option value="{{ $questionType['value'] }}" @selected(($filters['type'] ?? '') === $questionType['value'])>{{ $questionType['label'] }}</option>
+      @endforeach
     </select>
     <select class="select" name="level">
       <option value="">كل المستويات</option>
@@ -36,13 +45,14 @@
 
   <div class="q-groups">
     @forelse($groupedCategories as $category)
+      @continue($category->questions->isEmpty())
       <details class="q-group" @if(($filters['category_id'] ?? null) || $loop->first) open @endif>
         <summary class="q-group__head">
           <div class="q-group__title">
             <span class="q-group__icon">{{ $category->icon ?: '🎯' }}</span>
             <div>
               <b>{{ $category->name_ar }}</b>
-              <small>{{ $category->group === 'uae' ? 'إمارات' : 'عامة' }} · {{ $category->questions->count() }} سؤال معروض · {{ $category->questions_count }} إجمالي</small>
+              <small>{{ $category->classificationName() }} · {{ $category->questions->count() }} سؤال معروض · {{ $category->questions_count }} إجمالي</small>
             </div>
           </div>
           <div class="q-group__actions">
@@ -60,6 +70,7 @@
                 <thead>
                   <tr>
                     <th>السؤال</th>
+                    <th>النوع</th>
                     <th>المستوى</th>
                     <th>النقاط</th>
                     <th>الحالة</th>
@@ -70,6 +81,18 @@
                   @foreach($category->questions as $question)
                     <tr>
                       <td class="q-text">{{ $question->question_text }}</td>
+                      <td>
+                        <span class="status-pill admin">
+                          {{ match($question->type ?? 'standard') {
+                            'image_guess' => 'خمن الصورة',
+                            'puzzle' => 'لغز',
+                            'match' => 'توصيل',
+                            'complete' => 'أكمل الناقص',
+                            'order' => 'ترتيب',
+                            default => 'عادي',
+                          } }}
+                        </span>
+                      </td>
                       <td>
                         <span class="badge-level lvl-{{ $question->points }}">{{ $question->level->label() }}</span>
                       </td>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
+use App\Models\Classification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -13,10 +14,10 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Category::query()->withCount('questions')->orderBy('sort_order');
+        $query = Category::query()->with('classification')->withCount('questions')->orderBy('sort_order');
 
-        if ($request->filled('group')) {
-            $query->where('group', $request->string('group'));
+        if ($request->filled('classification_id')) {
+            $query->where('classification_id', $request->integer('classification_id'));
         }
 
         if ($request->filled('status')) {
@@ -33,18 +34,23 @@ class CategoryController extends Controller
 
         return view('admin.categories.index', [
             'categories' => $query->get(),
-            'filters' => $request->only(['group', 'status', 'q']),
+            'classifications' => Classification::orderBy('sort_order')->get(['id', 'name_ar', 'icon']),
+            'filters' => $request->only(['classification_id', 'status', 'q']),
         ]);
     }
 
     public function create()
     {
-        return view('admin.categories.form', ['category' => new Category]);
+        return view('admin.categories.form', [
+            'category' => new Category,
+            'classifications' => Classification::where('is_active', true)->orderBy('sort_order')->get(),
+        ]);
     }
 
     public function store(StoreCategoryRequest $request)
     {
         $data = $request->safe()->except(['image', 'remove_image']);
+        $data['group'] = Classification::findOrFail($data['classification_id'])->name_ar;
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
@@ -61,12 +67,16 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        return view('admin.categories.form', compact('category'));
+        return view('admin.categories.form', [
+            'category' => $category,
+            'classifications' => Classification::orderBy('sort_order')->get(),
+        ]);
     }
 
     public function update(StoreCategoryRequest $request, Category $category)
     {
         $data = $request->safe()->except(['image', 'remove_image']);
+        $data['group'] = Classification::findOrFail($data['classification_id'])->name_ar;
 
         if ($request->boolean('remove_image') && $category->image) {
             $this->deleteImage($category->image);

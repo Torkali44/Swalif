@@ -61,6 +61,7 @@
 
   <section class="assign-panel">
     <h3>الإجابة الصحيحة</h3>
+    <p style="color:#C8CFE7;font-weight:700;margin-bottom:16px">نوع السؤال: {{ $question->typeLabel() }}</p>
 
     @if($question->answerImageUrl())
       <div class="question-card__media" style="margin:0 auto 20px;position:relative">
@@ -72,7 +73,23 @@
       </div>
     @endif
 
-    @if($question->correctAnswerText())
+    @if($question->type === 'order' && $question->orderItems())
+      <ol class="correct-answer correct-answer--list">
+        @foreach($question->orderItems() as $item)
+          <li>{{ $item }}</li>
+        @endforeach
+      </ol>
+    @elseif($question->type === 'match' && $question->matchPairs())
+      <div class="correct-answer correct-answer--pairs">
+        @foreach($question->matchPairs() as $pair)
+          <div class="correct-answer__pair">
+            <b>{{ $pair['left'] }}</b>
+            <span>↔</span>
+            <b>{{ $pair['right'] }}</b>
+          </div>
+        @endforeach
+      </div>
+    @elseif($question->correctAnswerText())
       <div class="correct-answer">{{ $question->correctAnswerText() }}</div>
     @endif
 
