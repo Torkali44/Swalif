@@ -25,15 +25,19 @@
     document.body.classList.add('dark');
   }
 </script>
+<div class="admin-overlay" id="adminOverlay" hidden></div>
 <div class="admin-shell">
-  <aside class="admin-sidebar">
-    <a class="brand" href="{{ route('admin.dashboard') }}">
-      <img src="{{ asset('images/logo.png') }}" alt="سوالف" class="brand-logo">
-      <div>
-        <div class="brand-title">سوالف</div>
-        <div class="brand-sub">لوحة التحكم</div>
-      </div>
-    </a>
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-head">
+      <a class="brand" href="{{ route('admin.dashboard') }}">
+        <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="brand-logo">
+        <div>
+          <div class="brand-title">سوالف</div>
+          <div class="brand-sub">لوحة التحكم</div>
+        </div>
+      </a>
+      <button type="button" class="admin-sidebar__close" id="adminSidebarClose" aria-label="إغلاق القائمة">×</button>
+    </div>
 
     <nav class="admin-nav">
       <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -76,7 +80,8 @@
 
   <main class="admin-main">
     <header class="admin-topbar">
-      <div>
+      <button type="button" class="admin-menu-btn" id="adminMenuBtn" aria-label="فتح القائمة" aria-controls="adminSidebar">☰</button>
+      <div class="admin-topbar__title">
         <h1 class="page-title">{{ $heading ?? 'لوحة التحكم' }}</h1>
         <p class="page-sub">{{ $subheading ?? 'إدارة محتوى سوالف' }}</p>
       </div>

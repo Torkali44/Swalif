@@ -149,7 +149,12 @@ class QuestionController extends Controller
 
             if ($request->hasFile('image')) {
                 $this->deleteImage($question->image);
-                $payload['image'] = $request->file('image')->store('questions', 'public');
+                $folder = match ($data['type']) {
+                    'video' => 'questions/videos',
+                    'audio' => 'questions/audio',
+                    default => 'questions',
+                };
+                $payload['image'] = $request->file('image')->store($folder, 'public');
             }
 
             if ($request->hasFile('answer_image')) {

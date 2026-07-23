@@ -112,10 +112,17 @@ class GameController extends Controller
         abort_unless($question->category_id === $game->category_id, 404);
         abort_unless($question->is_active, 404);
 
-        $gq = GameQuestion::firstOrCreate([
-            'game_id' => $game->id,
-            'question_id' => $question->id,
-        ]);
+        try {
+            $gq = GameQuestion::firstOrCreate([
+                'game_id' => $game->id,
+                'question_id' => $question->id,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            $gq = GameQuestion::query()
+                ->where('game_id', $game->id)
+                ->where('question_id', $question->id)
+                ->firstOrFail();
+        }
 
         if ($gq->answered_at) {
             return redirect()
@@ -181,6 +188,18 @@ class GameController extends Controller
             ? "تم إضافة {$gameQuestion->question->points} نقطة لفريق {$team->name}"
             : 'تم تسجيل السؤال بدون نقاط';
 
+        $game->load('gameQuestions');
+        $total = $game->gameQuestions->count();
+        $answered = $game->gameQuestions->whereNotNull('answered_at')->count();
+        $gameComplete = $total > 0 && $answered >= $total;
+
+        if ($gameComplete) {
+            return redirect()
+                ->route('game.result', $game)
+                ->with('game_just_ended', true)
+                ->with('success', $message);
+        }
+
         return redirect()
             ->route('game.board', $game)
             ->with('success', $message);
@@ -212,35 +231,42 @@ class GameController extends Controller
             $duration = sprintf('%d:%02d', intdiv($seconds, 60), $seconds % 60);
         }
 
-        $rankedTeams = $game->teams->sortByDesc('score')->values()->map(function ($team, $index) use ($answered) {
-            $teamAnswers = $answered->where('assigned_team_id', $team->id);
-            $correct = $teamAnswers->where('answered_correctly', true)->count();
+        $teamsByOrder = $game->teams->values();
+        $teamStats = $teamsByOrder->mapWithKeys(fn ($t) => [
+            $t->id => ['correct' => 0, 'wrong' => 0],
+        ])->all();
+
+        // Correct = فريق خد النقط. Wrong = دور الفريق ومخدش نقط (ولا فريق أو الفريق التاني).
+        $answered->sortBy('answered_at')->values()->each(function ($gq, $i) use ($teamsByOrder, &$teamStats) {
+            $turnTeam = $teamsByOrder->get($i % max(1, $teamsByOrder->count()));
+            if (! $turnTeam) {
+                return;
+            }
+
+            $assignedId = $gq->assigned_team_id ? (int) $gq->assigned_team_id : null;
+
+            if ($gq->answered_correctly && $assignedId) {
+                $teamStats[$assignedId]['correct'] = ($teamStats[$assignedId]['correct'] ?? 0) + 1;
+
+                if ($assignedId !== (int) $turnTeam->id) {
+                    $teamStats[$turnTeam->id]['wrong'] = ($teamStats[$turnTeam->id]['wrong'] ?? 0) + 1;
+                }
+
+                return;
+            }
+
+            $teamStats[$turnTeam->id]['wrong'] = ($teamStats[$turnTeam->id]['wrong'] ?? 0) + 1;
+        });
+
+        $rankedTeams = $game->teams->sortByDesc('score')->values()->map(function ($team, $index) use ($teamStats) {
+            $stats = $teamStats[$team->id] ?? ['correct' => 0, 'wrong' => 0];
 
             return [
                 'team' => $team,
                 'rank' => $index + 1,
-                'correct' => $correct,
-                'wrong' => 0,
+                'correct' => (int) $stats['correct'],
+                'wrong' => (int) $stats['wrong'],
             ];
-        });
-
-        // Attribute unanswered (no points) rounds to alternating turns by answer order
-        $teamsByOrder = $game->teams->values();
-        $wrongByTeam = $teamsByOrder->mapWithKeys(fn ($t) => [$t->id => 0])->all();
-        $answered->sortBy('answered_at')->values()->each(function ($gq, $i) use ($teamsByOrder, &$wrongByTeam) {
-            if ($gq->answered_correctly) {
-                return;
-            }
-            $turnTeam = $teamsByOrder->get($i % max(1, $teamsByOrder->count()));
-            if ($turnTeam) {
-                $wrongByTeam[$turnTeam->id] = ($wrongByTeam[$turnTeam->id] ?? 0) + 1;
-            }
-        });
-
-        $rankedTeams = $rankedTeams->map(function ($row) use ($wrongByTeam) {
-            $row['wrong'] = (int) ($wrongByTeam[$row['team']->id] ?? 0);
-
-            return $row;
         });
 
         return view('site.game.result', compact(

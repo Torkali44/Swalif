@@ -22,7 +22,7 @@
     <button class="btn btn-outline" type="submit">تصفية</button>
     <a class="btn btn-ghost" href="{{ route('admin.classifications.index') }}">إعادة</a>
     <div class="spacer"></div>
-    <!-- <a class="btn btn-primary" href="{{ route('admin.classifications.create') }}">+ تصنيف جديد</a> -->
+    <a class="btn btn-primary" href="{{ route('admin.classifications.create') }}">+ تصنيف جديد</a>
   </form>
 
   <div class="admin-circle-grid admin-circle-grid--compact">

@@ -16,16 +16,24 @@ class StoreQuestionRequest extends FormRequest
 
     public function rules(): array
     {
+        $type = (string) $this->input('type', 'standard');
+
+        $mediaRules = match ($type) {
+            'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime,video/x-msvideo', 'max:51200'],
+            'audio' => ['nullable', 'file', 'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a', 'max:20480'],
+            default => ['nullable', 'image', 'max:5120'],
+        };
+
         return [
             'category_id' => ['required', 'exists:categories,id'],
-            'type' => ['required', Rule::in(['standard', 'image_guess', 'puzzle', 'match', 'complete', 'order'])],
+            'type' => ['required', Rule::in(['standard', 'image_guess', 'puzzle', 'match', 'complete', 'order', 'video', 'audio'])],
             'question_text' => ['required', 'string', 'max:2000'],
             'answer_text' => ['nullable', 'string', 'max:2000'],
             'level' => ['required', 'in:easy,medium,hard'],
             'points' => ['required', 'integer', 'in:200,400,600'],
             'time_limit' => ['nullable', 'integer', 'min:10', 'max:300'],
             'is_active' => ['nullable', 'boolean'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => $mediaRules,
             'answer_image' => ['nullable', 'image', 'max:5120'],
             'remove_image' => ['nullable', 'boolean'],
             'remove_answer_image' => ['nullable', 'boolean'],
@@ -68,7 +76,7 @@ class StoreQuestionRequest extends FormRequest
                 ->values();
 
             $hasAnswerText = filled($this->input('answer_text'));
-            $hasImage = $this->hasFile('image') || filled($existingQuestion?->image);
+            $hasMedia = $this->hasFile('image') || filled($existingQuestion?->image);
 
             if ($type === 'standard') {
                 if ($filledOptions->count() < 2) {
@@ -85,12 +93,36 @@ class StoreQuestionRequest extends FormRequest
             }
 
             if ($type === 'image_guess') {
-                if (! $hasImage) {
+                if (! $hasMedia) {
                     $validator->errors()->add('image', 'ارفع صورة السؤال لهذا النوع.');
                 }
 
                 if (! $hasAnswerText) {
                     $validator->errors()->add('answer_text', 'اكتب الإجابة النصية لعرضها للمستخدم.');
+                }
+
+                return;
+            }
+
+            if ($type === 'video') {
+                if (! $hasMedia) {
+                    $validator->errors()->add('image', 'ارفع فيديو السؤال.');
+                }
+
+                if (! $hasAnswerText) {
+                    $validator->errors()->add('answer_text', 'اكتب نص الإجابة.');
+                }
+
+                return;
+            }
+
+            if ($type === 'audio') {
+                if (! $hasMedia) {
+                    $validator->errors()->add('image', 'ارفع الملف الصوتي للسؤال.');
+                }
+
+                if (! $hasAnswerText) {
+                    $validator->errors()->add('answer_text', 'اكتب نص الإجابة.');
                 }
 
                 return;
@@ -122,6 +154,18 @@ class StoreQuestionRequest extends FormRequest
                 $validator->errors()->add('answer_text', 'اكتب الإجابة النصية لهذا النوع.');
             }
         });
+    }
+
+    public function messages(): array
+    {
+        return [
+            'category_id.required' => 'اختر الفئة.',
+            'type.required' => 'اختر نوع السؤال.',
+            'question_text.required' => 'نص السؤال مطلوب.',
+            'image.mimetypes' => 'صيغة الملف غير مدعومة لهذا النوع.',
+            'image.max' => 'حجم الملف كبير جدًا.',
+            'image.image' => 'الملف يجب أن يكون صورة.',
+        ];
     }
 
     protected function prepareForValidation(): void

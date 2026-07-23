@@ -16,11 +16,13 @@ class QuestionPickerService
         $perLevel ??= (int) config('game.questions_per_level', 6);
 
         $picked = collect();
+        $pickedIds = collect();
 
         foreach (Difficulty::cases() as $level) {
             $questions = $category->questions()
                 ->where('is_active', true)
                 ->where('level', $level->value)
+                ->whereNotIn('id', $pickedIds)
                 ->inRandomOrder()
                 ->limit($perLevel)
                 ->get();
@@ -30,7 +32,7 @@ class QuestionPickerService
                 $byPoints = $category->questions()
                     ->where('is_active', true)
                     ->where('points', $level->points())
-                    ->whereNotIn('id', $questions->pluck('id'))
+                    ->whereNotIn('id', $questions->pluck('id')->merge($pickedIds))
                     ->inRandomOrder()
                     ->limit($perLevel - $questions->count())
                     ->get();
@@ -38,9 +40,11 @@ class QuestionPickerService
                 $questions = $questions->concat($byPoints);
             }
 
-            $picked = $picked->concat($questions->take($perLevel));
+            $batch = $questions->unique('id')->take($perLevel)->values();
+            $picked = $picked->concat($batch);
+            $pickedIds = $picked->pluck('id');
         }
 
-        return $picked->values();
+        return $picked->unique('id')->values();
     }
 }

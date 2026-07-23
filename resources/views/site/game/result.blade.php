@@ -6,13 +6,28 @@
   $winnerRow = $winner ? $rankedTeams->firstWhere('team.id', $winner->id) : null;
   $winnerCorrect = $winnerRow ? $winnerRow['correct'] : 0;
   $winnerWrong = $winnerRow ? $winnerRow['wrong'] : 0;
+  $justEnded = session('game_just_ended');
 @endphp
 
-<x-layouts.game :show-nav="true">
+<x-layouts.game>
 <canvas id="confetti"></canvas>
+<audio id="winSound" src="{{ asset('audio/game win.wav') }}" preload="auto"></audio>
 
-<div class="result-stage">
-  <x-back-button :href="route('game.board', $game)" label="رجوع للوحة" />
+<div
+  class="result-stage"
+  data-result-page
+  @if($justEnded) data-game-just-ended="1" @endif
+>
+  <header class="result-top">
+    <a href="{{ route('home') }}" class="result-top__brand" title="سوالف">
+      <img src="{{ asset('images/logo.png') }}" alt="سوالف">
+      <span>سوالف</span>
+    </a>
+    <div class="result-top__actions">
+      <button type="button" id="themeToggle" class="result-top__icon" title="تبديل المظهر" aria-label="تبديل المظهر">🌙</button>
+      <a class="result-top__link" href="{{ route('categories.index') }}">لعبة جديدة</a>
+    </div>
+  </header>
 
   <section class="winner">
     <div class="winner__crown">
@@ -53,23 +68,25 @@
         $team = $row['team'];
         $isWinner = $winner && $winner->id === $team->id;
       @endphp
-      <div class="team-card {{ $isWinner ? 'team-card--winner' : '' }}">
-        <div class="team-card__rank">{{ $row['rank'] }}</div>
-        <div class="team-card__avatar" style="background:{{ $avatars[($row['rank'] - 1) % 2] }}">
-          {{ mb_substr($team->name, 0, 1) }}
-        </div>
-        <div class="team-card__info">
-          <b>{{ $team->name }}</b>
-          <div class="team-card__stats">
-            <span class="stat stat--correct">✔ {{ $row['correct'] }} صحيحة</span>
-            <span class="stat stat--wrong">✕ {{ $row['wrong'] }} خاطئة</span>
+      <article class="team-card {{ $isWinner ? 'team-card--winner' : '' }}">
+        <div class="team-card__main">
+          <div class="team-card__rank">{{ $row['rank'] }}</div>
+          <div class="team-card__avatar" style="background:{{ $avatars[($row['rank'] - 1) % 2] }}">
+            {{ mb_substr($team->name, 0, 1) }}
+          </div>
+          <div class="team-card__info">
+            <b>{{ $team->name }}</b>
+            <div class="team-card__stats">
+              <span class="stat stat--correct">✔ {{ $row['correct'] }} صحيحة</span>
+              <span class="stat stat--wrong">✕ {{ $row['wrong'] }} خاطئة</span>
+            </div>
+          </div>
+          <div class="team-card__score">
+            <b>{{ number_format($team->score) }}</b>
+            <small>نقطة</small>
           </div>
         </div>
-        <div class="team-card__score">
-          <b>{{ number_format($team->score) }}</b>
-          <small>نقطة</small>
-        </div>
-      </div>
+      </article>
     @endforeach
   </section>
 
@@ -106,7 +123,6 @@
 
   <section class="actions">
     <a class="btn btn--fire btn--lg" href="{{ route('categories.index') }}">🔁 لعبة جديدة</a>
-    <a class="btn btn--ghost" href="{{ route('game.board', $game) }}">📊 العودة للوحة</a>
     <a class="btn btn--ghost" href="{{ route('home') }}">🏠 الرئيسية</a>
   </section>
 </div>

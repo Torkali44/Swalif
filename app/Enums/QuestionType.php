@@ -10,6 +10,8 @@ enum QuestionType: string
     case Match = 'match';
     case Complete = 'complete';
     case Order = 'order';
+    case Video = 'video';
+    case Audio = 'audio';
 
     public function label(): string
     {
@@ -20,6 +22,8 @@ enum QuestionType: string
             self::Match => 'توصيل',
             self::Complete => 'أكمل الناقص',
             self::Order => 'ترتيب',
+            self::Video => 'فيديو',
+            self::Audio => 'صوتي',
         };
     }
 

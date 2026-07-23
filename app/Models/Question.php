@@ -44,7 +44,26 @@ class Question extends Model
 
     public function imageUrl(): ?string
     {
+        if ($this->isVideo() || $this->isAudio()) {
+            return null;
+        }
+
         return $this->publicUrl($this->image);
+    }
+
+    public function mediaUrl(): ?string
+    {
+        return $this->publicUrl($this->image);
+    }
+
+    public function isVideo(): bool
+    {
+        return ($this->type ?? '') === QuestionType::Video->value;
+    }
+
+    public function isAudio(): bool
+    {
+        return ($this->type ?? '') === QuestionType::Audio->value;
     }
 
     public function answerImageUrl(): ?string
@@ -86,7 +105,9 @@ class Question extends Model
         return match ($this->type ?? QuestionType::Standard->value) {
             QuestionType::ImageGuess->value,
             QuestionType::Puzzle->value,
-            QuestionType::Complete->value => filled($this->answer_text) ? $this->answer_text : null,
+            QuestionType::Complete->value,
+            QuestionType::Video->value,
+            QuestionType::Audio->value => filled($this->answer_text) ? $this->answer_text : null,
             QuestionType::Order->value => filled($this->orderItems())
                 ? implode(' → ', $this->orderItems())
                 : null,

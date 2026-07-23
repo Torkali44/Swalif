@@ -71,6 +71,14 @@
       <div class="question-card__media" style="margin:0 auto 20px;position:relative">
         <img src="{{ $question->imageUrl() }}" alt="صورة السؤال" loading="lazy">
       </div>
+    @elseif(($question->isVideo() || $question->isAudio()) && $question->mediaUrl())
+      <div class="question-card__media" style="margin:0 auto 20px">
+        @if($question->isVideo())
+          <video src="{{ $question->mediaUrl() }}" controls playsinline style="max-width:100%;border-radius:16px;max-height:280px"></video>
+        @else
+          <audio src="{{ $question->mediaUrl() }}" controls style="width:100%"></audio>
+        @endif
+      </div>
     @endif
 
     @if($question->type === 'order' && $question->orderItems())

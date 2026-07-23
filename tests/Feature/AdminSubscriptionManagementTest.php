@@ -275,4 +275,76 @@ class AdminSubscriptionManagementTest extends TestCase
             'status' => 'active',
         ]);
     }
+
+    public function test_admin_can_create_video_question(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $category = Category::create([
+            'name_ar' => 'فيديو',
+            'name_en' => 'Video',
+            'slug' => 'video-cat',
+            'group' => 'general',
+            'icon' => '🎬',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.questions.store'), [
+                'category_id' => $category->id,
+                'type' => 'video',
+                'question_text' => 'ماذا يظهر في الفيديو؟',
+                'answer_text' => 'برج خليفة',
+                'image' => UploadedFile::fake()->create('clip.mp4', 1024, 'video/mp4'),
+                'level' => 'easy',
+                'points' => 200,
+                'time_limit' => 60,
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('admin.questions.index'));
+
+        $this->assertDatabaseHas('questions', [
+            'category_id' => $category->id,
+            'type' => 'video',
+            'answer_text' => 'برج خليفة',
+        ]);
+    }
+
+    public function test_admin_can_create_audio_question(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $category = Category::create([
+            'name_ar' => 'صوت',
+            'name_en' => 'Audio',
+            'slug' => 'audio-cat',
+            'group' => 'general',
+            'icon' => '🎧',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.questions.store'), [
+                'category_id' => $category->id,
+                'type' => 'audio',
+                'question_text' => 'ما هذه الأغنية؟',
+                'answer_text' => 'النشيد الوطني',
+                'image' => UploadedFile::fake()->create('sound.mp3', 512, 'audio/mpeg'),
+                'level' => 'medium',
+                'points' => 400,
+                'time_limit' => 60,
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('admin.questions.index'));
+
+        $this->assertDatabaseHas('questions', [
+            'category_id' => $category->id,
+            'type' => 'audio',
+            'answer_text' => 'النشيد الوطني',
+        ]);
+    }
 }

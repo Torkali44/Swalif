@@ -706,7 +706,16 @@ body.dark .nav {
 /* ============ RESPONSIVE ============ */
 @media (max-width: 780px) {
   .nav__links { display: none; }
+  .nav__links.is-open {
+    display: flex;
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline: 12px;
+    flex-direction: column;
+    z-index: 80;
+  }
   .nav__toggle { display: block; }
+  .nav { position: relative; }
   .hero { padding: 60px 20px 90px; }
   .hero__stats .stat { padding: 0 12px; }
   .stat b { font-size: 30px; }

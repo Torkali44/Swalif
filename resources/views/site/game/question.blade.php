@@ -102,7 +102,12 @@
       <div class="q-progress"><i style="width:{{ $progress }}%"></i></div>
     </div>
 
-    <div class="timer" id="playTimer" data-timer-ring="{{ $timeLimit }}">
+    <div
+      class="timer"
+      id="playTimer"
+      data-timer-ring="{{ $timeLimit }}"
+      @if($question->isVideo() && $question->mediaUrl()) data-timer-wait-video="true" @endif
+    >
       <svg viewBox="0 0 120 120" class="timer__ring">
         <defs>
           <linearGradient id="fireGrad" x1="0" y1="0" x2="1" y2="1">
@@ -126,83 +131,121 @@
 
   <main class="question-card">
     <div class="question-card__glow"></div>
-    <span class="question-card__label">السؤال</span>
-    <h1 class="question-card__text">{{ $question->question_text }}</h1>
 
-    @if($question->imageUrl())
-      <div class="question-card__media">
-        <img src="{{ $question->imageUrl() }}" alt="صورة السؤال" loading="lazy">
-      </div>
-    @endif
-
-    @if($questionType === 'order' && $orderItems->isNotEmpty())
-      <section class="interactive-answer interactive-answer--order" data-order-game>
-        <div class="interactive-answer__head">
-          <b>رتّب الجمل بالترتيب الصحيح</b>
-          <span>اسحب العنصر أو استخدم الأسهم</span>
+    @if($question->isVideo() && $question->mediaUrl())
+      <div class="video-gate" data-video-gate>
+        <div class="video-gate__alert">
+          <span class="video-gate__icon">🎬</span>
+          <div>
+            <b>ركّز في الفيديو كويس</b>
+            <p>الفيديو هيتعرض <em>مرة واحدة فقط</em>، وبعده هيظهر السؤال. لو طفّيته مش هيتشاف تاني.</p>
+          </div>
         </div>
-        <div class="order-list" data-order-list>
-          @foreach($orderItems as $item)
-            <div class="order-item" draggable="true" data-order-key="{{ $item['key'] }}">
-              <span class="order-item__handle">↕</span>
-              <span class="order-item__text">{{ $item['text'] }}</span>
-              <span class="order-item__tools">
-                <button type="button" data-order-up title="رفع">↑</button>
-                <button type="button" data-order-down title="نزول">↓</button>
-              </span>
+        <div class="question-card__media question-card__media--video">
+          <video
+            id="questionVideo"
+            class="question-media question-media--video"
+            src="{{ $question->mediaUrl() }}"
+            controls
+            playsinline
+            controlslist="nodownload noplaybackrate"
+            data-play-once="true"
+            data-gate-video="true"
+          ></video>
+          <p class="question-media__hint" data-video-hint>اضغط تشغيل وركّز… لن يُعاد العرض</p>
+        </div>
+      </div>
+
+      <div class="video-reveal" data-video-reveal hidden>
+        <span class="question-card__label">السؤال</span>
+        <h1 class="question-card__text">{{ $question->question_text }}</h1>
+        <div class="action-bar">
+          <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
+        </div>
+      </div>
+    @else
+      <span class="question-card__label">السؤال</span>
+      <h1 class="question-card__text">{{ $question->question_text }}</h1>
+
+      @if($question->isAudio() && $question->mediaUrl())
+        <div class="question-card__media question-card__media--audio">
+          <audio class="question-media question-media--audio" src="{{ $question->mediaUrl() }}" controls controlsList="nodownload"></audio>
+        </div>
+      @elseif($question->imageUrl())
+        <div class="question-card__media">
+          <img src="{{ $question->imageUrl() }}" alt="صورة السؤال" loading="lazy">
+        </div>
+      @endif
+
+      @if($questionType === 'order' && $orderItems->isNotEmpty())
+        <section class="interactive-answer interactive-answer--order" data-order-game>
+          <div class="interactive-answer__head">
+            <b>رتّب الجمل بالترتيب الصحيح</b>
+            <span>اسحب العنصر أو استخدم الأسهم</span>
+          </div>
+          <div class="order-list" data-order-list>
+            @foreach($orderItems as $item)
+              <div class="order-item" draggable="true" data-order-key="{{ $item['key'] }}">
+                <span class="order-item__handle">↕</span>
+                <span class="order-item__text">{{ $item['text'] }}</span>
+                <span class="order-item__tools">
+                  <button type="button" data-order-up title="رفع">↑</button>
+                  <button type="button" data-order-down title="نزول">↓</button>
+                </span>
+              </div>
+            @endforeach
+          </div>
+          <div class="interactive-answer__actions">
+            <button class="btn btn--fire" type="button" data-check-order>تحقق من الترتيب</button>
+            <span class="interactive-answer__result" data-order-result></span>
+          </div>
+        </section>
+      @elseif($questionType === 'match' && $matchPairs->isNotEmpty())
+        <section class="interactive-answer interactive-answer--match" data-match-game>
+          <div class="interactive-answer__head">
+            <b>وصّل كل عنصر بما يناسبه</b>
+            <span>اختر من العمود الأول ثم اختر المقابل من العمود الثاني</span>
+          </div>
+          <div class="match-board">
+            <div class="match-column">
+              @foreach($matchLeftItems as $item)
+                <button class="match-choice" type="button" data-match-left data-match-key="{{ $item['key'] }}">
+                  <span class="match-choice__mark"></span>
+                  <span>{{ $item['text'] }}</span>
+                </button>
+              @endforeach
+            </div>
+            <div class="match-column">
+              @foreach($matchRightItems as $item)
+                <button class="match-choice" type="button" data-match-right data-match-key="{{ $item['key'] }}">
+                  <span class="match-choice__mark"></span>
+                  <span>{{ $item['text'] }}</span>
+                </button>
+              @endforeach
+            </div>
+          </div>
+          <div class="interactive-answer__actions">
+            <button class="btn btn--fire" type="button" data-check-match>تحقق من التوصيل</button>
+            <button class="btn btn--ghost" type="button" data-reset-match>إعادة التوصيل</button>
+            <span class="interactive-answer__result" data-match-result></span>
+          </div>
+        </section>
+      @elseif($question->hasChoices())
+        <div class="answers">
+          @foreach($question->options as $i => $option)
+            @continue(!filled($option->option_text))
+            <div class="answer">
+              <span class="answer__key">{{ $keys[$i] ?? ($i + 1) }}</span>
+              <span class="answer__text">{{ $option->option_text }}</span>
             </div>
           @endforeach
         </div>
-        <div class="interactive-answer__actions">
-          <button class="btn btn--fire" type="button" data-check-order>تحقق من الترتيب</button>
-          <span class="interactive-answer__result" data-order-result></span>
-        </div>
-      </section>
-    @elseif($questionType === 'match' && $matchPairs->isNotEmpty())
-      <section class="interactive-answer interactive-answer--match" data-match-game>
-        <div class="interactive-answer__head">
-          <b>وصّل كل عنصر بما يناسبه</b>
-          <span>اختر من العمود الأول ثم اختر المقابل من العمود الثاني</span>
-        </div>
-        <div class="match-board">
-          <div class="match-column">
-            @foreach($matchLeftItems as $item)
-              <button class="match-choice" type="button" data-match-left data-match-key="{{ $item['key'] }}">
-                <span class="match-choice__mark"></span>
-                <span>{{ $item['text'] }}</span>
-              </button>
-            @endforeach
-          </div>
-          <div class="match-column">
-            @foreach($matchRightItems as $item)
-              <button class="match-choice" type="button" data-match-right data-match-key="{{ $item['key'] }}">
-                <span class="match-choice__mark"></span>
-                <span>{{ $item['text'] }}</span>
-              </button>
-            @endforeach
-          </div>
-        </div>
-        <div class="interactive-answer__actions">
-          <button class="btn btn--fire" type="button" data-check-match>تحقق من التوصيل</button>
-          <button class="btn btn--ghost" type="button" data-reset-match>إعادة التوصيل</button>
-          <span class="interactive-answer__result" data-match-result></span>
-        </div>
-      </section>
-    @elseif($question->hasChoices())
-      <div class="answers">
-        @foreach($question->options as $i => $option)
-          @continue(!filled($option->option_text))
-          <div class="answer">
-            <span class="answer__key">{{ $keys[$i] ?? ($i + 1) }}</span>
-            <span class="answer__text">{{ $option->option_text }}</span>
-          </div>
-        @endforeach
+      @endif
+
+      <div class="action-bar">
+        <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
       </div>
     @endif
-
-    <div class="action-bar">
-      <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
-    </div>
   </main>
 </div>
 </x-layouts.game>

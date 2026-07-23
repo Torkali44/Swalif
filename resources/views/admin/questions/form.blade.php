@@ -72,35 +72,67 @@
       <textarea name="question_text" required>{{ old('question_text', $question->question_text) }}</textarea>
     </label>
 
-    <div class="wide question-section" data-question-section data-types="image_guess,puzzle,complete" hidden>
+    <div class="wide question-section" data-question-section data-types="image_guess,puzzle,complete,video,audio" hidden>
       <label class="wide">
         نص الإجابة
         <textarea name="answer_text" placeholder="مثال: نص الحديث كاملاً…">{{ old('answer_text', $question->answer_text) }}</textarea>
       </label>
-      <small class="muted">هذا الحقل يظهر فقط مع: خمن الصورة، لغز، أكمل الناقص.</small>
+      <small class="muted">هذا الحقل يظهر مع: خمن الصورة، لغز، أكمل الناقص، فيديو، صوتي.</small>
     </div>
 
-    <label class="wide">
-      صورة السؤال (اختياري)
-      <input type="file" name="image" accept="image/*">
-      @if($question->imageUrl())
-        <div class="media-preview">
-          <img src="{{ $question->imageUrl() }}" alt="صورة السؤال">
-          <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الصورة الحالية</label>
-        </div>
-      @endif
-    </label>
+    <div class="wide question-section" data-question-section data-types="video" hidden>
+      <label class="wide">
+        فيديو السؤال
+        <input type="file" name="image" accept="video/mp4,video/webm,video/quicktime">
+        @if($question->exists && $question->isVideo() && $question->mediaUrl())
+          <div class="media-preview">
+            <video src="{{ $question->mediaUrl() }}" controls style="max-width:100%;border-radius:12px;max-height:240px"></video>
+            <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الفيديو الحالي</label>
+          </div>
+        @endif
+        <small class="muted">يُسمح بالتشغيل مرة واحدة فقط أثناء اللعب. الصيغ: mp4 / webm</small>
+      </label>
+    </div>
 
-    <label class="wide">
-      صورة الإجابة (اختياري)
-      <input type="file" name="answer_image" accept="image/*">
-      @if($question->answerImageUrl())
-        <div class="media-preview">
-          <img src="{{ $question->answerImageUrl() }}" alt="صورة الإجابة">
-          <label class="check"><input type="checkbox" name="remove_answer_image" value="1"> حذف صورة الإجابة</label>
-        </div>
-      @endif
-    </label>
+    <div class="wide question-section" data-question-section data-types="audio" hidden>
+      <label class="wide">
+        الملف الصوتي
+        <input type="file" name="image" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav">
+        @if($question->exists && $question->isAudio() && $question->mediaUrl())
+          <div class="media-preview">
+            <audio src="{{ $question->mediaUrl() }}" controls style="width:100%"></audio>
+            <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الصوت الحالي</label>
+          </div>
+        @endif
+        <small class="muted">الصيغ المدعومة: mp3 / wav / ogg</small>
+      </label>
+    </div>
+
+    <div class="wide question-section" data-question-section data-types="standard,image_guess,puzzle,complete,order,match" hidden>
+      <label class="wide">
+        صورة السؤال (اختياري)
+        <input type="file" name="image" accept="image/*">
+        @if($question->imageUrl())
+          <div class="media-preview">
+            <img src="{{ $question->imageUrl() }}" alt="صورة السؤال">
+            <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الصورة الحالية</label>
+          </div>
+        @endif
+      </label>
+    </div>
+
+    <div class="wide question-section" data-question-section data-types="standard,image_guess,puzzle,complete,order,match" hidden>
+      <label class="wide">
+        صورة الإجابة (اختياري)
+        <input type="file" name="answer_image" accept="image/*">
+        @if($question->answerImageUrl())
+          <div class="media-preview">
+            <img src="{{ $question->answerImageUrl() }}" alt="صورة الإجابة">
+            <label class="check"><input type="checkbox" name="remove_answer_image" value="1"> حذف صورة الإجابة</label>
+          </div>
+        @endif
+      </label>
+    </div>
 
     <div class="wide question-section" data-question-section data-types="order" hidden>
       <fieldset class="wide">
@@ -177,7 +209,13 @@
               .split(',')
               .map((item) => item.trim())
               .filter(Boolean);
-            section.hidden = !allowed.includes(type);
+            const show = allowed.includes(type);
+            section.hidden = !show;
+            section.querySelectorAll('input, textarea, select').forEach((el) => {
+              if (el.type === 'file' || el.name === 'image' || el.name === 'answer_image' || el.name === 'answer_text' || el.name?.startsWith('options') || el.name?.startsWith('order_items') || el.name?.startsWith('match_pairs') || el.name === 'correct_option' || el.name === 'remove_image' || el.name === 'remove_answer_image') {
+                el.disabled = !show;
+              }
+            });
           });
         };
 

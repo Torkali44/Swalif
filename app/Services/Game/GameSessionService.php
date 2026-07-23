@@ -34,8 +34,8 @@ class GameSessionService
             $game->load('category');
             $questions = $this->picker->forBoard($game->category);
 
-            foreach ($questions as $question) {
-                $game->gameQuestions()->create([
+            foreach ($questions->unique('id') as $question) {
+                $game->gameQuestions()->firstOrCreate([
                     'question_id' => $question->id,
                 ]);
             }

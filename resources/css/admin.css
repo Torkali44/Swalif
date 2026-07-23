@@ -26,6 +26,18 @@
   height: 100vh;
 }
 
+.admin-sidebar .sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.admin-sidebar .sidebar-head .brand {
+  flex: 1;
+  border-bottom: 0;
+  padding-bottom: 12px;
+}
 .admin-sidebar .brand {
   display: flex;
   align-items: center;
@@ -1130,23 +1142,94 @@ body.dark.admin-body .extend-form {
 .q-group__body .table-wrap { margin: 0; }
 .q-text { max-width: 420px; font-weight: 700; }
 
+.admin-menu-btn {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line, #e5e7ef);
+  background: var(--card, #fff);
+  color: var(--text, #14181F);
+  font-size: 22px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.admin-sidebar__close {
+  display: none;
+}
+.admin-overlay {
+  display: none;
+}
+body.admin-nav-open {
+  overflow: hidden;
+}
+
 @media (max-width: 900px) {
   .admin-shell {
     grid-template-columns: 1fr !important;
   }
-  .admin-sidebar {
-    position: static !important;
-    height: auto !important;
-    flex-direction: column !important;
-    padding: 16px !important;
+  .admin-menu-btn {
+    display: inline-flex !important;
   }
-  .admin-sidebar .brand,
+  .admin-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 39, .55);
+    z-index: 90;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .admin-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .admin-body .admin-sidebar,
+  .admin-sidebar {
+    position: fixed !important;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: min(300px, 86vw) !important;
+    height: 100vh !important;
+    max-height: 100dvh !important;
+    z-index: 100;
+    transform: translateX(110%);
+    transition: transform .25s ease;
+    padding: 18px 16px !important;
+    overflow-y: auto;
+    box-shadow: -12px 0 40px rgba(0,0,0,.28);
+  }
+  .admin-sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+  .admin-sidebar .sidebar-head .brand,
+  .admin-sidebar .brand {
+    display: flex !important;
+  }
+  .admin-sidebar__close {
+    display: inline-flex !important;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
   .admin-footer {
-    display: none !important;
+    display: flex !important;
   }
   .admin-nav {
-    flex-direction: row !important;
-    overflow-x: auto !important;
+    flex-direction: column !important;
+    overflow: visible !important;
     gap: 4px !important;
     width: 100% !important;
   }
@@ -1154,7 +1237,9 @@ body.dark.admin-body .extend-form {
     white-space: nowrap !important;
   }
   .admin-main {
-    padding: 0 16px 28px !important;
+    padding: 0 14px 28px !important;
+    min-width: 0;
+    overflow-x: hidden;
   }
   .admin-body .admin-form {
     grid-template-columns: 1fr !important;
@@ -1165,14 +1250,30 @@ body.dark.admin-body .extend-form {
     flex: 1 !important;
   }
   .admin-topbar {
-    flex-direction: column !important;
-    align-items: flex-start !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
     gap: 12px !important;
-    margin: 0 -16px 18px !important;
-    padding: 14px 16px !important;
+    margin: 0 -14px 18px !important;
+    padding: 14px !important;
+  }
+  .admin-topbar__title {
+    flex: 1;
+    min-width: 0;
+  }
+  .admin-topbar .page-title {
+    font-size: 20px !important;
   }
   .admin-topbar .top-actions {
     width: 100% !important;
     justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+  .admin-body .table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-body table {
+    min-width: 640px;
   }
 }

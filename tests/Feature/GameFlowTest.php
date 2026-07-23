@@ -80,6 +80,51 @@ class GameFlowTest extends TestCase
         $this->assertSame((int) $question->points, (int) $team->fresh()->score);
     }
 
+    public function test_finishing_all_questions_redirects_to_result_with_team_stats(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $category = Category::where('slug', 'uae-malls')->firstOrFail();
+
+        $this->actingAs($player)->post(route('game.start'), [
+            'category_id' => $category->id,
+            'name' => 'نهاية اللعبة',
+            'team_one' => 'الأسود',
+            'team_two' => 'النمور',
+        ]);
+
+        $game = Game::query()->latest('id')->firstOrFail();
+        $teams = $game->teams()->orderBy('id')->get();
+        $questions = $game->gameQuestions()->with('question')->get();
+
+        $this->assertGreaterThan(0, $questions->count());
+
+        foreach ($questions as $index => $gq) {
+            $this->get(route('game.question', [$game, $gq->question]))->assertOk();
+
+            $teamId = $index === 0 ? $teams[0]->id : null;
+            $response = $this->post(route('game.assign', [$game, $gq]), [
+                'team_id' => $teamId,
+            ]);
+
+            if ($index === $questions->count() - 1) {
+                $response->assertRedirect(route('game.result', $game));
+                $response->assertSessionHas('game_just_ended', true);
+            } else {
+                $response->assertRedirect(route('game.board', $game));
+            }
+        }
+
+        $result = $this->get(route('game.result', $game));
+        $result->assertOk();
+        $result->assertSee('الأسود');
+        $result->assertSee('النمور');
+        $result->assertSee('صحيحة');
+        $result->assertSee('خاطئة');
+    }
+
     public function test_player_can_use_lifeline(): void
     {
         $this->withoutVite();

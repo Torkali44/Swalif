@@ -23,18 +23,33 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
 
   bar.style.strokeDasharray = String(circum);
   let remaining = total;
+  let interval = null;
 
-  const interval = window.setInterval(() => {
+  const tick = () => {
     remaining -= 1;
     val.textContent = String(Math.max(remaining, 0));
     bar.style.strokeDashoffset = String(circum * (1 - Math.max(remaining, 0) / total));
     if (remaining <= 5) timerEl.classList.add('warn');
     if (remaining <= 0) {
       window.clearInterval(interval);
+      interval = null;
       timerEl.classList.add('expired');
-      window.showPopup('انتهى وقت الإجابة!', 'error');
+      window.showPopup?.('انتهى وقت الإجابة!', 'error');
     }
-  }, 1000);
+  };
+
+  const start = () => {
+    if (interval) return;
+    timerEl.classList.remove('is-waiting');
+    interval = window.setInterval(tick, 1000);
+  };
+
+  if (timerEl.dataset.timerWaitVideo === 'true') {
+    timerEl.classList.add('is-waiting');
+    document.addEventListener('swalif:video-ready', start, { once: true });
+  } else {
+    start();
+  }
 });
 
 /* Mobile nav */
@@ -45,6 +60,34 @@ if (navToggle && navLinks) {
     navLinks.classList.toggle('is-open');
   });
 }
+
+/* Admin mobile sidebar drawer */
+(() => {
+  const sidebar = document.getElementById('adminSidebar');
+  const overlay = document.getElementById('adminOverlay');
+  const openBtn = document.getElementById('adminMenuBtn');
+  const closeBtn = document.getElementById('adminSidebarClose');
+  if (!sidebar || !openBtn) return;
+
+  const setOpen = (open) => {
+    sidebar.classList.toggle('is-open', open);
+    if (overlay) {
+      overlay.hidden = !open;
+      overlay.classList.toggle('is-open', open);
+    }
+    document.body.classList.toggle('admin-nav-open', open);
+  };
+
+  openBtn.addEventListener('click', () => setOpen(true));
+  closeBtn?.addEventListener('click', () => setOpen(false));
+  overlay?.addEventListener('click', () => setOpen(false));
+  sidebar.querySelectorAll('.nav-link').forEach((link) => {
+    link.addEventListener('click', () => setOpen(false));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setOpen(false);
+  });
+})();
 
 /* Home category filter pills */
 (() => {
@@ -226,10 +269,89 @@ if (assignForm) {
   });
 }
 
+/* Video questions — play once, then reveal question */
+(() => {
+  const video = document.querySelector('video[data-play-once]');
+  if (!video) return;
+
+  let finished = false;
+  let started = false;
+  const hint = document.querySelector('[data-video-hint]');
+  const gate = document.querySelector('[data-video-gate]');
+  const reveal = document.querySelector('[data-video-reveal]');
+
+  const lockAndReveal = () => {
+    if (finished) return;
+    finished = true;
+    video.pause();
+    video.removeAttribute('controls');
+    video.controls = false;
+    video.classList.add('is-locked');
+    if (hint) hint.textContent = '✓ انتهى العرض — هيظهر السؤال الآن';
+    if (gate) gate.classList.add('is-done');
+    if (reveal) {
+      reveal.hidden = false;
+      reveal.classList.add('is-visible');
+      try { reveal.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    }
+    document.dispatchEvent(new CustomEvent('swalif:video-ready'));
+  };
+
+  video.addEventListener('play', () => {
+    if (finished) {
+      video.pause();
+      return;
+    }
+    started = true;
+    if (hint) hint.textContent = 'جاري التشغيل… ركّز كويس (مرة واحدة فقط)';
+  });
+
+  video.addEventListener('ended', lockAndReveal);
+
+  // If user seeks near end after watching most of it, still lock
+  video.addEventListener('timeupdate', () => {
+    if (!started || finished || !video.duration) return;
+    if (video.currentTime / video.duration >= 0.98) {
+      lockAndReveal();
+    }
+  });
+
+  video.addEventListener('seeking', () => {
+    if (finished) {
+      try { video.currentTime = video.duration || 0; } catch (e) {}
+    }
+  });
+  video.addEventListener('contextmenu', (e) => e.preventDefault());
+})();
+
 /* Result confetti */
 (() => {
   const canvas = document.getElementById('confetti');
   if (!canvas || !canvas.getContext) return;
+
+  const winSound = document.getElementById('winSound');
+  const playWinSound = () => {
+    if (!winSound) return;
+    const tryPlay = () => {
+      winSound.currentTime = 0;
+      winSound.play().catch(() => {});
+    };
+    tryPlay();
+    const unlock = () => {
+      tryPlay();
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('touchstart', unlock);
+    };
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
+  };
+
+  // Delay sound until after optional "game ended" popup
+  window.__swalifPlayWinSound = playWinSound;
+  const resultPage = document.querySelector('[data-result-page]');
+  if (!resultPage || resultPage.dataset.gameJustEnded !== '1') {
+    playWinSound();
+  }
 
   const ctx = canvas.getContext('2d');
   let W;
@@ -648,6 +770,19 @@ window.showPopup = function(message, type = 'success') {
     });
   });
 };
+
+/* Game-over popup on result page */
+(() => {
+  const resultPage = document.querySelector('[data-result-page][data-game-just-ended]');
+  if (!resultPage) return;
+
+  window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success')
+    .then(() => {
+      if (typeof window.__swalifPlayWinSound === 'function') {
+        window.__swalifPlayWinSound();
+      }
+    });
+})();
 
 window.showConfirm = function(message) {
   document.querySelectorAll('.custom-modal-overlay').forEach(el => el.remove());
