@@ -43,7 +43,7 @@ class GameFlowTest extends TestCase
         $this->seed();
 
         $player = User::where('email', 'player@swalif.test')->firstOrFail();
-        $admin = User::where('email', 'admin@swalif.test')->firstOrFail();
+        $admin = User::where('email', 'omjori_Swalif_Admin_009@gmail.com')->firstOrFail();
 
         $this->actingAs($player)->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();

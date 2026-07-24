@@ -32,7 +32,12 @@
 @endphp
 
 <x-layouts.game :show-nav="true">
-<div class="play-stage">
+<div class="play-stage"
+  @if(!empty($freeLeaveWarn))
+    data-free-leave-guard="1"
+    data-free-leave-message="{{ $leaveWarningMessage }}"
+  @endif
+>
   <header class="topbar">
     <div class="category-badge">
       <span class="category-badge__icon">
@@ -58,7 +63,7 @@
 
     <div class="level-chip level-chip--{{ $levelClass }}">
       <span></span><span></span><span></span>
-      <em>{{ $levelLabel }} • {{ $question->points }} نقطة</em>
+      <em>{{ $levelLabel }} • {{ $question->displayPoints() }} نقطة</em>
     </div>
   </header>
 
@@ -106,6 +111,7 @@
       class="timer"
       id="playTimer"
       data-timer-ring="{{ $timeLimit }}"
+      data-answer-url="{{ route('game.answer', [$game, $gq]) }}"
       @if($question->isVideo() && $question->mediaUrl()) data-timer-wait-video="true" @endif
     >
       <svg viewBox="0 0 120 120" class="timer__ring">
@@ -124,7 +130,7 @@
 
     <div class="q-points">
       <span>مكافأة</span>
-      <b>{{ $question->points }}</b>
+      <b>{{ $question->displayPoints() }}</b>
       <small>نقطة</small>
     </div>
   </div>
@@ -200,6 +206,9 @@
             <span class="interactive-answer__result" data-order-result></span>
           </div>
         </section>
+        <div class="action-bar">
+          <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
+        </div>
       @elseif($questionType === 'match' && $matchPairs->isNotEmpty())
         <section class="interactive-answer interactive-answer--match" data-match-game>
           <div class="interactive-answer__head">
@@ -230,21 +239,48 @@
             <span class="interactive-answer__result" data-match-result></span>
           </div>
         </section>
+        <div class="action-bar">
+          <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
+        </div>
       @elseif($question->hasChoices())
-        <div class="answers">
-          @foreach($question->options as $i => $option)
-            @continue(!filled($option->option_text))
-            <div class="answer">
-              <span class="answer__key">{{ $keys[$i] ?? ($i + 1) }}</span>
-              <span class="answer__text">{{ $option->option_text }}</span>
-            </div>
-          @endforeach
+        <form method="POST" action="{{ route('game.answer.store', [$game, $gq]) }}" id="revealAnswerForm" data-choice-form>
+          @csrf
+          <input type="hidden" name="selected_option_id" id="selectedOptionId" value="{{ $gq->selected_option_id }}">
+          <div class="answers" data-answers>
+            @foreach($question->options as $i => $option)
+              @continue(!filled($option->option_text))
+              <button
+                type="button"
+                class="answer {{ (int) $gq->selected_option_id === (int) $option->id ? 'selected' : '' }}"
+                data-option-id="{{ $option->id }}"
+              >
+                <span class="answer__key">{{ $keys[$i] ?? ($i + 1) }}</span>
+                <span class="answer__text">{{ $option->option_text }}</span>
+                <span class="answer__mark"></span>
+              </button>
+            @endforeach
+          </div>
+          <p class="choice-hint" data-choice-hint>اختار إجابة وبعدين اضغط عرض الإجابة</p>
+          <div class="action-bar">
+            <button class="btn btn--fire btn--lg" type="submit">✔ عرض الإجابة</button>
+          </div>
+        </form>
+      @elseif(in_array($questionType, ['complete', 'puzzle', 'image_guess'], true))
+        <form method="POST" action="{{ route('game.answer.store', [$game, $gq]) }}" id="revealAnswerForm">
+          @csrf
+          <label class="player-answer-field">
+            <span>إجابتك (اختياري)</span>
+            <input type="text" name="player_answer" value="{{ old('player_answer', $gq->player_answer) }}" placeholder="اكتب إجابتك هنا…">
+          </label>
+          <div class="action-bar">
+            <button class="btn btn--fire btn--lg" type="submit">✔ عرض الإجابة</button>
+          </div>
+        </form>
+      @else
+        <div class="action-bar">
+          <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
         </div>
       @endif
-
-      <div class="action-bar">
-        <a class="btn btn--fire btn--lg" href="{{ route('game.answer', [$game, $gq]) }}">✔ عرض الإجابة</a>
-      </div>
     @endif
   </main>
 </div>

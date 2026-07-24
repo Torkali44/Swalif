@@ -3,20 +3,29 @@
     'linear-gradient(135deg,#FF1744,#7C3AED)',
     'linear-gradient(135deg,#00E5FF,#00843D)',
   ];
-  $winnerRow = $winner ? $rankedTeams->firstWhere('team.id', $winner->id) : null;
+  $winnerRow = $winner
+    ? $rankedTeams->first(fn ($row) => (int) $row['team']->id === (int) $winner->id)
+    : null;
   $winnerCorrect = $winnerRow ? $winnerRow['correct'] : 0;
   $winnerWrong = $winnerRow ? $winnerRow['wrong'] : 0;
+  $winnerAttempts = $winnerCorrect + $winnerWrong;
+  $winnerAccuracy = $winnerAttempts > 0 ? (int) round(($winnerCorrect / $winnerAttempts) * 100) : 0;
   $justEnded = session('game_just_ended');
 @endphp
 
 <x-layouts.game>
 <canvas id="confetti"></canvas>
-<audio id="winSound" src="{{ asset('audio/game win.wav') }}" preload="auto"></audio>
+<audio id="winSound" src="{{ asset('audio/game-win.wav') }}" preload="auto"></audio>
 
 <div
   class="result-stage"
   data-result-page
   @if($justEnded) data-game-just-ended="1" @endif
+  @if(!empty($needsSubscribe))
+    data-subscribe-guard="1"
+    data-subscribe-message="{{ $subscribeMessage }}"
+    data-subscribe-url="{{ route('subscription.index') }}"
+  @endif
 >
   <header class="result-top">
     <a href="{{ route('home') }}" class="result-top__brand" title="سوالف">
@@ -25,7 +34,7 @@
     </a>
     <div class="result-top__actions">
       <button type="button" id="themeToggle" class="result-top__icon" title="تبديل المظهر" aria-label="تبديل المظهر">🌙</button>
-      <a class="result-top__link" href="{{ route('categories.index') }}">لعبة جديدة</a>
+      <a class="result-top__link" href="{{ !empty($needsSubscribe) ? route('subscription.index') : route('categories.index') }}" @if(!empty($needsSubscribe)) data-subscribe-lock data-subscribe-message="{{ $subscribeMessage }}" @endif>لعبة جديدة</a>
     </div>
   </header>
 
@@ -57,7 +66,7 @@
       <div class="winner__badges">
         <span class="badge">🔥 {{ $winnerCorrect }} صحيحة</span>
         <span class="badge">✕ {{ $winnerWrong }} خاطئة</span>
-        <span class="badge">🎯 دقة {{ $accuracy }}%</span>
+        <span class="badge">🎯 دقة {{ $winnerAccuracy }}%</span>
       </div>
     @endif
   </section>
@@ -70,9 +79,8 @@
       @endphp
       <article class="team-card {{ $isWinner ? 'team-card--winner' : '' }}">
         <div class="team-card__main">
-          <div class="team-card__rank">{{ $row['rank'] }}</div>
           <div class="team-card__avatar" style="background:{{ $avatars[($row['rank'] - 1) % 2] }}">
-            {{ mb_substr($team->name, 0, 1) }}
+            {{ $row['rank'] }}
           </div>
           <div class="team-card__info">
             <b>{{ $team->name }}</b>
@@ -122,7 +130,7 @@
   </section>
 
   <section class="actions">
-    <a class="btn btn--fire btn--lg" href="{{ route('categories.index') }}">🔁 لعبة جديدة</a>
+    <a class="btn btn--fire btn--lg" href="{{ !empty($needsSubscribe) ? route('subscription.index') : route('categories.index') }}" @if(!empty($needsSubscribe)) data-subscribe-lock data-subscribe-message="{{ $subscribeMessage }}" @endif>🔁 لعبة جديدة</a>
     <a class="btn btn--ghost" href="{{ route('home') }}">🏠 الرئيسية</a>
   </section>
 </div>

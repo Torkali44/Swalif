@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClassificationRequest;
 use App\Models\Classification;
+use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -44,7 +45,7 @@ class ClassificationController extends Controller
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('classifications', 'public');
+            $data['image'] = $request->file('image')->store('classifications', PublicMedia::DISK);
         }
 
         $classification = Classification::create($data);
@@ -71,7 +72,7 @@ class ClassificationController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteImage($classification->image);
-            $data['image'] = $request->file('image')->store('classifications', 'public');
+            $data['image'] = $request->file('image')->store('classifications', PublicMedia::DISK);
         }
 
         $classification->update($data);
@@ -125,8 +126,8 @@ class ClassificationController extends Controller
 
     private function deleteImage(?string $path): void
     {
-        if ($path && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if ($path && Storage::disk(PublicMedia::DISK)->exists($path)) {
+            Storage::disk(PublicMedia::DISK)->delete($path);
         }
     }
 }

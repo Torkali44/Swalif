@@ -313,6 +313,13 @@
   margin-top: 22px;
 }
 
+.admin-body .panel-warning {
+  border: 1px solid rgba(255,109,0,.35);
+  background: rgba(255,109,0,.08);
+  margin-bottom: 18px;
+  margin-top: 0;
+}
+
 .admin-body .panel-head,
 .admin-body .panel-title {
   display: flex;
@@ -695,6 +702,40 @@ body.dark.admin-body .admin-form {
   color: #F5F7FF !important;
   border-color: rgba(255,255,255,.12) !important;
   box-shadow: 0 12px 32px rgba(0,0,0,.35);
+}
+body.dark.admin-body .panel,
+body.dark.admin-body .admin-panel {
+  background: #151B32 !important;
+  border-color: rgba(255,255,255,.12) !important;
+  color: #F5F7FF !important;
+}
+body.dark.admin-body .panel-warning {
+  background: rgba(255,109,0,.15) !important;
+  border-color: rgba(255,109,0,.3) !important;
+}
+body.dark.admin-body .panel-head h3,
+body.dark.admin-body .panel-title h2 {
+  color: #F5F7FF !important;
+}
+body.dark.admin-body .mini-item,
+body.dark.admin-body .mini-row {
+  background: rgba(255,255,255,.04) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+body.dark.admin-body .mini-item .q,
+body.dark.admin-body .mini-row b {
+  color: #F5F7FF !important;
+}
+body.dark.admin-body .quick-card {
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01)) !important;
+  border-color: rgba(255,255,255,.1) !important;
+  color: #F5F7FF !important;
+}
+body.dark.admin-body .quick-card:hover {
+  border-color: rgba(255,109,0,.5) !important;
+}
+body.dark.admin-body .quick-card small {
+  color: #8892B0 !important;
 }
 body.dark.admin-body .admin-form label,
 body.dark.admin-body .admin-form .form-group {

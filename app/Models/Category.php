@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
+use App\Support\PublicMedia;
 
 class Category extends Model
 {
@@ -49,14 +49,6 @@ class Category extends Model
 
     public function imageUrl(): ?string
     {
-        if (! $this->image) {
-            return null;
-        }
-
-        if (Storage::disk('public')->exists($this->image)) {
-            return '/storage/'.ltrim($this->image, '/');
-        }
-
-        return null;
+        return PublicMedia::url($this->image);
     }
 }

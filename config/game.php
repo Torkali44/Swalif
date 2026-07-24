@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'free_trial_limit' => 5,
+    'free_trial_limit' => 5, // legacy; free play is now 1 category
+    'max_questions_per_category' => 18,
     'questions_per_level' => 6,
     'points_map' => [
         'easy' => 200,

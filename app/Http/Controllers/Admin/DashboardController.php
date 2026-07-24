@@ -14,6 +14,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $expiringSubscriptions = Subscription::query()
+            ->with(['user', 'plan'])
+            ->where('status', 'active')
+            ->whereBetween('ends_at', [now(), now()->addDays(7)])
+            ->orderBy('ends_at')
+            ->take(12)
+            ->get();
+
+        $playBlockedCount = User::query()
+            ->where('is_admin', false)
+            ->where('play_blocked', true)
+            ->count();
+
         return view('admin.dashboard', [
             'stats' => [
                 'categories' => Category::count(),
@@ -24,10 +37,12 @@ class DashboardController extends Controller
                 'plans' => Plan::count(),
                 'recommended_plans' => Plan::where('is_recommended', true)->count(),
                 'subscribers' => Subscription::where('status', 'active')->where('ends_at', '>', now())->count(),
-                'expiring_soon' => Subscription::where('status', 'active')
-                    ->whereBetween('ends_at', [now(), now()->addDays(7)])
-                    ->count(),
+                'expiring_soon' => $expiringSubscriptions->count() > 0
+                    ? Subscription::where('status', 'active')->whereBetween('ends_at', [now(), now()->addDays(7)])->count()
+                    : 0,
+                'play_blocked' => $playBlockedCount,
             ],
+            'expiringSubscriptions' => $expiringSubscriptions,
             'recent' => Question::with('category')->latest()->take(8)->get(),
             'activePlans' => Plan::where('is_active', true)->orderBy('sort_order')->take(6)->get(),
         ]);

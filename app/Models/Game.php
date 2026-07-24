@@ -38,7 +38,7 @@ class Game extends Model
 
     public function teams()
     {
-        return $this->hasMany(Team::class);
+        return $this->hasMany(Team::class)->orderBy('id');
     }
 
     public function gameQuestions()

@@ -21,7 +21,13 @@
         @endif
       </div>
       <div class="cat-circle__label">
-        <span class="cat-circle__num">{{ $category->classificationName() }}</span>
+        @if($category->classification && $category->classification->imageUrl())
+          <img src="{{ $category->classification->imageUrl() }}" alt="{{ $category->classificationName() }}" class="cat-circle__class-img" style="width:32px;height:32px;border-radius:8px;object-fit:cover;margin:0 auto 4px">
+        @elseif($category->classification && $category->classification->icon)
+          <span class="cat-circle__num">{{ $category->classification->icon }}</span>
+        @else
+          <span class="cat-circle__num">{{ $category->classificationName() }}</span>
+        @endif
         <span class="cat-circle__name">{{ $category->name_ar }}</span>
       </div>
     </div>

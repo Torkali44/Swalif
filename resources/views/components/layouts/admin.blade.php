@@ -58,6 +58,9 @@
       <a href="{{ route('admin.subscribers.index') }}" class="nav-link {{ request()->routeIs('admin.subscribers.*') ? 'active' : '' }}">
         <span class="ico">💳</span> المشتركين
       </a>
+      <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
+        <span class="ico">🧾</span> المدفوعات
+      </a>
       <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
         <span class="ico">👥</span> المستخدمون
       </a>

@@ -1,5 +1,11 @@
 <x-layouts.app title="تجهيز اللعبة — سوالف">
-<div class="setup-page-wrapper">
+<div
+  class="setup-page-wrapper"
+  @if(!empty($freeLeaveWarn))
+    data-free-leave-guard="1"
+    data-free-leave-message="{{ $leaveWarningMessage }}"
+  @endif
+>
   <!-- Blurred Category Show Background -->
   <div class="setup-page-bg">
     <section class="page-hero category-show-hero">
@@ -23,7 +29,15 @@
 
   <!-- Modal Dialog Overlay -->
   <div class="setup-modal-overlay">
-    <form class="setup-modal-card" method="POST" action="{{ route('game.start') }}">
+    <form
+      class="setup-modal-card"
+      method="POST"
+      action="{{ route('game.start') }}"
+      @if(!empty($aboutToClaimFree))
+        data-free-start-confirm="1"
+        data-free-start-message="هذي فئتك المجانية الوحيدة. بعد ما تبدأ مينفعش تلعب فئة تانية غير بالاشتراك. متأكد؟"
+      @endif
+    >
       @csrf
       <input type="hidden" name="category_id" value="{{ $category->id }}">
       <input type="hidden" name="name" value="تحدي {{ $category->name_ar }}">

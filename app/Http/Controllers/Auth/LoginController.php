@@ -18,6 +18,9 @@ class LoginController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
+        ], [
+            'email.required' => 'اكتب البريد الإلكتروني.',
+            'password.required' => 'اكتب كلمة المرور.',
         ]);
 
         if (! Auth::attempt($data, $request->boolean('remember'))) {
@@ -32,7 +35,7 @@ class LoginController extends Controller
             $request->session()->regenerateToken();
 
             return back()
-                ->withErrors(['email' => 'تم إيقاف هذا الحساب. تواصل مع الإدارة.'])
+                ->withErrors(['email' => 'تم إيقاف هذا الحساب.'])
                 ->onlyInput('email');
         }
 
@@ -41,6 +44,18 @@ class LoginController extends Controller
         return redirect()->intended(
             Auth::user()->is_admin ? route('admin.dashboard') : route('home')
         );
+    }
+
+    /** @deprecated use login form */
+    public function adminCreate()
+    {
+        return redirect()->route('login');
+    }
+
+    /** @deprecated use login.store */
+    public function adminStore(Request $request)
+    {
+        return $this->store($request);
     }
 
     public function destroy(Request $request)

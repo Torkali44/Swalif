@@ -34,4 +34,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Subscription::class);
     }
+
+    public function isPaid(): bool
+    {
+        return $this->status === 'paid';
+    }
 }

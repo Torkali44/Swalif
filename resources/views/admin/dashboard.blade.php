@@ -1,6 +1,26 @@
 <x-layouts.admin>
   <x-slot:heading>نظرة عامة</x-slot:heading>
-  <x-slot:subheading>ملخص سريع عن اللعبة والمحتوى</x-slot:subheading>
+  <x-slot:subheading>ملخص سريع عن اللعبة والمحتوى والاشتراكات</x-slot:subheading>
+
+  @if($expiringSubscriptions->isNotEmpty())
+    <div class="panel panel-warning">
+      <div class="panel-head">
+        <h3>⚠ اشتراكات تنتهي خلال 7 أيام ({{ $stats['expiring_soon'] }})</h3>
+        <a href="{{ route('admin.users.index', ['subscription' => 'expiring']) }}" class="link-more">عرض اللاعبين ←</a>
+      </div>
+      <div class="mini-list">
+        @foreach($expiringSubscriptions as $sub)
+          <div class="mini-item">
+            <span class="q">{{ $sub->user?->name ?? 'لاعب' }} — {{ $sub->plan?->name ?? 'باقة' }}</span>
+            <span class="meta">
+              <span dir="ltr">ينتهي {{ optional($sub->ends_at)->format('Y-m-d H:i') }}</span>
+              <span>{{ optional($sub->ends_at)->diffForHumans() }}</span>
+            </span>
+          </div>
+        @endforeach
+      </div>
+    </div>
+  @endif
 
   <div class="stat-grid">
     <div class="stat-card grad-fire">
@@ -46,7 +66,12 @@
     <div class="stat-card grad-emerald">
       <div class="stat-label">اشتراكات تنتهي قريبًا</div>
       <div class="stat-value">{{ $stats['expiring_soon'] }}</div>
-      <div class="stat-trend">↑ تحتاج متابعة</div>
+      <div class="stat-trend">↑ خلال 7 أيام</div>
+    </div>
+    <div class="stat-card grad-fire">
+      <div class="stat-label">لاعبون مقفول لعبهم</div>
+      <div class="stat-value">{{ $stats['play_blocked'] }}</div>
+      <div class="stat-trend">↑ يحتاجون فتح أو اشتراك</div>
     </div>
   </div>
 
@@ -66,20 +91,20 @@
         <b>إضافة فئة</b>
         <small>نظّم الأسئلة داخل فئة جديدة</small>
       </a>
-      <a class="quick-card" href="{{ route('admin.classifications.create') }}">
-        <span>◇</span>
-        <b>إضافة تصنيف</b>
-        <small>أنشئ مجموعة جديدة للفئات</small>
-      </a>
-      <a class="quick-card" href="{{ route('admin.plans.create') }}">
-        <span>◇</span>
-        <b>إضافة باقة</b>
-        <small>أنشئ خطة اشتراك جديدة</small>
+      <a class="quick-card" href="{{ route('admin.payments.index') }}">
+        <span>🧾</span>
+        <b>تأكيد مدفوعات</b>
+        <small>فعّل الاشتراك بعد الدفع</small>
       </a>
       <a class="quick-card" href="{{ route('admin.subscribers.create') }}">
         <span>◎</span>
         <b>منح اشتراك</b>
         <small>ربط مستخدم بخطة مباشرة</small>
+      </a>
+      <a class="quick-card" href="{{ route('admin.users.index', ['play' => 'blocked']) }}">
+        <span>🔒</span>
+        <b>اللاعبون المقفولون</b>
+        <small>افتح أو أبقِ القفل</small>
       </a>
     </div>
   </div>

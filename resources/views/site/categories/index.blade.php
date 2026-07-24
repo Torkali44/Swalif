@@ -68,14 +68,30 @@
   </section>
 
   <main class="container">
+    @if(!empty($playBlocked))
+      <div class="free-lock-banner" style="margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.25);font-weight:700">
+        {{ $subscribeMessage }}
+        <a href="{{ route('subscription.index') }}" style="color:var(--uae-red);font-weight:900">صفحة الاشتراك</a>.
+      </div>
+    @elseif(!empty($freeLocked))
+      <div class="free-lock-banner" style="margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.25);font-weight:700">
+        خلصت التجربة المجانية (فئة واحدة). عشان تلعب فئة تانية
+        <a href="{{ route('subscription.index') }}" style="color:var(--uae-red);font-weight:900">اشترك الآن</a>.
+      </div>
+    @endif
     <div class="grid" id="categoryGrid">
       @foreach($categories as $index => $category)
         @php
           $palette = $palettes[$index % count($palettes)];
           $filterKey = $category->classification_id ? 'c'.$category->classification_id : 'general';
+          $isLocked = !empty($playBlocked) || (!empty($freeLocked) && (int) $allowedCategoryId !== (int) $category->id);
         @endphp
-        <a href="{{ route('categories.show', $category) }}"
-           class="card"
+        <a href="{{ $isLocked ? route('subscription.index') : route('categories.show', $category) }}"
+           class="card {{ $isLocked ? 'is-locked' : '' }}"
+           @if($isLocked)
+             data-subscribe-lock
+             data-subscribe-message="{{ $subscribeMessage }}"
+           @endif
            data-filter="{{ $filterKey }}"
            data-group="{{ $filterKey }}"
            data-name="{{ $category->name_ar }}"
@@ -83,7 +99,7 @@
            data-created="{{ $category->created_at ? $category->created_at->timestamp : 0 }}"
            data-order="{{ $category->sort_order ?? 0 }}"
            style="--c1:{{ $palette[0] }};--c2:{{ $palette[1] }}">
-          <span class="card__tag">{{ $category->classificationName() }}</span>
+          <span class="card__tag">{{ $isLocked ? '🔒 مقفول' : $category->classificationName() }}</span>
           <div class="card__icon">
             @if($category->imageUrl())
               <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}">

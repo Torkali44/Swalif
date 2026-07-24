@@ -37,4 +37,21 @@ class Subscription extends Model
     {
         return $this->belongsTo(Payment::class);
     }
+
+    public function isCurrentlyActive(): bool
+    {
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        if ($this->ends_at && $this->ends_at->isPast()) {
+            return false;
+        }
+
+        if ($this->starts_at && $this->starts_at->isFuture()) {
+            return false;
+        }
+
+        return true;
+    }
 }

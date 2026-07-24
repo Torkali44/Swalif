@@ -8,6 +8,7 @@ use App\Http\Requests\StoreQuestionRequest;
 use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Question;
+use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -72,10 +73,23 @@ class QuestionController extends Controller
 
     public function create()
     {
+        $categories = Category::with('classification')
+            ->withCount('questions')
+            ->withCount([
+                'questions as easy_count' => fn ($q) => $q->where('level', 'easy'),
+                'questions as medium_count' => fn ($q) => $q->where('level', 'medium'),
+                'questions as hard_count' => fn ($q) => $q->where('level', 'hard'),
+            ])
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
         return view('admin.questions.form', [
             'question' => new Question,
-            'categories' => Category::with('classification')->where('is_active', true)->orderBy('sort_order')->get(),
+            'categories' => $categories,
             'questionTypes' => QuestionType::options(),
+            'maxQuestionsPerCategory' => (int) config('game.max_questions_per_category', 18),
+            'maxPerLevel' => (int) config('game.questions_per_level', 6),
         ]);
     }
 
@@ -92,8 +106,19 @@ class QuestionController extends Controller
 
         return view('admin.questions.form', [
             'question' => $question,
-            'categories' => Category::with('classification')->where('is_active', true)->orderBy('sort_order')->get(),
+            'categories' => Category::with('classification')
+                ->withCount('questions')
+                ->withCount([
+                    'questions as easy_count' => fn ($q) => $q->where('level', 'easy'),
+                    'questions as medium_count' => fn ($q) => $q->where('level', 'medium'),
+                    'questions as hard_count' => fn ($q) => $q->where('level', 'hard'),
+                ])
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->get(),
             'questionTypes' => QuestionType::options(),
+            'maxQuestionsPerCategory' => (int) config('game.max_questions_per_category', 18),
+            'maxPerLevel' => (int) config('game.questions_per_level', 6),
         ]);
     }
 
@@ -154,12 +179,12 @@ class QuestionController extends Controller
                     'audio' => 'questions/audio',
                     default => 'questions',
                 };
-                $payload['image'] = $request->file('image')->store($folder, 'public');
+                $payload['image'] = $request->file('image')->store($folder, PublicMedia::DISK);
             }
 
             if ($request->hasFile('answer_image')) {
                 $this->deleteImage($question->answer_image);
-                $payload['answer_image'] = $request->file('answer_image')->store('questions', 'public');
+                $payload['answer_image'] = $request->file('answer_image')->store('questions', PublicMedia::DISK);
             }
 
             $question->fill($payload)->save();
@@ -210,8 +235,8 @@ class QuestionController extends Controller
 
     private function deleteImage(?string $path): void
     {
-        if ($path && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if ($path && Storage::disk(PublicMedia::DISK)->exists($path)) {
+            Storage::disk(PublicMedia::DISK)->delete($path);
         }
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClassificationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\SubscriberController;
@@ -31,6 +32,10 @@ Route::patch('subscribers/{subscription}/cancel', [SubscriberController::class, 
 Route::patch('subscribers/{subscription}/activate', [SubscriberController::class, 'activate'])->name('subscribers.activate');
 Route::patch('subscribers/{subscription}/extend', [SubscriberController::class, 'extend'])->name('subscribers.extend');
 
+Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+Route::post('payments/{payment}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
+
 Route::get('users', [UserController::class, 'index'])->name('users.index');
 Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
+Route::patch('users/{user}/toggle-play', [UserController::class, 'togglePlayBlock'])->name('users.togglePlay');
 Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');

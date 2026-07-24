@@ -24,6 +24,25 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
   bar.style.strokeDasharray = String(circum);
   let remaining = total;
   let interval = null;
+  let expiredHandled = false;
+
+  const goToAnswer = async () => {
+    if (expiredHandled) return;
+    expiredHandled = true;
+    const answerUrl = timerEl.dataset.answerUrl;
+    try {
+      if (typeof window.showPopup === 'function') {
+        await window.showPopup('انتهى وقت الإجابة!', 'error', { autoCloseMs: 5000 });
+      } else {
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+    } catch (_) {
+      // continue to answer page even if popup fails
+    }
+    if (answerUrl) {
+      window.location.href = answerUrl;
+    }
+  };
 
   const tick = () => {
     remaining -= 1;
@@ -34,7 +53,7 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
       window.clearInterval(interval);
       interval = null;
       timerEl.classList.add('expired');
-      window.showPopup?.('انتهى وقت الإجابة!', 'error');
+      goToAnswer();
     }
   };
 
@@ -268,6 +287,39 @@ if (assignForm) {
     });
   });
 }
+
+/* Multiple-choice selection on question page */
+(() => {
+  const form = document.querySelector('[data-choice-form]');
+  if (!form) return;
+
+  const hidden = form.querySelector('#selectedOptionId');
+  const hint = form.querySelector('[data-choice-hint]');
+  const options = form.querySelectorAll('.answer[data-option-id]');
+
+  options.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      options.forEach((b) => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if (hidden) hidden.value = btn.dataset.optionId || '';
+      if (hint) {
+        hint.textContent = 'تمام — اضغط عرض الإجابة';
+        hint.classList.remove('is-error');
+      }
+    });
+  });
+
+  form.addEventListener('submit', (e) => {
+    if (!hidden?.value) {
+      e.preventDefault();
+      if (hint) {
+        hint.textContent = 'لازم تختار إجابة الأول';
+        hint.classList.add('is-error');
+      }
+      window.showPopup?.('اختار إجابة قبل عرض الإجابة', 'error');
+    }
+  });
+})();
 
 /* Video questions — play once, then reveal question */
 (() => {
@@ -737,7 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ==========================================
    Theme Toggling & Custom Dialog Modals
    ========================================== */
-window.showPopup = function(message, type = 'success') {
+window.showPopup = function(message, type = 'success', options = {}) {
   document.querySelectorAll('.custom-modal-overlay').forEach(el => el.remove());
 
   const overlay = document.createElement('div');
@@ -760,14 +812,24 @@ window.showPopup = function(message, type = 'success') {
   
   setTimeout(() => overlay.classList.add('is-active'), 10);
 
+  const autoCloseMs = Number(options?.autoCloseMs) || 0;
+
   return new Promise((resolve) => {
-    document.getElementById('modalOkBtn').addEventListener('click', () => {
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
       overlay.classList.remove('is-active');
       setTimeout(() => {
         overlay.remove();
         resolve();
       }, 300);
-    });
+    };
+
+    document.getElementById('modalOkBtn').addEventListener('click', close);
+    if (autoCloseMs > 0) {
+      setTimeout(close, autoCloseMs);
+    }
   });
 };
 
@@ -937,3 +999,70 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+/* Free-trial leave warning + subscribe locks */
+(() => {
+  const leaveRoot = document.querySelector('[data-free-leave-guard]');
+  if (leaveRoot) {
+    const message = leaveRoot.dataset.freeLeaveMessage
+      || 'لو خرجت هتكون خلصت التجربة المجانية وعلشان تلعب فئة تانية لازم تشترك. متأكد؟';
+
+    const guardNavigate = async (url) => {
+      const ok = typeof window.showConfirm === 'function'
+        ? await window.showConfirm(message)
+        : window.confirm(message);
+      if (ok) window.location.href = url;
+    };
+
+    document.querySelectorAll('[data-free-leave-link]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        guardNavigate(link.href);
+      });
+    });
+
+    // Generic: leaving play pages via logo/back outside board actions
+    leaveRoot.querySelectorAll('a[href]').forEach((link) => {
+      if (link.hasAttribute('data-free-leave-link')) return;
+      if (link.hasAttribute('data-ignore-free-leave')) return;
+      const href = link.getAttribute('href') || '';
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+      // Stay inside current game
+      if (href.includes('/game/')) return;
+
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        guardNavigate(link.href);
+      });
+    });
+  }
+
+  document.querySelectorAll('[data-subscribe-lock]').forEach((el) => {
+    el.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const msg = el.dataset.subscribeMessage
+        || document.querySelector('[data-subscribe-guard]')?.dataset.subscribeMessage
+        || 'خلصت الفئة المجانية. اشترك عشان تلعب فئات تانية.';
+      if (typeof window.showPopup === 'function') {
+        await window.showPopup(msg, 'error');
+      }
+      window.location.href = el.getAttribute('href') || '/subscribe';
+    });
+  });
+
+  const startForm = document.querySelector('[data-free-start-confirm]');
+  if (startForm) {
+    startForm.addEventListener('submit', async (e) => {
+      if (startForm.dataset.confirmed === '1') return;
+      e.preventDefault();
+      const msg = startForm.dataset.freeStartMessage
+        || 'هذي فئتك المجانية الوحيدة. متأكد إنك عايز تبدأ؟';
+      const ok = typeof window.showConfirm === 'function'
+        ? await window.showConfirm(msg)
+        : window.confirm(msg);
+      if (!ok) return;
+      startForm.dataset.confirmed = '1';
+      startForm.requestSubmit();
+    });
+  }
+})();

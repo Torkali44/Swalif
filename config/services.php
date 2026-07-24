@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    /*
+    | SMS / OTP — set SMS_DRIVER=twilio and Twilio credentials to send real OTPs.
+    | Leave as log (default) for local/demo (code shown on screen).
+    */
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        'default_country_code' => env('SMS_DEFAULT_COUNTRY_CODE', '+971'),
+        'twilio' => [
+            'sid' => env('TWILIO_SID'),
+            'token' => env('TWILIO_AUTH_TOKEN', env('TWILIO_TOKEN')),
+            'from' => env('TWILIO_FROM'),
+            'verify_sid' => env('TWILIO_VERIFY_SID'),
+        ],
+    ],
+
 ];

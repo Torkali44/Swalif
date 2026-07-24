@@ -11,9 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind nginx/cPanel reverse proxy so HTTPS and assets resolve correctly
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdmin::class,
             'free.trial' => \App\Http\Middleware\FreeTrialLimit::class,
+            'play.access' => \App\Http\Middleware\EnsurePlayAccess::class,
             'subscribed' => \App\Http\Middleware\EnsureSubscribed::class,
         ]);
     })

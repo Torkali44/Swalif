@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Enums\Difficulty;
 use App\Enums\QuestionType;
+use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class Question extends Model
 {
@@ -40,6 +40,30 @@ class Question extends Model
     public function options()
     {
         return $this->hasMany(QuestionOption::class);
+    }
+
+    public function displayPoints(): int
+    {
+        if ($this->level instanceof Difficulty) {
+            return $this->level->points();
+        }
+
+        $level = Difficulty::tryFrom((string) $this->level);
+
+        return $level?->points() ?? (int) $this->points;
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Question $question) {
+            $level = $question->level instanceof Difficulty
+                ? $question->level
+                : Difficulty::tryFrom((string) $question->level);
+
+            if ($level) {
+                $question->points = $level->points();
+            }
+        });
     }
 
     public function imageUrl(): ?string
@@ -128,15 +152,6 @@ class Question extends Model
 
     private function publicUrl(?string $path): ?string
     {
-        if (! $path) {
-            return null;
-        }
-
-        // Relative URL avoids APP_URL host mismatch (localhost vs 127.0.0.1)
-        if (Storage::disk('public')->exists($path)) {
-            return '/storage/'.ltrim($path, '/');
-        }
-
-        return null;
+        return PublicMedia::url($path);
     }
 }

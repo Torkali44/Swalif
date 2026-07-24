@@ -10,10 +10,16 @@
   $teamB = $teams->get(1);
 @endphp
 
-<div class="board-page">
+<div
+  class="board-page"
+  @if(!empty($freeLeaveWarn))
+    data-free-leave-guard="1"
+    data-free-leave-message="{{ $leaveWarningMessage }}"
+  @endif
+>
   <header class="board-bar">
     <div class="board-bar__start">
-      <a href="{{ route('home') }}" class="board-bar__logo" title="سوالف">
+      <a href="{{ route('home') }}" class="board-bar__logo" title="سوالف" data-free-leave-link>
         <img src="{{ asset('images/logo.png') }}" alt="سوالف">
       </a>
       @if($activeTeam)
@@ -37,7 +43,7 @@
         <span class="board-bar__action-ico">🏁</span>
         <span>إنهاء اللعبة</span>
       </a>
-      <a class="board-bar__action board-bar__action--exit" href="{{ route('home') }}" title="خروج">
+      <a class="board-bar__action board-bar__action--exit" href="{{ route('home') }}" title="خروج" data-free-leave-link>
         <span class="board-bar__action-ico">⏻</span>
         <span>خروج</span>
       </a>
@@ -74,7 +80,7 @@
               <a class="board-tile"
                  style="grid-column:{{ $gridCol }};grid-row:{{ $gridRow }}"
                  href="{{ route('game.question', [$game, $cell['question']]) }}">
-                {{ $cell['points'] }}
+                {{ $row['points'] }}
               </a>
             @endif
           @else

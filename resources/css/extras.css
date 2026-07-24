@@ -263,7 +263,6 @@ button, input, textarea, select { font: inherit; }
   place-items: center;
   font-weight: 900;
 }
-.scoreboard,
 .final-scores {
   display: flex;
   justify-content: center;
@@ -271,16 +270,13 @@ button, input, textarea, select { font: inherit; }
   margin: 26px 0;
   flex-wrap: wrap;
 }
-.scoreboard div,
 .final-scores div {
   background: rgba(255,255,255,.12);
   border: 1px solid rgba(255,255,255,.25);
   border-radius: 14px;
   padding: 10px 32px;
 }
-.scoreboard small,
 .final-scores small { display: block; color: #d5e1dd; }
-.scoreboard b,
 .final-scores b {
   color: var(--uae-gold-bright);
   font-family: "Cairo", sans-serif;
@@ -820,16 +816,16 @@ button, input, textarea, select { font: inherit; }
 }
 
 /* Light mode board page style overrides */
-body.game-body:not(.dark) .scoreboard > .team-card {
+body.game-body:not(.dark) .result-stage .team-card {
   background: #ffffff !important;
   border: 1px solid rgba(11, 18, 32, 0.08) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
 }
-body.game-body:not(.dark) .scoreboard .team-card__score small {
+body.game-body:not(.dark) .result-stage .team-card__score small {
   color: #6C7799 !important;
 }
-body.game-body:not(.dark) .scoreboard .team-card__info b {
-  color: #C8102E !important;
+body.game-body:not(.dark) .result-stage .team-card__info b {
+  color: #14181F !important;
 }
 body.game-body:not(.dark) .game-top small {
   color: #6C7799 !important;

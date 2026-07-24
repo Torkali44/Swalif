@@ -19,14 +19,55 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => 'admin@swalif.test'],
-            ['name' => 'مدير سوالف', 'password' => Hash::make('password'), 'is_admin' => true]
+            ['email' => 'omjori_Swalif_Admin_009@gmail.com'],
+            [
+                'name' => 'omjori',
+                'password' => Hash::make('Omjori@2026$Admin'),
+                'phone' => '0501000001',
+                'phone_code' => '+971',
+                'is_admin' => true,
+                'is_active' => true,
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'hamda_Swalif_Admin_009@gmail.com'],
+            [
+                'name' => 'hamda',
+                'password' => Hash::make('Hamda@2026$Admin'),
+                'phone' => '0501000002',
+                'phone_code' => '+971',
+                'is_admin' => true,
+                'is_active' => true,
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'tork_Swalif_Admin_009@gmail.com'],
+            [
+                'name' => 'tork',
+                'password' => Hash::make('Tork_Elzohry#123@Admin'),
+                'phone' => '0501000003',
+                'phone_code' => '+971',
+                'is_admin' => true,
+                'is_active' => true,
+            ]
         );
 
         User::updateOrCreate(
             ['email' => 'player@swalif.test'],
-            ['name' => 'لاعب تجريبي', 'password' => Hash::make('password'), 'is_admin' => false]
+            [
+                'name' => 'لاعب تجريبي',
+                'password' => Hash::make('password'),
+                'phone' => '0501999999',
+                'phone_code' => '+971',
+                'is_admin' => false,
+                'is_active' => true,
+            ]
         );
+
+        // إيقاف الحساب القديم لو موجود
+        User::where('email', 'admin@swalif.test')->update(['is_admin' => false, 'is_active' => false]);
 
         $categories = [
             ['مولات الإمارات', 'UAE Malls', '🏬', 'uae'],

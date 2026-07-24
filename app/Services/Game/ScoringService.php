@@ -29,10 +29,22 @@ class ScoringService
                 throw new RuntimeException('الفريق غير مرتبط بهذه اللعبة.');
             }
 
+            $game->loadMissing('teams');
+            $teams = $game->teams->values();
+            $answeredBefore = GameQuestion::query()
+                ->where('game_id', $game->id)
+                ->whereNotNull('answered_at')
+                ->count();
+
+            $turnTeam = $teams->count() > 0
+                ? $teams->get($answeredBefore % $teams->count())
+                : null;
+
             $gameQuestion->loadMissing('question');
-            $points = $team ? (int) $gameQuestion->question->points : 0;
+            $points = $team ? $gameQuestion->question->displayPoints() : 0;
 
             $gameQuestion->update([
+                'turn_team_id' => $turnTeam?->id,
                 'assigned_team_id' => $team?->id,
                 'points_awarded' => $points,
                 'answered_correctly' => (bool) $team,

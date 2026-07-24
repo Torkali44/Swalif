@@ -18,7 +18,17 @@
     } else {
       $matchPairs = $matchPairs->pad(4, ['left' => '', 'right' => ''])->values();
     }
+    $maxQuestions = $maxQuestionsPerCategory ?? 18;
+    $maxPerLevel = $maxPerLevel ?? 6;
+    $pointsMap = ['easy' => 200, 'medium' => 400, 'hard' => 600];
   @endphp
+
+  @unless($question->exists)
+    <div class="alert alert-info" style="margin-bottom:16px;padding:12px 14px;border-radius:12px;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);font-weight:700">
+      كل فئة: <b>6 سهل (200)</b> + <b>6 متوسط (400)</b> + <b>6 صعب (600)</b> = {{ $maxQuestions }} سؤال.
+      لو مستوى اكتمل هيظهر تنبيه، ولو الفئة خلصت: أنشئ فئة جديدة.
+    </div>
+  @endunless
 
   <form class="admin-form" method="POST" action="{{ $question->exists ? route('admin.questions.update', $question) : route('admin.questions.store') }}" enctype="multipart/form-data">
     @csrf
@@ -26,14 +36,32 @@
 
     <label>
       الفئة
-      <select name="category_id">
+      <select name="category_id" id="questionCategorySelect">
         @foreach($categories as $category)
-          <option value="{{ $category->id }}" @selected(old('category_id', $question->category_id ?: request('category_id')) == $category->id)>
+          @php
+            $count = (int) ($category->questions_count ?? 0);
+            $easy = (int) ($category->easy_count ?? 0);
+            $medium = (int) ($category->medium_count ?? 0);
+            $hard = (int) ($category->hard_count ?? 0);
+          @endphp
+          <option
+            value="{{ $category->id }}"
+            data-count="{{ $count }}"
+            data-easy="{{ $easy }}"
+            data-medium="{{ $medium }}"
+            data-hard="{{ $hard }}"
+            data-full="{{ $count >= $maxQuestions ? '1' : '0' }}"
+            @selected(old('category_id', $question->category_id ?: request('category_id')) == $category->id)
+            @disabled(! $question->exists && $count >= $maxQuestions)
+          >
             {{ $category->classificationName() }} — {{ $category->name_ar }}
+            ({{ $count }}/{{ $maxQuestions }} · سهل {{ $easy }}/{{ $maxPerLevel }} · متوسط {{ $medium }}/{{ $maxPerLevel }} · صعب {{ $hard }}/{{ $maxPerLevel }})
+            @if($count >= $maxQuestions) — مكتملة @endif
           </option>
         @endforeach
       </select>
     </label>
+    @error('category_id')<small class="error">{{ $message }}</small>@enderror
 
     <label>
       نوع السؤال
@@ -46,20 +74,19 @@
 
     <label>
       المستوى
-      <select name="level">
-        @foreach(['easy' => 'سهل', 'medium' => 'متوسط', 'hard' => 'صعب'] as $key => $label)
+      <select name="level" id="questionLevelSelect">
+        @foreach(['easy' => 'سهل (200 نقطة)', 'medium' => 'متوسط (400 نقطة)', 'hard' => 'صعب (600 نقطة)'] as $key => $label)
           <option value="{{ $key }}" @selected(old('level', $question->level?->value) === $key)>{{ $label }}</option>
         @endforeach
       </select>
+      <small id="levelCapacityHint" style="display:block;margin-top:6px;font-weight:700;color:var(--muted,#6C7799)"></small>
     </label>
+    @error('level')<small class="error">{{ $message }}</small>@enderror
 
     <label>
-      النقاط
-      <select name="points">
-        @foreach([200, 400, 600] as $points)
-          <option value="{{ $points }}" @selected((int) old('points', $question->points) === $points)>{{ $points }}</option>
-        @endforeach
-      </select>
+      النقاط (تلقائي حسب المستوى)
+      <input type="text" id="pointsPreview" value="{{ old('points', $question->points ?: 200) }}" readonly>
+      <input type="hidden" name="points" id="pointsHidden" value="{{ old('points', $question->points ?: 200) }}">
     </label>
 
     <label>
@@ -251,6 +278,48 @@
         addMatchBtn?.addEventListener('click', () => addMatchRow());
 
         updateSections();
+      })();
+
+      (() => {
+        const categorySelect = document.getElementById('questionCategorySelect');
+        const levelSelect = document.getElementById('questionLevelSelect');
+        const pointsPreview = document.getElementById('pointsPreview');
+        const pointsHidden = document.getElementById('pointsHidden');
+        const hint = document.getElementById('levelCapacityHint');
+        const maxPerLevel = {{ (int) ($maxPerLevel ?? 6) }};
+        const pointsMap = { easy: 200, medium: 400, hard: 600 };
+        const labels = { easy: 'السهل', medium: 'المتوسط', hard: 'الصعب' };
+        const isEdit = {{ $question->exists ? 'true' : 'false' }};
+
+        const sync = () => {
+          const level = levelSelect?.value || 'easy';
+          const points = pointsMap[level] || 200;
+          if (pointsPreview) pointsPreview.value = points;
+          if (pointsHidden) pointsHidden.value = points;
+
+          const opt = categorySelect?.selectedOptions?.[0];
+          if (!opt || !hint) return;
+
+          const count = Number(opt.dataset[level] || 0);
+          const total = Number(opt.dataset.count || 0);
+          if (total >= {{ (int) ($maxQuestions ?? 18) }} && !isEdit) {
+            hint.textContent = 'الفئة مكتملة وكل المستويات مكتملة. قم بإنشاء فئة جديدة.';
+            hint.style.color = '#C8102E';
+            return;
+          }
+
+          hint.textContent = `أسئلة ${labels[level] || level}: ${count}/${maxPerLevel} — النقاط ${points} تلقائيًا`;
+          if (!isEdit && count >= maxPerLevel) {
+            hint.textContent = `أسئلة المستوى ${labels[level]} مكتملة (${maxPerLevel}/${maxPerLevel}). أكمل باقي المستويات.`;
+            hint.style.color = '#C8102E';
+          } else {
+            hint.style.color = '';
+          }
+        };
+
+        categorySelect?.addEventListener('change', sync);
+        levelSelect?.addEventListener('change', sync);
+        sync();
       })();
     </script>
 

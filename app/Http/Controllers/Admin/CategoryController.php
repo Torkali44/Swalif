@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -54,7 +55,7 @@ class CategoryController extends Controller
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('categories', 'public');
+            $data['image'] = $request->file('image')->store('categories', PublicMedia::DISK);
         }
 
         $category = Category::create($data);
@@ -85,7 +86,7 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteImage($category->image);
-            $data['image'] = $request->file('image')->store('categories', 'public');
+            $data['image'] = $request->file('image')->store('categories', PublicMedia::DISK);
         }
 
         $category->update($data);
@@ -138,8 +139,8 @@ class CategoryController extends Controller
 
     private function deleteImage(?string $path): void
     {
-        if ($path && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if ($path && Storage::disk(PublicMedia::DISK)->exists($path)) {
+            Storage::disk(PublicMedia::DISK)->delete($path);
         }
     }
 }

@@ -9,14 +9,20 @@ class WinnerCalculator
 {
     public function determine(Game $game): ?Team
     {
-        $teams = $game->teams()->orderByDesc('score')->get();
+        // reorder() يشيل ترتيب الـ id الافتراضي عشان الفائز يبقى أعلى نقاط
+        $teams = $game->teams()
+            ->reorder()
+            ->orderByDesc('score')
+            ->orderBy('id')
+            ->get();
 
         if ($teams->isEmpty()) {
             return null;
         }
 
         $top = $teams->first();
-        $tie = $teams->filter(fn (Team $team) => $team->score === $top->score);
+        $topScore = (int) $top->score;
+        $tie = $teams->filter(fn (Team $team) => (int) $team->score === $topScore);
 
         return $tie->count() > 1 ? null : $top;
     }

@@ -91,6 +91,9 @@
 @keyframes hpPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.5);} 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} }
 .hp-hero__art { position: relative; text-align: center; }
 .hp-hero__art img { width: 100%; max-width: 520px; height: auto; filter: drop-shadow(0 30px 45px rgba(24,32,51,.18)); animation: hpFloat 6s ease-in-out infinite; }
+.hero-img-dark { display: none !important; }
+body.dark .hero-img-dark { display: block !important; }
+body.dark .hero-img-light { display: none !important; }
 @keyframes hpFloat { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-16px);} }
 
 /* ============ STATS ============ */

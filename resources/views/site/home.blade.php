@@ -60,7 +60,9 @@
       </div>
 
       <div class="hp-hero__art">
-        <img src="{{ asset('images/hero-character.png') }}" alt="العب سوالف" loading="eager">
+        {{-- Show different images based on dark/light mode --}}
+        <img src="{{ asset('images/hero-character-dark.png') }}" alt="العب سوالف" loading="eager" class="hero-img-dark">
+        <img src="{{ asset('images/hero-character-custom.png') }}" alt="العب سوالف" loading="eager" class="hero-img-light">
       </div>
     </div>
   </section>

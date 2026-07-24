@@ -3,45 +3,41 @@
 namespace App\Http\Middleware;
 
 use App\Models\Game;
-use App\Models\GameQuestion;
-use App\Models\Question;
-use App\Services\Subscription\FreeTrialService;
+use App\Services\Subscription\PlayAccessService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class FreeTrialLimit
 {
-    public function __construct(private FreeTrialService $freeTrial) {}
+    public function __construct(private PlayAccessService $playAccess) {}
 
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
-        if (! $user || $user->is_admin || $user->hasActiveSubscription()) {
+        if (! $user || $user->is_admin) {
+            return $next($request);
+        }
+
+        if ($this->playAccess->isBlocked($user)) {
+            return redirect()
+                ->route('subscription.index')
+                ->with('error', $this->playAccess->blockMessage($user));
+        }
+
+        if ($user->hasActiveSubscription()) {
             return $next($request);
         }
 
         /** @var Game|null $game */
         $game = $request->route('game');
-        /** @var Question|null $question */
-        $question = $request->route('question');
+        $categoryId = $game?->category_id;
 
-        if ($game && $question) {
-            $alreadyOpened = GameQuestion::query()
-                ->where('game_id', $game->id)
-                ->where('question_id', $question->id)
-                ->exists();
-
-            if ($alreadyOpened) {
-                return $next($request);
-            }
-        }
-
-        if (! $this->freeTrial->canOpenQuestion($user)) {
+        if ($categoryId && ! $this->playAccess->canPlayCategory($user, (int) $categoryId)) {
             return redirect()
                 ->route('subscription.index')
-                ->with('error', 'انتهت الأسئلة التجريبية المجانية. اشترك للمتابعة.');
+                ->with('error', $this->playAccess->blockMessage($user));
         }
 
         return $next($request);

@@ -14,6 +14,8 @@ use App\Services\Game\GameSessionService;
 use App\Services\Game\ScoringService;
 use App\Services\Game\TimerService;
 use App\Services\Game\WinnerCalculator;
+use App\Services\Subscription\FreeTrialService;
+use App\Services\Subscription\PlayAccessService;
 use Illuminate\Http\Request;
 
 class GameController extends Controller
@@ -23,18 +25,44 @@ class GameController extends Controller
         private ScoringService $scoring,
         private WinnerCalculator $winners,
         private TimerService $timer,
+        private FreeTrialService $freeTrial,
+        private PlayAccessService $playAccess,
     ) {}
 
     public function setup(Category $category)
     {
         abort_unless($category->is_active, 404);
 
-        return view('site.game.setup', compact('category'));
+        $user = request()->user();
+        if ($user && ! $this->playAccess->canPlayCategory($user, (int) $category->id)) {
+            return redirect()
+                ->route('subscription.index')
+                ->with('error', $this->playAccess->blockMessage($user));
+        }
+
+        return view('site.game.setup', [
+            'category' => $category,
+            'freeLeaveWarn' => $user && $this->freeTrial->shouldWarnOnLeave($user),
+            'leaveWarningMessage' => $this->freeTrial->leaveWarningMessage(),
+            'aboutToClaimFree' => $user
+                && $this->freeTrial->isLimitedFreeUser($user)
+                && ! $this->freeTrial->hasConsumedFreeCategory($user),
+        ]);
     }
 
     public function start(StoreGameRequest $request)
     {
-        $game = $this->sessions->start($request->user(), $request->validated());
+        $user = $request->user();
+        $categoryId = (int) $request->validated('category_id');
+
+        if (! $this->playAccess->canPlayCategory($user, $categoryId)) {
+            return redirect()
+                ->route('subscription.index')
+                ->with('error', $this->playAccess->blockMessage($user));
+        }
+
+        $this->freeTrial->claimFreeCategory($user, $categoryId);
+        $game = $this->sessions->start($user, $request->validated());
 
         return redirect()->route('game.board', $game);
     }
@@ -43,6 +71,9 @@ class GameController extends Controller
     {
         $this->sessions->ensureOwned($game, $request->user());
         $game->load(['category', 'teams', 'gameQuestions.question']);
+        $user = $request->user();
+        $freeLeaveWarn = $user && $this->freeTrial->shouldWarnOnLeave($user);
+        $leaveWarningMessage = $this->freeTrial->leaveWarningMessage();
 
         $perLevel = (int) config('game.questions_per_level', 6);
         $expected = $perLevel * 3;
@@ -70,27 +101,53 @@ class GameController extends Controller
             }
 
             $gq = $game->gameQuestions->firstWhere('question_id', $question->id);
+            $level = $question->level instanceof \BackedEnum
+                ? $question->level
+                : \App\Enums\Difficulty::tryFrom((string) $question->level);
 
             return [
                 'question' => $question,
-                'points' => $question->points,
+                // النقاط من المستوى فقط (مش القيمة المخزّنة لو كانت غلط)
+                'points' => $level?->points() ?? (int) $question->points,
                 'used' => $gq && $gq->answered_at,
             ];
         };
 
-        $byLevel = function (string $level, int $points) use ($boardQuestions, $mapCell, $perLevel) {
+        $placedIds = collect();
+        $byLevel = function (string $level, int $points) use ($boardQuestions, $mapCell, $perLevel, &$placedIds) {
             $items = $boardQuestions
-                ->filter(function ($q) use ($level, $points) {
+                ->filter(function ($q) use ($level, $placedIds) {
+                    if ($placedIds->contains($q->id)) {
+                        return false;
+                    }
                     $qLevel = $q->level instanceof \BackedEnum ? $q->level->value : (string) $q->level;
 
-                    return $qLevel === $level || (int) $q->points === $points;
+                    return $qLevel === $level;
                 })
                 ->unique('id')
                 ->take($perLevel)
-                ->values()
-                ->map($mapCell);
+                ->values();
 
-            return $items->pad($perLevel, null);
+            // لو ناقص: كمّل بأسئلة نقاطها مطابقة للمستوى وما اتاخدتش
+            if ($items->count() < $perLevel) {
+                $fill = $boardQuestions
+                    ->filter(function ($q) use ($points, $placedIds, $items) {
+                        if ($placedIds->contains($q->id) || $items->contains(fn ($item) => (int) $item->id === (int) $q->id)) {
+                            return false;
+                        }
+
+                        return (int) $q->points === $points;
+                    })
+                    ->unique('id')
+                    ->take($perLevel - $items->count())
+                    ->values();
+
+                $items = $items->concat($fill)->unique('id')->take($perLevel)->values();
+            }
+
+            $placedIds = $placedIds->merge($items->pluck('id'))->unique()->values();
+
+            return $items->map($mapCell)->pad($perLevel, null);
         };
 
         $easyCells = $byLevel('easy', 200);
@@ -103,7 +160,15 @@ class GameController extends Controller
             ? (($answeredQuestions % 2 === 0) ? $teams->get(0) : $teams->get(1))
             : null;
 
-        return view('site.game.board', compact('game', 'easyCells', 'mediumCells', 'hardCells', 'activeTeam'));
+        return view('site.game.board', compact(
+            'game',
+            'easyCells',
+            'mediumCells',
+            'hardCells',
+            'activeTeam',
+            'freeLeaveWarn',
+            'leaveWarningMessage',
+        ));
     }
 
     public function question(Game $game, Question $question, Request $request)
@@ -140,6 +205,9 @@ class GameController extends Controller
             ? $expected
             : max($expected, $game->category->questions()->where('is_active', true)->count());
         $answeredQuestions = $game->gameQuestions->whereNotNull('answered_at')->count();
+        $user = $request->user();
+        $freeLeaveWarn = $user && $this->freeTrial->shouldWarnOnLeave($user);
+        $leaveWarningMessage = $this->freeTrial->leaveWarningMessage();
 
         return view('site.game.question', compact(
             'game',
@@ -148,6 +216,8 @@ class GameController extends Controller
             'timeLimit',
             'totalQuestions',
             'answeredQuestions',
+            'freeLeaveWarn',
+            'leaveWarningMessage',
         ));
     }
 
@@ -155,10 +225,45 @@ class GameController extends Controller
     {
         $this->sessions->ensureOwned($game, $request->user());
         abort_unless($gameQuestion->game_id === $game->id, 404);
+
+        $gameQuestion->loadMissing(['question.options', 'selectedOption']);
+
+        if ($request->isMethod('post') && ! $gameQuestion->answered_at) {
+            $data = $request->validate([
+                'selected_option_id' => ['nullable', 'integer', 'exists:question_options,id'],
+                'player_answer' => ['nullable', 'string', 'max:2000'],
+            ]);
+
+            if (! empty($data['selected_option_id'])) {
+                $belongs = $gameQuestion->question->options
+                    ->contains(fn ($opt) => (int) $opt->id === (int) $data['selected_option_id']);
+                abort_unless($belongs, 422);
+            }
+
+            $gameQuestion->update([
+                'selected_option_id' => $data['selected_option_id'] ?? $gameQuestion->selected_option_id,
+                'player_answer' => array_key_exists('player_answer', $data)
+                    ? ($data['player_answer'] ?: null)
+                    : $gameQuestion->player_answer,
+            ]);
+            $gameQuestion->refresh()->load(['question.options', 'selectedOption']);
+        }
+
         $game->load(['category', 'teams', 'gameQuestions']);
         $answeredQuestions = $game->gameQuestions->whereNotNull('answered_at')->count();
+        $playerCorrect = $gameQuestion->playerChoseCorrectly();
+        $user = $request->user();
+        $freeLeaveWarn = $user && $this->freeTrial->shouldWarnOnLeave($user);
+        $leaveWarningMessage = $this->freeTrial->leaveWarningMessage();
 
-        return view('site.game.answer', compact('game', 'gameQuestion', 'answeredQuestions'));
+        return view('site.game.answer', compact(
+            'game',
+            'gameQuestion',
+            'answeredQuestions',
+            'playerCorrect',
+            'freeLeaveWarn',
+            'leaveWarningMessage',
+        ));
     }
 
     public function assign(Game $game, GameQuestion $gameQuestion, Request $request)
@@ -185,8 +290,8 @@ class GameController extends Controller
         }
 
         $message = $team
-            ? "تم إضافة {$gameQuestion->question->points} نقطة لفريق {$team->name}"
-            : 'تم تسجيل السؤال بدون نقاط';
+            ? 'تم إضافة '.$gameQuestion->question->displayPoints()." نقطة لفريق {$team->name}"
+            : 'تم تسجيل السؤال بدون نقاط (إجابة خاطئة)';
 
         $game->load('gameQuestions');
         $total = $game->gameQuestions->count();
@@ -211,13 +316,12 @@ class GameController extends Controller
         $game->load(['teams', 'gameQuestions', 'category']);
         $winner = $this->winners->determine($game);
 
-        if ($game->status !== GameStatus::Finished) {
-            $game->update([
-                'status' => GameStatus::Finished,
-                'winner_team_id' => $winner?->id,
-                'ended_at' => now(),
-            ]);
-        }
+        // حدّث الفائز دائمًا حسب أعلى نقاط (حتى لو اللعبة خلصت بدري)
+        $game->update([
+            'status' => GameStatus::Finished,
+            'winner_team_id' => $winner?->id,
+            'ended_at' => $game->ended_at ?? now(),
+        ]);
 
         $answered = $game->gameQuestions->whereNotNull('answered_at');
         $correctCount = $answered->where('answered_correctly', true)->count();
@@ -231,43 +335,71 @@ class GameController extends Controller
             $duration = sprintf('%d:%02d', intdiv($seconds, 60), $seconds % 60);
         }
 
-        $teamsByOrder = $game->teams->values();
+        $teamsByOrder = $game->teams->sortBy('id')->values();
         $teamStats = $teamsByOrder->mapWithKeys(fn ($t) => [
             $t->id => ['correct' => 0, 'wrong' => 0],
         ])->all();
 
-        // Correct = فريق خد النقط. Wrong = دور الفريق ومخدش نقط (ولا فريق أو الفريق التاني).
+        /*
+         * منطق النتيجة:
+         * - الفريق اللي خد النقط → صحيحة
+         * - لو كان دور فريق ومخدش النقط (غلط / ولا فريق / الفريق التاني) → خاطئة لدوره
+         */
         $answered->sortBy('answered_at')->values()->each(function ($gq, $i) use ($teamsByOrder, &$teamStats) {
-            $turnTeam = $teamsByOrder->get($i % max(1, $teamsByOrder->count()));
+            $turnTeam = $gq->turn_team_id
+                ? $teamsByOrder->firstWhere('id', (int) $gq->turn_team_id)
+                : $teamsByOrder->get($i % max(1, $teamsByOrder->count()));
+
             if (! $turnTeam) {
                 return;
             }
 
+            $turnId = (int) $turnTeam->id;
             $assignedId = $gq->assigned_team_id ? (int) $gq->assigned_team_id : null;
 
             if ($gq->answered_correctly && $assignedId) {
                 $teamStats[$assignedId]['correct'] = ($teamStats[$assignedId]['correct'] ?? 0) + 1;
 
-                if ($assignedId !== (int) $turnTeam->id) {
-                    $teamStats[$turnTeam->id]['wrong'] = ($teamStats[$turnTeam->id]['wrong'] ?? 0) + 1;
+                // دور الفريق ومخدش النقط → خاطئة عليه
+                if ($assignedId !== $turnId) {
+                    $teamStats[$turnId]['wrong'] = ($teamStats[$turnId]['wrong'] ?? 0) + 1;
                 }
 
                 return;
             }
 
-            $teamStats[$turnTeam->id]['wrong'] = ($teamStats[$turnTeam->id]['wrong'] ?? 0) + 1;
+            // إجابة غلط / بدون نقاط → خاطئة على صاحب الدور
+            $teamStats[$turnId]['wrong'] = ($teamStats[$turnId]['wrong'] ?? 0) + 1;
         });
 
-        $rankedTeams = $game->teams->sortByDesc('score')->values()->map(function ($team, $index) use ($teamStats) {
-            $stats = $teamStats[$team->id] ?? ['correct' => 0, 'wrong' => 0];
+        $rankedTeams = $game->teams
+            ->sortByDesc(fn ($team) => (int) $team->score)
+            ->values()
+            ->map(function ($team, $index) use ($teamStats) {
+                $stats = $teamStats[$team->id] ?? ['correct' => 0, 'wrong' => 0];
 
-            return [
-                'team' => $team,
-                'rank' => $index + 1,
-                'correct' => (int) $stats['correct'],
-                'wrong' => (int) $stats['wrong'],
-            ];
-        });
+                return [
+                    'team' => $team,
+                    'rank' => $index + 1,
+                    'correct' => (int) $stats['correct'],
+                    'wrong' => (int) $stats['wrong'],
+                ];
+            });
+
+        // الفائز المعروض = صاحب المركز الأول في الترتيب (أعلى نقاط)
+        if ($rankedTeams->isNotEmpty()) {
+            $first = $rankedTeams->first();
+            $second = $rankedTeams->get(1);
+            $isTie = $second && (int) $first['team']->score === (int) $second['team']->score;
+            $winner = $isTie ? null : $first['team'];
+
+            if ((int) ($game->winner_team_id ?? 0) !== (int) ($winner?->id ?? 0)) {
+                $game->update(['winner_team_id' => $winner?->id]);
+            }
+        }
+        $user = $request->user();
+        $needsSubscribe = $user && $this->freeTrial->hasConsumedFreeCategory($user);
+        $subscribeMessage = $this->freeTrial->subscribeRequiredMessage();
 
         return view('site.game.result', compact(
             'game',
@@ -277,6 +409,8 @@ class GameController extends Controller
             'accuracy',
             'duration',
             'rankedTeams',
+            'needsSubscribe',
+            'subscribeMessage',
         ));
     }
 

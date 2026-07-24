@@ -110,6 +110,13 @@ class AdminSubscriptionManagementTest extends TestCase
         $this->actingAs($user)
             ->post(route('subscription.checkout', $plan))
             ->assertRedirect('https://buy.stripe.com/test_live_link');
+
+        $this->assertDatabaseHas('payments', [
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'gateway' => 'stripe_link',
+        ]);
+        $this->assertFalse($user->fresh()->hasActiveSubscription());
     }
 
     public function test_plan_numeric_fields_must_be_at_least_one(): void
