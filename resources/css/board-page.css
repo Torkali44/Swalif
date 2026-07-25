@@ -69,7 +69,7 @@ body.dark .board-page {
   font-weight: 800;
   font-size: 15px;
   white-space: nowrap;
-  max-width: 100%;
+  max-width: min(48vw, 240px);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -403,8 +403,8 @@ body.dark .board-helper {
 }
 
 @media (max-width: 980px) {
-  .board-page { padding: 10px 10px 20px; }
-  .board-page__body { padding: 0 8px 16px; }
+  .board-page { padding: 10px 10px 20px; overflow-x: hidden; max-width: 100vw; }
+  .board-page__body { padding: 0 8px 16px; width: 100%; max-width: 100%; overflow-x: hidden; }
   .board-bar {
     grid-template-columns: 1fr auto;
     grid-template-areas:
@@ -415,30 +415,45 @@ body.dark .board-helper {
     min-height: 64px;
     padding: 10px 12px;
   }
-  .board-bar__start { grid-area: start; }
+  .board-bar__start { grid-area: start; min-width: 0; }
   .board-bar__actions { grid-area: actions; }
   .board-bar__center { grid-area: center; }
+  .board-bar__turn {
+    max-width: min(42vw, 160px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .board-bar__action span:last-child { display: none; }
   .board-bar__action { width: 38px; padding: 0; }
   .board-bar__title { font-size: 15px; }
   .board-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: 140px repeat(6, minmax(56px, auto));
-    gap: 8px;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: 140px repeat(6, minmax(56px, auto)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .board-cell {
+    font-size: 14px;
+    padding: 4px;
   }
   .board-grid__center {
-    grid-column: 1 / -1;
-    grid-row: 1;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
     min-height: 140px;
   }
   .board-grid .board-tile,
-  .board-grid .board-tile.is-empty {
+  .board-grid .board-tile.is-empty,
+  .board-grid .board-tile.is-used {
     grid-column: auto !important;
     grid-row: auto !important;
     min-height: 56px;
     font-size: 18px;
+    width: 100%;
   }
-  .board-teams { grid-template-columns: 1fr; gap: 10px; }
+  .board-teams { grid-template-columns: 1fr !important; gap: 10px; }
   .board-team {
     flex-wrap: wrap;
     justify-content: center;

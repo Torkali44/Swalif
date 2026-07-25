@@ -366,11 +366,22 @@ button, input, textarea, select { font: inherit; }
   display: block;
 }
 .admin-body .admin-circle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 12px;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
   justify-items: stretch;
   margin-top: 10px;
+  width: 100% !important;
+}
+@media (min-width: 701px) {
+  .admin-body .admin-circle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 1100px) {
+  .admin-body .admin-circle-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
 }
 .admin-body .admin-circle-card {
   width: 100%;
@@ -406,6 +417,14 @@ button, input, textarea, select { font: inherit; }
   color: var(--ink);
   background: #fff;
   border: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .admin-body .admin-circle-grid,
+  .admin-body .admin-circle-grid--compact {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
 }
 .admin-body .toolbar .btn-outline {
   color: var(--ink);

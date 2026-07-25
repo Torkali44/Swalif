@@ -392,7 +392,16 @@ body.dark .play-stage .video-gate__alert {
   .play-stage .match-board{grid-template-columns:1fr}
   .play-stage .order-item{grid-template-columns:auto 1fr}
   .play-stage .order-item__tools{grid-column:1/-1;justify-content:flex-end}
-  .play-stage .assign-grid{grid-template-columns:1fr}
+@media (max-width: 900px) {
+  .play-stage .assign-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 600px) {
+  .play-stage .assign-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
   .play-stage .question-card{padding:18px}
   .play-stage .question-card__text{font-size:clamp(20px,6vw,28px)}
   .play-stage .question-media--video{max-height:42vh}

@@ -1,0 +1,266 @@
+/* ============================================================
+   Mobile fixes — loaded LAST so it wins all !important wars
+   ============================================================ */
+
+/* Admin category / classification cards: 1 column on phones */
+@media (max-width: 900px) {
+  body.admin-body .admin-circle-grid,
+  body.admin-body .admin-circle-grid--compact,
+  .admin-body .admin-circle-grid,
+  .admin-body .admin-circle-grid--compact,
+  .admin-circle-grid,
+  .admin-circle-grid--compact {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body.admin-body .admin-circle-card,
+  .admin-circle-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: auto !important;
+    padding: 18px 14px !important;
+  }
+
+  body.admin-body .admin-circle-card .cat-circle,
+  .admin-circle-card .cat-circle {
+    width: 140px !important;
+    max-width: 100% !important;
+  }
+
+  body.admin-body .admin-circle-card .cat-circle__ring,
+  .admin-circle-card .cat-circle__ring {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  body.admin-body .admin-circle-card .cat-circle__name,
+  .admin-circle-card .cat-circle__name {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    font-size: 15px !important;
+  }
+
+  body.admin-body .admin-circle-card .cat-actions,
+  .admin-circle-card .cat-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  body.admin-body .admin-circle-card .cat-actions .btn,
+  body.admin-body .admin-circle-card .cat-actions a.btn,
+  body.admin-body .admin-circle-card .cat-actions form,
+  .admin-circle-card .cat-actions .btn,
+  .admin-circle-card .cat-actions a.btn,
+  .admin-circle-card .cat-actions form {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: none !important;
+  }
+
+  body.admin-body .admin-circle-card .cat-actions form .btn {
+    width: 100% !important;
+  }
+
+  body.admin-body .toolbar,
+  body.admin-body .toolbar--tight {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  body.admin-body .toolbar .spacer {
+    display: none !important;
+  }
+
+  body.admin-body .toolbar .btn,
+  body.admin-body .toolbar .select,
+  body.admin-body .toolbar .search-inp {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Site header: auth buttons in hamburger on mobile */
+@media (max-width: 900px) {
+  .nav {
+    position: relative;
+    z-index: 100;
+  }
+
+  .nav__inner {
+    position: relative !important;
+  }
+
+  .nav__actions-desktop {
+    display: none !important;
+  }
+
+  .nav__toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, .08);
+    background: #fff;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .nav__actions {
+    gap: 8px !important;
+    flex-shrink: 0;
+  }
+
+  .nav-icon-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .nav__links {
+    display: none !important;
+  }
+
+  .nav__links.is-open {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    z-index: 200 !important;
+    background: #fff !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .16) !important;
+    gap: 6px !important;
+  }
+
+  body.dark .nav__links.is-open {
+    background: #151b2e !important;
+  }
+
+  .nav-mobile-extra {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(0, 0, 0, .08) !important;
+  }
+
+  .nav-mobile-extra .btn {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+}
+
+/* Account page mobile */
+@media (max-width: 780px) {
+  .account-card__body {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .account-avatar img[hidden],
+  .account-avatar__placeholder[hidden],
+  .account-avatar [hidden] {
+    display: none !important;
+  }
+
+  .account-form__row,
+  .account-form__row--phone {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Game board mobile */
+@media (max-width: 980px) {
+  .board-page {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
+  .board-bar__turn {
+    max-width: min(46vw, 200px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .board-teams {
+    grid-template-columns: 1fr !important;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .board-page__body,
+  .board-page__main {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+}
+
+/* Public categories grid */
+@media (max-width: 500px) {
+  .categories-design .grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Home (logged-in) mobile */
+@media (max-width: 900px) {
+  .hp-hero__inner {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hp-stats__grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .hp-plans {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hp-cats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .hp-panels {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nav__actions-desktop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .hp-stats__grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .foot__inner {
+    grid-template-columns: 1fr !important;
+  }
+}

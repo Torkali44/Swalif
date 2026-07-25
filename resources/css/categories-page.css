@@ -157,9 +157,12 @@ body.dark .categories-design {
   .categories-design .hero-stats { grid-template-columns:repeat(2,1fr) }
   .categories-design .controls__inner { grid-template-columns:1fr }
   .categories-design .sort { grid-column:1 }
-  .categories-design .grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:14px }
+  .categories-design .grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:14px }
   .categories-design .card { min-height:190px;padding:16px }
   .categories-design .card__icon { font-size:44px }
   .categories-design .card__title { font-size:17px }
   .categories-design .cta__inner { padding:28px;text-align:center;justify-content:center }
+}
+@media (max-width:500px){
+  .categories-design .grid { grid-template-columns:1fr !important; }
 }

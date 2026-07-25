@@ -32,11 +32,6 @@
             <div class="account-avatar">
               @if($user->avatarUrl())
                 <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}" id="avatarPreview">
-                <div class="account-avatar__placeholder" id="avatarPlaceholder" hidden>
-                  <svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor" aria-hidden="true">
-                    <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z"/>
-                  </svg>
-                </div>
               @else
                 <div class="account-avatar__placeholder" id="avatarPlaceholder">
                   <svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor" aria-hidden="true">

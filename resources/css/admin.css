@@ -14,6 +14,23 @@
   min-height: 100vh;
 }
 
+@media (max-width: 900px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+  .admin-sidebar {
+    display: none;
+  }
+  .grid, .card-grid, .admin-cards, .cat-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 600px) {
+  .quick-grid, .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .admin-sidebar {
   background: linear-gradient(180deg, #0A0E27 0%, #1a1246 100%);
   color: #fff;
@@ -947,16 +964,30 @@ body.dark.admin-body .media-preview {
   border: 1px solid var(--border);
 }
 
-/* Category cards — larger, 4 per row, clear actions */
+/* Category cards — mobile-first */
 .admin-circle-grid {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 18px !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
   width: 100% !important;
 }
 .admin-circle-grid--compact {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 18px !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+}
+@media (min-width: 701px) {
+  .admin-circle-grid,
+  .admin-circle-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+@media (min-width: 1100px) {
+  .admin-circle-grid,
+  .admin-circle-grid--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+  }
 }
 .admin-circle-card {
   background: var(--surface, #fff) !important;
@@ -972,7 +1003,7 @@ body.dark.admin-body .media-preview {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  min-height: 300px !important;
+  min-height: 0 !important;
 }
 .admin-circle-card:hover {
   transform: translateY(-4px) !important;
@@ -1316,5 +1347,59 @@ body.admin-nav-open {
   }
   .admin-body table {
     min-width: 640px;
+  }
+
+  /* Force single-column category/classification cards on mobile */
+  .admin-body .admin-circle-grid,
+  .admin-body .admin-circle-grid--compact,
+  .admin-circle-grid,
+  .admin-circle-grid--compact {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+  }
+  .admin-body .admin-circle-card,
+  .admin-circle-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    padding: 18px 14px !important;
+  }
+  .admin-circle-card .cat-circle {
+    width: min(150px, 46vw) !important;
+  }
+  .admin-circle-card .cat-circle__ring {
+    width: min(136px, 42vw) !important;
+    height: min(136px, 42vw) !important;
+  }
+  .admin-circle-card .cat-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .admin-circle-card .cat-actions .btn,
+  .admin-circle-card .cat-actions a.btn,
+  .admin-circle-card .cat-actions form {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .admin-circle-card .cat-actions form .btn {
+    width: 100% !important;
+  }
+  .admin-body .toolbar,
+  .admin-body .toolbar--tight {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .admin-body .toolbar .spacer {
+    display: none !important;
+  }
+  .admin-body .toolbar .btn,
+  .admin-body .toolbar .select,
+  .admin-body .toolbar .search-inp {
+    width: 100% !important;
   }
 }

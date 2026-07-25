@@ -72,6 +72,8 @@
   position: relative;
   width: 140px;
   height: 140px;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 .account-avatar img,
 .account-avatar__placeholder {
@@ -83,6 +85,14 @@
   place-items: center;
   background: #1E3A5F;
   color: rgba(255,255,255,.85);
+}
+.account-avatar img[hidden],
+.account-avatar__placeholder[hidden],
+.account-avatar [hidden] {
+  display: none !important;
+}
+.account-avatar img:not([hidden]) {
+  display: block !important;
 }
 .account-avatar__cam {
   position: absolute;
@@ -98,6 +108,7 @@
   cursor: pointer;
   color: #374151;
   box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  z-index: 3;
 }
 .account-sidebar__info b {
   display: block;
@@ -211,9 +222,38 @@
 .hidden { display: none !important; }
 
 @media (max-width: 780px) {
+  .account-page { padding: 20px 0 50px; }
   .account-card { padding: 22px 18px 28px; border-radius: 22px; }
-  .account-card__body { grid-template-columns: 1fr; gap: 24px; }
+  .account-card__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .account-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .account-tab { text-align: center; padding: 10px 8px; font-size: 13px; }
+  .account-card__body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+  }
+  .account-sidebar {
+    width: 100%;
+    order: 0;
+  }
+  .account-form {
+    width: 100%;
+    order: 1;
+  }
   .account-form__row,
   .account-form__row--phone { grid-template-columns: 1fr; }
   .account-card__head h1 { font-size: 26px; }
+  .account-avatar,
+  .account-avatar img,
+  .account-avatar__placeholder {
+    width: 120px;
+    height: 120px;
+  }
 }

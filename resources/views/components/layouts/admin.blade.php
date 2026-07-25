@@ -9,6 +9,37 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
+  <style>
+    /* Critical mobile fix for admin cards (before/without cache) */
+    @media (max-width: 900px) {
+      .admin-circle-grid,
+      .admin-circle-grid--compact {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        width: 100% !important;
+      }
+      .admin-circle-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 0 !important;
+      }
+      .admin-circle-card .cat-actions {
+        flex-direction: column !important;
+        width: 100% !important;
+      }
+      .admin-circle-card .cat-actions .btn,
+      .admin-circle-card .cat-actions a.btn,
+      .admin-circle-card .cat-actions form {
+        width: 100% !important;
+      }
+      .admin-circle-card .cat-circle__name {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+      }
+    }
+  </style>
   <script>
     (function () {
       try {

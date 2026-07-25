@@ -410,11 +410,27 @@ body.dark .how {
   background: #070A14;
 }
 
-/* Admin categories — 4 larger cards per row */
+/* Admin categories — mobile-first: 1 col, then 4 on desktop */
 .admin-circle-grid,
 .admin-circle-grid--compact {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 18px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+@media (min-width: 701px) {
+  .admin-circle-grid,
+  .admin-circle-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+@media (min-width: 1100px) {
+  .admin-circle-grid,
+  .admin-circle-grid--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+  }
 }
 .admin-body .admin-circle-card {
   max-width: none !important;
@@ -564,7 +580,7 @@ body.dark.admin-body .btn-danger {
   border-color: rgba(248, 113, 113, .35) !important;
 }
 
-@media (max-width: 1200px) {
+@media (min-width: 901px) and (max-width: 1200px) {
   .admin-circle-grid,
   .admin-circle-grid--compact {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -573,13 +589,13 @@ body.dark.admin-body .btn-danger {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-@media (max-width: 1100px) {
+@media (min-width: 701px) and (max-width: 1100px) {
   .categories-design .grid,
   .cat-circle-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
-@media (max-width: 860px) {
+@media (min-width: 501px) and (max-width: 860px) {
   .categories-design .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
