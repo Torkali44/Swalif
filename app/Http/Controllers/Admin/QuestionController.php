@@ -10,6 +10,7 @@ use App\Models\Classification;
 use App\Models\Question;
 use App\Support\MediaStore;
 use App\Support\PublicMedia;
+use App\Support\UploadedMediaPath;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -150,10 +151,25 @@ class QuestionController extends Controller
             };
             $maxWidth = $data['type'] === 'image_guess' || $data['type'] === 'puzzle' ? 1400 : 1200;
             $newImagePath = MediaStore::store($request->file('image'), $folder, $maxWidth);
+        } else {
+            $mediaKind = match ($data['type']) {
+                'video' => 'video',
+                'audio' => 'audio',
+                default => 'image',
+            };
+            $preloaded = (string) ($data['image_path'] ?? '');
+            if (UploadedMediaPath::isValid($preloaded, $mediaKind)) {
+                $newImagePath = $preloaded;
+            }
         }
 
         if ($request->hasFile('answer_image')) {
             $newAnswerImagePath = MediaStore::store($request->file('answer_image'), 'questions', 1200);
+        } else {
+            $preloadedAnswer = (string) ($data['answer_image_path'] ?? '');
+            if (UploadedMediaPath::isValid($preloadedAnswer, 'image')) {
+                $newAnswerImagePath = $preloadedAnswer;
+            }
         }
 
         DB::transaction(function () use ($question, $data, $newImagePath, $newAnswerImagePath) {

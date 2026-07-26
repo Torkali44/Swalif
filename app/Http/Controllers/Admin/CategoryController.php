@@ -57,7 +57,7 @@ class CategoryController extends Controller
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
-            $data['image'] = MediaStore::store($request->file('image'), 'categories', 1000);
+            $data['image'] = MediaStore::store($request->file('image'), 'categories', 480);
         }
 
         $category = Category::create($data);
@@ -89,7 +89,7 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteImage($category->image);
-            $data['image'] = MediaStore::store($request->file('image'), 'categories', 1000);
+            $data['image'] = MediaStore::store($request->file('image'), 'categories', 480);
         }
 
         $category->update($data);

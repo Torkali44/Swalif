@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClassificationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MediaUploadController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\QuestionController;
@@ -20,6 +21,7 @@ Route::patch('classifications/{classification}/toggle', [ClassificationControlle
 
 Route::resource('questions', QuestionController::class)->except(['show']);
 Route::patch('questions/{question}/toggle', [QuestionController::class, 'toggle'])->name('questions.toggle');
+Route::post('media', [MediaUploadController::class, 'store'])->name('media.store');
 
 Route::resource('plans', PlanController::class)->only(['index', 'create', 'store', 'edit', 'update']);
 

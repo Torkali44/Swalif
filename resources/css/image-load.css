@@ -2,7 +2,7 @@
 img.sw-img {
   opacity: 0;
   transition: opacity .18s ease;
-  background: transparent;
+  background: #e8edf7;
 }
 img.sw-img.is-ready {
   opacity: 1;

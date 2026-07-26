@@ -46,7 +46,7 @@ class ClassificationController extends Controller
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
-            $data['image'] = MediaStore::store($request->file('image'), 'classifications', 800);
+            $data['image'] = MediaStore::store($request->file('image'), 'classifications', 480);
         }
 
         $classification = Classification::create($data);
@@ -73,7 +73,7 @@ class ClassificationController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteImage($classification->image);
-            $data['image'] = MediaStore::store($request->file('image'), 'classifications', 800);
+            $data['image'] = MediaStore::store($request->file('image'), 'classifications', 480);
         }
 
         $classification->update($data);

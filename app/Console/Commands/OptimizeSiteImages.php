@@ -91,22 +91,33 @@ class OptimizeSiteImages extends Command
                 continue;
             }
 
-            if ($file->getSize() < 30 * 1024) {
+            if ($file->getSize() < 12 * 1024 && ! $this->isProgressiveJpeg($file->getPathname())) {
                 continue;
             }
 
             $path = $file->getPathname();
             $relative = ltrim(str_replace('\\', '/', substr($path, strlen(rtrim($root, '/\\')))), '/');
-            $maxWidth = str_contains($relative, 'questions') ? 1200 : 900;
 
+            // Category circles display ~136px — keep files small for fast paint
+            $maxWidth = match (true) {
+                str_starts_with($relative, 'categories/') => 480,
+                str_starts_with($relative, 'classifications/') => 480,
+                str_starts_with($relative, 'avatars/') => 400,
+                str_contains($relative, 'questions') => 1200,
+                default => 900,
+            };
+
+            $isProgressive = $this->isProgressiveJpeg($path);
             $tmp = $path.'.opt.jpg';
-            if (! $this->encodeFile($path, $tmp, $maxWidth, 78)) {
+            if (! $this->encodeFile($path, $tmp, $maxWidth, 72)) {
                 continue;
             }
 
             $newSize = filesize($tmp) ?: 0;
             $oldSize = $file->getSize();
-            if ($newSize < 1 || $newSize >= $oldSize * 0.98) {
+
+            // Always rewrite progressive JPEGs (band-by-band loading) even if size is similar
+            if ($newSize < 1 || (! $isProgressive && $newSize >= $oldSize * 0.98)) {
                 @unlink($tmp);
                 continue;
             }
@@ -183,5 +194,21 @@ class OptimizeSiteImages extends Command
         imagedestroy($canvas);
 
         return (bool) $ok;
+    }
+
+    private function isProgressiveJpeg(string $path): bool
+    {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if (! in_array($ext, ['jpg', 'jpeg'], true)) {
+            return false;
+        }
+
+        $chunk = @file_get_contents($path, false, null, 0, 131072);
+        if ($chunk === false || $chunk === '') {
+            return false;
+        }
+
+        // SOF2 (0xFFC2) = progressive DCT — causes band-by-band browser paint
+        return str_contains($chunk, "\xFF\xC2");
     }
 }

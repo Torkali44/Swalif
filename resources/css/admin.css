@@ -1020,6 +1020,7 @@ body.dark.admin-body .media-preview {
   margin: 0 auto !important;
   position: relative !important;
   overflow: hidden !important;
+  background: linear-gradient(145deg, #e8edf7, #d5dceb) !important;
 }
 .admin-circle-card .cat-circle__ring img {
   position: absolute !important;

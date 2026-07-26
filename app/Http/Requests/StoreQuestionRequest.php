@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Question;
+use App\Support\UploadedMediaPath;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -18,10 +19,10 @@ class StoreQuestionRequest extends FormRequest
     {
         $type = (string) $this->input('type', 'standard');
 
-        // Prefer mimes (extension) over heavy mimetypes sniffing on large uploads
+        // Prefer extensions over mimes: MIME sniffing rejects many valid phone/WhatsApp videos.
         $mediaRules = match ($type) {
-            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,avi', 'max:51200'],
-            'audio' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac', 'max:20480'],
+            'video' => ['nullable', 'file', 'extensions:mp4,webm,mov,avi,m4v', 'max:51200'],
+            'audio' => ['nullable', 'file', 'extensions:mp3,wav,ogg,m4a,aac', 'max:20480'],
             default => ['nullable', 'image', 'max:4096'],
         };
 
@@ -35,7 +36,9 @@ class StoreQuestionRequest extends FormRequest
             'time_limit' => ['nullable', 'integer', 'min:10', 'max:300'],
             'is_active' => ['nullable', 'boolean'],
             'image' => $mediaRules,
+            'image_path' => ['nullable', 'string', 'max:255'],
             'answer_image' => ['nullable', 'image', 'max:5120'],
+            'answer_image_path' => ['nullable', 'string', 'max:255'],
             'remove_image' => ['nullable', 'boolean'],
             'remove_answer_image' => ['nullable', 'boolean'],
             'options' => ['nullable', 'array', 'max:4'],
@@ -77,7 +80,25 @@ class StoreQuestionRequest extends FormRequest
                 ->values();
 
             $hasAnswerText = filled($this->input('answer_text'));
-            $hasMedia = $this->hasFile('image') || filled($existingQuestion?->image);
+            $imagePath = (string) $this->input('image_path', '');
+            $answerImagePath = (string) $this->input('answer_image_path', '');
+            $mediaKind = match ($type) {
+                'video' => 'video',
+                'audio' => 'audio',
+                default => 'image',
+            };
+
+            if (filled($imagePath) && ! UploadedMediaPath::isValid($imagePath, $mediaKind)) {
+                $validator->errors()->add('image', 'ملف الوسائط غير صالح. أعد رفعه.');
+            }
+
+            if (filled($answerImagePath) && ! UploadedMediaPath::isValid($answerImagePath, 'image')) {
+                $validator->errors()->add('answer_image', 'صورة الإجابة غير صالحة. أعد رفعها.');
+            }
+
+            $hasMedia = $this->hasFile('image')
+                || (filled($imagePath) && UploadedMediaPath::isValid($imagePath, $mediaKind))
+                || filled($existingQuestion?->image);
 
             if ($type === 'standard') {
                 if ($filledOptions->count() < 2) {
@@ -190,8 +211,12 @@ class StoreQuestionRequest extends FormRequest
             'question_text.required' => 'نص السؤال مطلوب.',
             'level.required' => 'اختر مستوى السؤال.',
             'image.mimetypes' => 'صيغة الملف غير مدعومة لهذا النوع.',
+            'image.mimes' => 'صيغة الملف غير مدعومة لهذا النوع.',
+            'image.extensions' => 'صيغة الملف غير مدعومة. للفيديو: mp4/webm/mov — للصوت: mp3/wav/ogg.',
             'image.max' => 'حجم الملف كبير جدًا.',
             'image.image' => 'الملف يجب أن يكون صورة.',
+            'file.extensions' => 'صيغة الملف غير مدعومة.',
+            'file.mimes' => 'صيغة الملف غير مدعومة.',
         ];
     }
 

@@ -30,9 +30,18 @@
     </div>
   @endunless
 
-  <form class="admin-form" method="POST" action="{{ $question->exists ? route('admin.questions.update', $question) : route('admin.questions.store') }}" enctype="multipart/form-data">
+  <form
+    class="admin-form"
+    method="POST"
+    action="{{ $question->exists ? route('admin.questions.update', $question) : route('admin.questions.store') }}"
+    enctype="multipart/form-data"
+    data-async-upload
+    data-upload-url="{{ route('admin.media.store') }}"
+  >
     @csrf
     @if($question->exists) @method('PUT') @endif
+    <input type="hidden" name="image_path" id="questionImagePath" value="{{ old('image_path') }}">
+    <input type="hidden" name="answer_image_path" id="questionAnswerImagePath" value="{{ old('answer_image_path') }}">
 
     <label>
       الفئة
@@ -110,35 +119,38 @@
     <div class="wide question-section" data-question-section data-types="video" hidden>
       <label class="wide">
         فيديو السؤال
-        <input type="file" name="image" accept="video/mp4,video/webm,video/quicktime">
+        <input type="file" name="image" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v,.avi" data-async-file data-path-input="questionImagePath" data-upload-kind="video">
+        <div class="upload-status" data-upload-status hidden></div>
         @if($question->exists && $question->isVideo() && $question->mediaUrl())
           <div class="media-preview">
             <video src="{{ $question->mediaUrl() }}" controls style="max-width:100%;border-radius:12px;max-height:240px"></video>
             <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الفيديو الحالي</label>
           </div>
         @endif
-        <small class="muted">يُسمح بالتشغيل مرة واحدة فقط أثناء اللعب. الصيغ: mp4 / webm</small>
+        <small class="muted">يبدأ الرفع فور اختيار الملف. يُفضّل mp4 أقل من 15MB. الصيغ: mp4 / webm</small>
       </label>
     </div>
 
     <div class="wide question-section" data-question-section data-types="audio" hidden>
       <label class="wide">
         الملف الصوتي
-        <input type="file" name="image" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav">
+        <input type="file" name="image" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav" data-async-file data-path-input="questionImagePath" data-upload-kind="audio">
+        <div class="upload-status" data-upload-status hidden></div>
         @if($question->exists && $question->isAudio() && $question->mediaUrl())
           <div class="media-preview">
             <audio src="{{ $question->mediaUrl() }}" controls style="width:100%"></audio>
             <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الصوت الحالي</label>
           </div>
         @endif
-        <small class="muted">الصيغ المدعومة: mp3 / wav / ogg</small>
+        <small class="muted">يبدأ الرفع فور اختيار الملف. الصيغ: mp3 / wav / ogg</small>
       </label>
     </div>
 
     <div class="wide question-section" data-question-section data-types="standard,image_guess,puzzle,complete,order,match" hidden>
       <label class="wide">
         صورة السؤال (اختياري)
-        <input type="file" name="image" accept="image/*">
+        <input type="file" name="image" accept="image/*" data-async-file data-path-input="questionImagePath" data-upload-kind="image">
+        <div class="upload-status" data-upload-status hidden></div>
         @if($question->imageUrl())
           <div class="media-preview">
             <img src="{{ $question->imageUrl() }}" alt="صورة السؤال">
@@ -151,7 +163,8 @@
     <div class="wide question-section" data-question-section data-types="standard,image_guess,puzzle,complete,order,match" hidden>
       <label class="wide">
         صورة الإجابة (اختياري)
-        <input type="file" name="answer_image" accept="image/*">
+        <input type="file" name="answer_image" accept="image/*" data-async-file data-path-input="questionAnswerImagePath" data-upload-kind="answer_image">
+        <div class="upload-status" data-upload-status hidden></div>
         @if($question->answerImageUrl())
           <div class="media-preview">
             <img src="{{ $question->answerImageUrl() }}" alt="صورة الإجابة">
@@ -229,8 +242,29 @@
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
 
+        let lastType = typeSelect?.value || @json($selectedType);
+
+        const clearAsyncMedia = () => {
+          const imagePath = document.getElementById('questionImagePath');
+          const answerPath = document.getElementById('questionAnswerImagePath');
+          if (imagePath) imagePath.value = '';
+          if (answerPath) answerPath.value = '';
+          document.querySelectorAll('[data-async-file]').forEach((input) => {
+            input.value = '';
+            const status = input.closest('label')?.querySelector('[data-upload-status]');
+            if (status) {
+              status.hidden = true;
+              status.textContent = '';
+            }
+          });
+        };
+
         const updateSections = () => {
           const type = typeSelect?.value || @json($selectedType);
+          if (type !== lastType) {
+            clearAsyncMedia();
+            lastType = type;
+          }
           sections.forEach((section) => {
             const allowed = (section.dataset.types || '')
               .split(',')

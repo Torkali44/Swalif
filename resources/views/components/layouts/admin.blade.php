@@ -132,17 +132,45 @@
   </main>
 </div>
 <x-toast />
+<style>
+  .upload-status {
+    margin-top: 8px;
+    font-weight: 700;
+    font-size: .92rem;
+    color: var(--muted, #6C7799);
+  }
+  .upload-status.is-progress {
+    color: #c45c00;
+  }
+  .upload-status.is-done { color: #1a7f37; }
+  .upload-status.is-error { color: #C8102E; }
+  .upload-status__bar {
+    margin-top: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+  .upload-status__bar > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #ff6d00;
+    transition: width .15s linear;
+  }
+</style>
 <script>
-/* Compress images in the browser before upload — faster admin saves on shared hosting */
+/* Compress images + async pre-upload so Save doesn't wait on large video/audio */
 (() => {
-  const MAX = 1400;
-  const QUALITY = 0.78;
+  const MAX = 1200;
+  const QUALITY = 0.72;
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
   async function compressFile(file) {
     if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
       return file;
     }
-    if (file.size < 350 * 1024) return file;
+    if (file.size < 250 * 1024) return file;
 
     const bitmap = await createImageBitmap(file);
     let w = bitmap.width;
@@ -167,7 +195,141 @@
     return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
   }
 
-  document.querySelectorAll('form').forEach((form) => {
+  function statusEl(input) {
+    return input.closest('label')?.querySelector('[data-upload-status]') || null;
+  }
+
+  function setStatus(input, text, state, percent) {
+    const el = statusEl(input);
+    if (!el) return;
+    el.hidden = !text;
+    el.className = 'upload-status' + (state ? ' is-' + state : '');
+    const barWidth = typeof percent === 'number' ? Math.max(0, Math.min(100, percent)) : null;
+    el.innerHTML = barWidth === null
+      ? text
+      : `${text}<div class="upload-status__bar"><span style="width:${barWidth}%"></span></div>`;
+  }
+
+  function uploadFile(url, file, kind, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && typeof onProgress === 'function') {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        let data = null;
+        try { data = JSON.parse(xhr.responseText); } catch (_) {}
+        if (xhr.status >= 200 && xhr.status < 300 && data?.path) {
+          resolve(data);
+          return;
+        }
+        let msg = data?.errors?.file?.[0] || data?.message || 'فشل رفع الملف';
+        if (typeof msg === 'string' && (msg === 'validation.mimes' || msg.startsWith('validation.'))) {
+          msg = 'صيغة الملف غير مدعومة. للفيديو استخدم mp4 أو webm أو mov.';
+        }
+        reject(new Error(msg));
+      };
+      xhr.onerror = () => reject(new Error('تعذر الاتصال أثناء الرفع'));
+      const body = new FormData();
+      body.append('file', file);
+      body.append('kind', kind);
+      xhr.send(body);
+    });
+  }
+
+  function bindAsyncForm(form) {
+    const uploadUrl = form.dataset.uploadUrl;
+    if (!uploadUrl) return;
+
+    const pending = new Set();
+    form._asyncUploads = pending;
+
+    form.querySelectorAll('[data-async-file]').forEach((input) => {
+      input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        const pathInput = document.getElementById(input.dataset.pathInput || '');
+        if (!file) {
+          if (pathInput) pathInput.value = '';
+          setStatus(input, '', '');
+          return;
+        }
+
+        const kind = input.dataset.uploadKind || 'image';
+        const token = Symbol('upload');
+        pending.add(token);
+        input.dataset.uploading = '1';
+
+        try {
+          setStatus(input, 'جاري تجهيز الملف...', 'progress', 0);
+          const ready = await compressFile(file);
+          setStatus(input, 'جاري رفع الملف... 0%', 'progress', 0);
+
+          const result = await uploadFile(uploadUrl, ready, kind, (pct) => {
+            setStatus(input, `جاري رفع الملف... ${pct}%`, 'progress', pct);
+          });
+
+          if (pathInput) pathInput.value = result.path;
+          // Avoid re-sending the heavy file on final save
+          input.value = '';
+          setStatus(input, 'تم رفع الملف بنجاح ✓', 'done');
+        } catch (err) {
+          console.error(err);
+          if (pathInput) pathInput.value = '';
+          setStatus(input, err.message || 'فشل رفع الملف', 'error');
+        } finally {
+          pending.delete(token);
+          delete input.dataset.uploading;
+        }
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      if (form.dataset.asyncReady === '1') return;
+
+      if (pending.size > 0 || form.querySelector('[data-async-file][data-uploading="1"]')) {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+        if (btn) {
+          btn.disabled = true;
+          btn.dataset.oldText = btn.dataset.oldText || btn.textContent;
+          btn.textContent = 'جاري إكمال الرفع...';
+        }
+        const wait = () => new Promise((r) => {
+          const t = setInterval(() => {
+            if (pending.size === 0 && !form.querySelector('[data-async-file][data-uploading="1"]')) {
+              clearInterval(t);
+              r();
+            }
+          }, 120);
+        });
+        await wait();
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = btn.dataset.oldText || 'حفظ السؤال';
+        }
+        form.dataset.asyncReady = '1';
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+        return;
+      }
+
+      // Clear any leftover file inputs so save is a light request
+      form.querySelectorAll('[data-async-file]').forEach((input) => {
+        const pathInput = document.getElementById(input.dataset.pathInput || '');
+        if (pathInput?.value) input.value = '';
+      });
+    });
+  }
+
+  document.querySelectorAll('form[data-async-upload]').forEach(bindAsyncForm);
+
+  // Fallback for other admin forms (categories, etc.): compress images then submit
+  document.querySelectorAll('form:not([data-async-upload])').forEach((form) => {
     form.addEventListener('submit', async (e) => {
       if (form.dataset.compressDone === '1') return;
       const inputs = [...form.querySelectorAll('input[type="file"]')].filter((i) => i.files?.length);
