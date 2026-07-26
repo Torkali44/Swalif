@@ -29,7 +29,7 @@
 >
   <header class="result-top">
     <a href="{{ route('home') }}" class="result-top__brand" title="سوالف">
-      <img src="{{ asset(file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg') }}" alt="سوالف" width="120" height="40" decoding="async">
+      <img src="{{ asset(file_exists(public_path('images/logo.png')) ? 'images/logo.png' : (file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg')) }}" alt="سوالف" width="54" height="54" decoding="async">
       <span>سوالف</span>
     </a>
     <div class="result-top__actions">

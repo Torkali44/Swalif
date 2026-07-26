@@ -84,12 +84,12 @@
                       <td>
                         <span class="status-pill admin">
                           {{ match($question->type ?? 'standard') {
-                            'image_guess' => 'خمن الصورة',
-                            'puzzle' => 'لغز',
+                            'image_guess' => 'خمن الصورة ( لغز )',
+                            'puzzle' => 'جواب واحد',
                             'match' => 'توصيل',
                             'complete' => 'أكمل الناقص',
                             'order' => 'ترتيب',
-                            default => 'عادي',
+                            default => 'أختياري',
                           } }}
                         </span>
                       </td>

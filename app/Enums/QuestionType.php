@@ -16,9 +16,9 @@ enum QuestionType: string
     public function label(): string
     {
         return match ($this) {
-            self::Standard => 'عادي',
-            self::ImageGuess => 'خمن الصورة',
-            self::Puzzle => 'لغز',
+            self::Standard => 'أختياري',
+            self::ImageGuess =>'خمن الصورة( لغز )',
+            self::Puzzle => 'جواب واحد',
             self::Match => 'توصيل',
             self::Complete => 'أكمل الناقص',
             self::Order => 'ترتيب',

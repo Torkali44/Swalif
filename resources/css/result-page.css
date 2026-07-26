@@ -22,8 +22,9 @@ body.game-body #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-e
   font-family:'Cairo',sans-serif;font-weight:900;font-size:18px;
 }
 .result-top__brand img{
-  width:42px;height:42px;border-radius:50%;object-fit:cover;
+  width:54px;height:54px;border-radius:50%;object-fit:contain;
   border:2px solid rgba(255,109,0,.35);
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
 }
 .result-top__actions{display:inline-flex;align-items:center;gap:10px}
 .result-top__icon{

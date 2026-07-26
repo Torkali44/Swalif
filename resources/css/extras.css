@@ -743,11 +743,13 @@ body.dark .error { color: #FCA5A5; }
   gap: 10px !important;
 }
 .logo-img {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 12px !important;
-  object-fit: cover !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  object-fit: contain !important;
   flex-shrink: 0 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15)) !important;
 }
 .logo-text {
   font-family: "Cairo", sans-serif !important;

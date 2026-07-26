@@ -20,7 +20,7 @@
   <header class="board-bar">
     <div class="board-bar__start">
       <a href="{{ route('home') }}" class="board-bar__logo" title="سوالف" data-free-leave-link>
-        <img src="{{ asset(file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg') }}" alt="سوالف" width="120" height="40" decoding="async">
+        <img src="{{ asset(file_exists(public_path('images/logo.png')) ? 'images/logo.png' : (file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg')) }}" alt="سوالف" width="58" height="58" decoding="async">
       </a>
       @if($activeTeam)
         <span class="board-bar__turn">دور فريق: {{ $activeTeam->name }}</span>
