@@ -9,6 +9,8 @@ use App\Services\Category\CategoryService;
 use App\Services\Subscription\FreeTrialService;
 use App\Services\Subscription\PlayAccessService;
 
+use Illuminate\Support\Facades\Cache;
+
 class CategoryController extends Controller
 {
     public function __construct(
@@ -25,12 +27,12 @@ class CategoryController extends Controller
         $allowedCategoryId = $user && ! $playBlocked ? $this->freeTrial->freeCategoryId($user) : null;
 
         return view('site.categories.index', [
-            'categories' => $this->categories->activeOrdered(),
-            'classifications' => Classification::query()
+            'categories' => Cache::remember('categories.active_ordered', 120, fn () => $this->categories->activeOrdered()),
+            'classifications' => Cache::remember('categories.active_classifications', 120, fn () => Classification::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('id')
-                ->get(['id', 'name_ar', 'icon', 'slug']),
+                ->get(['id', 'name_ar', 'icon', 'slug'])),
             'playBlocked' => $playBlocked,
             'freeLocked' => $freeLocked || $playBlocked,
             'allowedCategoryId' => $allowedCategoryId,

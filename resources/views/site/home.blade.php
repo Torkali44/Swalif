@@ -60,9 +60,19 @@
       </div>
 
       <div class="hp-hero__art">
-        {{-- Show different images based on dark/light mode --}}
-        <img src="{{ asset(file_exists(public_path('images/hero-dark.jpg')) ? 'images/hero-dark.jpg' : 'images/hero-character-dark.png') }}" alt="العب سوالف" width="720" height="720" decoding="async" fetchpriority="high" class="hero-img-dark">
-        <img src="{{ asset(file_exists(public_path('images/hero-light.jpg')) ? 'images/hero-light.jpg' : 'images/hero-character-custom.png') }}" alt="العب سوالف" width="720" height="720" decoding="async" fetchpriority="high" class="hero-img-light">
+        {{-- Hero: WebP served directly; if missing browser auto-falls to PNG via onerror --}}
+        <img
+          src="{{ asset('images/hero-dark.webp') }}"
+          onerror="this.onerror=null;this.src='{{ asset('images/hero-character-dark.png') }}'"
+          alt="العب سوالف" width="800" height="647"
+          decoding="async" fetchpriority="high"
+          class="hero-img-dark">
+        <img
+          src="{{ asset('images/hero-light.webp') }}"
+          onerror="this.onerror=null;this.src='{{ asset('images/hero-character-custom.png') }}'"
+          alt="العب سوالف" width="800" height="647"
+          decoding="async" fetchpriority="high"
+          class="hero-img-light">
       </div>
     </div>
   </section>
@@ -267,7 +277,10 @@
   <section class="hp-section hp-section--soft" id="faq">
     <div class="container hp-faq">
       <div class="hp-faq__art">
-        <img src="{{ asset(file_exists(public_path('images/faq-bubbles.jpg')) ? 'images/faq-bubbles.jpg' : 'images/faq-bubbles.png') }}" alt="الأسئلة الشائعة" loading="lazy" decoding="async" width="640" height="480">
+        <img
+          src="{{ asset('images/faq-bubbles.webp') }}"
+          onerror="this.onerror=null;this.src='{{ asset('images/faq-bubbles.png') }}'"
+          alt="الأسئلة الشائعة" loading="lazy" decoding="async" width="640" height="480">
         <h2>الأسئلة الشائعة</h2>
         <p>كل ما تريد معرفته عن سوالف في مكان واحد</p>
       </div>
@@ -303,7 +316,10 @@
         <a href="{{ route('categories.index') }}" class="btn btn--white btn--lg">🚀 ابدأ مجانًا</a>
       </div>
       <div class="hp-cta__art">
-        <img src="{{ asset(file_exists(public_path('images/game-controller.jpg')) ? 'images/game-controller.jpg' : 'images/game-controller.png') }}" alt="ابدأ التحدي" loading="lazy" decoding="async" width="480" height="360">
+        <img
+          src="{{ asset('images/game-controller.webp') }}"
+          onerror="this.onerror=null;this.src='{{ asset('images/game-controller.png') }}'"
+          alt="ابدأ التحدي" loading="lazy" decoding="async" width="480" height="360">
       </div>
     </div>
   </section>

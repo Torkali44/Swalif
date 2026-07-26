@@ -124,16 +124,30 @@ class MediaStore
         // Always baseline JPEG — progressive files paint band-by-band and feel "slow"
         ob_start();
         imageinterlace($canvas, false);
-        imagejpeg($canvas, null, 72);
+        imagejpeg($canvas, null, 80);
         $jpeg = ob_get_clean();
+
+        // Also generate WebP version if supported by PHP GD
+        $webp = null;
+        if (function_exists('imagewebp')) {
+            ob_start();
+            imagewebp($canvas, null, 80);
+            $webp = ob_get_clean();
+        }
+
         imagedestroy($canvas);
 
         if (! is_string($jpeg) || $jpeg === '') {
             return self::storeBinary($file, $folder);
         }
 
-        $path = $folder.'/'.Str::uuid()->toString().'.jpg';
+        $uuid = Str::uuid()->toString();
+        $path = $folder.'/'.$uuid.'.jpg';
         Storage::disk(PublicMedia::DISK)->put($path, $jpeg);
+
+        if (is_string($webp) && $webp !== '') {
+            Storage::disk(PublicMedia::DISK)->put($path.'.webp', $webp);
+        }
 
         return $path;
     }

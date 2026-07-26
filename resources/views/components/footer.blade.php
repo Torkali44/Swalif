@@ -2,7 +2,10 @@
   <div class="container foot__inner">
     <div class="foot__brand">
       <a href="{{ route('home') }}" class="nav__logo">
-        <img src="{{ asset(file_exists(public_path('images/logo.png')) ? 'images/logo.png' : (file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg')) }}" width="58" height="58" alt="سوالف" class="logo-img" loading="lazy" decoding="async">
+        <img
+          src="{{ asset('images/logo.webp') }}"
+          onerror="this.onerror=null;this.src='{{ asset('images/logo.png') }}'"
+          width="58" height="58" alt="سوالف" class="logo-img" loading="lazy" decoding="async">
         <span class="logo-text">سوالف</span>
       </a>
       <p class="foot__tag">منصة ألعاب معلوماتية ثقافية تجمع بين المتعة والتعلم بهوية عصرية.</p>
