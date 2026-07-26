@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -44,7 +45,7 @@ class ProfileController extends Controller
             if ($user->avatar && Storage::disk(PublicMedia::DISK)->exists($user->avatar)) {
                 Storage::disk(PublicMedia::DISK)->delete($user->avatar);
             }
-            $payload['avatar'] = $request->file('avatar')->store('avatars', PublicMedia::DISK);
+            $payload['avatar'] = MediaStore::store($request->file('avatar'), 'avatars', 400);
         }
 
         $user->update($payload);

@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Behind nginx/cPanel reverse proxy so HTTPS and assets resolve correctly
         $middleware->trustProxies(at: '*');
 
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdmin::class,
             'free.trial' => \App\Http\Middleware\FreeTrialLimit::class,

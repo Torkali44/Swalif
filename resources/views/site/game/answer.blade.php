@@ -78,7 +78,7 @@
         @if($choseCorrect)
           ✔ إجابتك صحيحة
           @if($turnTeam)
-            <small>دور فريق {{ $turnTeam->name }} — اختارهم عشان تتحسبلهم صح</small>
+            <small>دور فريق {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
           @endif
         @else
           ✕ إجابتك مش صحيحة

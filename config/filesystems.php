@@ -38,9 +38,16 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Web-accessible uploads under the real document root:
+         *   local:     {project}/public/storage
+         *   Namecheap: /home/USER/public_html/storage
+         * (public_path is forced to public_html via index.php / AppServiceProvider)
+         * Browser URL: https://domain.com/storage/questions/file.jpg
+         */
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            'root' => env('PUBLIC_STORAGE_PATH') ?: public_path('storage'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,

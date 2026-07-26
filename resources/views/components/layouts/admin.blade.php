@@ -61,7 +61,7 @@
   <aside class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-head">
       <a class="brand" href="{{ route('admin.dashboard') }}">
-        <img src="{{ asset('images/logo.jpg') }}" alt="سوالف" class="brand-logo">
+        <img src="{{ asset(file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg') }}" alt="سوالف" class="brand-logo" width="48" height="48" decoding="async">
         <div>
           <div class="brand-title">سوالف</div>
           <div class="brand-sub">لوحة التحكم</div>
@@ -132,5 +132,74 @@
   </main>
 </div>
 <x-toast />
+<script>
+/* Compress images in the browser before upload — faster admin saves on shared hosting */
+(() => {
+  const MAX = 1400;
+  const QUALITY = 0.78;
+
+  async function compressFile(file) {
+    if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
+      return file;
+    }
+    if (file.size < 350 * 1024) return file;
+
+    const bitmap = await createImageBitmap(file);
+    let w = bitmap.width;
+    let h = bitmap.height;
+    if (w > MAX) {
+      h = Math.round(h * (MAX / w));
+      w = MAX;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', QUALITY));
+    if (!blob || blob.size >= file.size) return file;
+
+    const name = file.name.replace(/\.\w+$/, '') + '.jpg';
+    return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+  }
+
+  document.querySelectorAll('form').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      if (form.dataset.compressDone === '1') return;
+      const inputs = [...form.querySelectorAll('input[type="file"]')].filter((i) => i.files?.length);
+      if (!inputs.length) return;
+
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.dataset.oldText = btn.textContent;
+        btn.textContent = 'جاري رفع الملف...';
+      }
+
+      try {
+        for (const input of inputs) {
+          const dt = new DataTransfer();
+          for (const file of input.files) {
+            dt.items.add(await compressFile(file));
+          }
+          input.files = dt.files;
+        }
+        form.dataset.compressDone = '1';
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+      } catch (err) {
+        console.error(err);
+        form.dataset.compressDone = '1';
+        form.submit();
+      }
+    });
+  });
+})();
+</script>
 </body>
 </html>

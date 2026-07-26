@@ -1,3 +1,9 @@
+<IfModule mod_headers.c>
+  <FilesMatch "\.(?i:jpe?g|png|gif|webp|avif|svg|ico|css|js|woff2?|ttf|mp4|webm|mp3)$">
+    Header set Cache-Control "public, max-age=2592000, immutable"
+  </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

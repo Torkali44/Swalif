@@ -1018,6 +1018,17 @@ body.dark.admin-body .media-preview {
   width: 136px !important;
   height: 136px !important;
   margin: 0 auto !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.admin-circle-card .cat-circle__ring img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
 }
 .admin-circle-meta {
   color: var(--muted);

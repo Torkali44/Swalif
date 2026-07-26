@@ -19,6 +19,11 @@ class EnsurePlayAccess
             return $next($request);
         }
 
+        // History → finished result should remain viewable after expiry/block
+        if ($request->routeIs('game.result')) {
+            return $next($request);
+        }
+
         if ($this->playAccess->isBlocked($user)) {
             return redirect()
                 ->route('subscription.index')

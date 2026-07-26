@@ -61,8 +61,9 @@ class GameController extends Controller
                 ->with('error', $this->playAccess->blockMessage($user));
         }
 
-        $this->freeTrial->claimFreeCategory($user, $categoryId);
+        // Create the game first so a failed start does not burn the free trial
         $game = $this->sessions->start($user, $request->validated());
+        $this->freeTrial->claimFreeCategory($user, $categoryId);
 
         return redirect()->route('game.board', $game);
     }
@@ -78,22 +79,12 @@ class GameController extends Controller
         $perLevel = (int) config('game.questions_per_level', 6);
         $expected = $perLevel * 3;
 
-        // Prefer the fixed set locked when the game started (18 questions)
-        $boardQuestions = collect();
-        if ($game->gameQuestions->count() >= $expected) {
-            $boardQuestions = $game->gameQuestions
-                ->filter(fn ($gq) => $gq->question)
-                ->map(fn ($gq) => $gq->question)
-                ->values();
-        }
-
-        // Legacy / incomplete boards: use category pool (still capped at 6/level)
-        if ($boardQuestions->count() < $expected) {
-            $boardQuestions = $game->category->questions()
-                ->where('is_active', true)
-                ->orderBy('id')
-                ->get();
-        }
+        // Only show the locked game set — never pull the full category pool
+        // (that caused leftover tiles after the game already ended).
+        $boardQuestions = $game->gameQuestions
+            ->filter(fn ($gq) => $gq->question)
+            ->map(fn ($gq) => $gq->question)
+            ->values();
 
         $mapCell = function ($question) use ($game) {
             if (! $question) {
@@ -175,19 +166,12 @@ class GameController extends Controller
     {
         $this->sessions->ensureOwned($game, $request->user());
         abort_unless($question->category_id === $game->category_id, 404);
-        abort_unless($question->is_active, 404);
 
-        try {
-            $gq = GameQuestion::firstOrCreate([
-                'game_id' => $game->id,
-                'question_id' => $question->id,
-            ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            $gq = GameQuestion::query()
-                ->where('game_id', $game->id)
-                ->where('question_id', $question->id)
-                ->firstOrFail();
-        }
+        // Only questions locked for this game (no URL guessing / extra cells)
+        $gq = GameQuestion::query()
+            ->where('game_id', $game->id)
+            ->where('question_id', $question->id)
+            ->firstOrFail();
 
         if ($gq->answered_at) {
             return redirect()
@@ -199,11 +183,7 @@ class GameController extends Controller
         $game->load(['category', 'teams', 'gameQuestions']);
         $timeLimit = $this->timer->limitFor($question);
 
-        $perLevel = (int) config('game.questions_per_level', 6);
-        $expected = $perLevel * 3;
-        $totalQuestions = $game->gameQuestions->count() >= $expected
-            ? $expected
-            : max($expected, $game->category->questions()->where('is_active', true)->count());
+        $totalQuestions = max(1, $game->gameQuestions->count());
         $answeredQuestions = $game->gameQuestions->whereNotNull('answered_at')->count();
         $user = $request->user();
         $freeLeaveWarn = $user && $this->freeTrial->shouldWarnOnLeave($user);

@@ -1,9 +1,10 @@
 <x-layouts.app>
+<x-auth-dark-fix />
 <section class="auth-wrap">
   <form class="auth-card" method="POST" action="{{ route('login.store') }}">
     @csrf
     <h1>تسجيل الدخول</h1>
-    <p>ادخل بحسابك عشان تكمل اللعب.</p>
+    <p>سجّل دخولك بحسابك عشان تكمل اللعب.</p>
 
     <label>البريد الإلكتروني
       <input name="email" type="email" value="{{ old('email') }}" required autofocus>

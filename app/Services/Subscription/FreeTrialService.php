@@ -54,18 +54,18 @@ class FreeTrialService
 
     public function subscribeRequiredMessage(): string
     {
-        return 'خلصت الفئة المجانية. اشترك عشان تلعب فئات تانية.';
+        return 'انتهت فئتك المجانية. اشترك عشان تقدر تلعب فئات ثانية.';
     }
 
     public function leaveWarningMessage(): string
     {
-        return 'لو خرجت دلوقتي هتكون خلصت التجربة المجانية، وعلشان تلعب فئة تانية لازم تشترك. متأكد إنك عايز تخرج؟';
+        return 'إذا طلعت الحين بتنتهي تجربتك المجانية، وحق تلعب فئة ثانية لازم تشترك. متأكد تبي تطلع؟';
     }
 
     /** @deprecated kept for compatibility */
     public function canOpenQuestion(User $user): bool
     {
-        return $user->is_admin || $user->hasActiveSubscription() || true;
+        return $user->is_admin || $user->hasActiveSubscription() || ! $user->free_category_id;
     }
 
     /** @deprecated kept for compatibility */

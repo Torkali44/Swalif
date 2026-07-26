@@ -14,7 +14,7 @@ class StoreGameRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_id' => ['required', 'exists:categories,id'],
+            'category_id' => ['required', 'exists:categories,id,is_active,1'],
             'name' => ['required', 'string', 'max:100'],
             'team_one' => ['required', 'string', 'max:50'],
             'team_two' => ['required', 'string', 'max:50'],

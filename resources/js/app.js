@@ -1,5 +1,55 @@
 import './bootstrap';
 
+/* Reveal images only after full download/decode — no progressive band paint */
+(() => {
+  const mark = (img) => {
+    if (!(img instanceof HTMLImageElement)) return;
+    img.classList.add('sw-img');
+    const ready = () => img.classList.add('is-ready');
+    const fail = () => img.classList.add('is-ready', 'is-error');
+
+    if (img.complete && img.naturalWidth > 0) {
+      if (typeof img.decode === 'function') {
+        img.decode().then(ready).catch(ready);
+      } else {
+        ready();
+      }
+      return;
+    }
+
+    img.addEventListener('load', () => {
+      if (typeof img.decode === 'function') {
+        img.decode().then(ready).catch(ready);
+      } else {
+        ready();
+      }
+    }, { once: true });
+    img.addEventListener('error', fail, { once: true });
+  };
+
+  const scan = (root = document) => {
+    root.querySelectorAll('img:not([data-no-sw-img])').forEach(mark);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => scan());
+  } else {
+    scan();
+  }
+
+  // Dynamically inserted images
+  const mo = new MutationObserver((mutations) => {
+    mutations.forEach((m) => {
+      m.addedNodes.forEach((node) => {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === 'IMG') mark(node);
+        else if (node.querySelectorAll) scan(node);
+      });
+    });
+  });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+})();
+
 /* Timer (simple text) */
 document.querySelectorAll('[data-timer]').forEach((timer) => {
   let remaining = Number(timer.dataset.timer);
@@ -745,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       const helperName = helperNames[helper] || helper;
 
-      const confirmed = await window.showConfirm(`هل أنت متأكد من رغبتك في استخدام وسيلة المساعدة "${helperName}"؟`);
+      const confirmed = await window.showConfirm(`متأكد تبي تستخدم وسيلة المساعدة "${helperName}"؟`);
       if (!confirmed) return;
 
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -838,7 +888,7 @@ window.showPopup = function(message, type = 'success', options = {}) {
   const resultPage = document.querySelector('[data-result-page][data-game-just-ended]');
   if (!resultPage) return;
 
-  window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success')
+  window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success') // Emirati-friendly
     .then(() => {
       if (typeof window.__swalifPlayWinSound === 'function') {
         window.__swalifPlayWinSound();
@@ -967,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       const helperName = helperNames[helper] || helper;
 
-      const confirmed = await window.showConfirm(`هل أنت متأكد من رغبتك في استخدام وسيلة المساعدة "${helperName}"؟`);
+      const confirmed = await window.showConfirm(`متأكد تبي تستخدم وسيلة المساعدة "${helperName}"؟`);
       if (!confirmed) return;
 
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -1005,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const leaveRoot = document.querySelector('[data-free-leave-guard]');
   if (leaveRoot) {
     const message = leaveRoot.dataset.freeLeaveMessage
-      || 'لو خرجت هتكون خلصت التجربة المجانية وعلشان تلعب فئة تانية لازم تشترك. متأكد؟';
+      || 'إذا طلعت الحين بتنتهي تجربتك المجانية، وحق تلعب فئة ثانية لازم تشترك. متأكد تبي تطلع؟';
 
     const guardNavigate = async (url) => {
       const ok = typeof window.showConfirm === 'function'
@@ -1042,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const msg = el.dataset.subscribeMessage
         || document.querySelector('[data-subscribe-guard]')?.dataset.subscribeMessage
-        || 'خلصت الفئة المجانية. اشترك عشان تلعب فئات تانية.';
+        || 'انتهت فئتك المجانية. اشترك عشان تقدر تلعب فئات ثانية.';
       if (typeof window.showPopup === 'function') {
         await window.showPopup(msg, 'error');
       }
@@ -1056,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (startForm.dataset.confirmed === '1') return;
       e.preventDefault();
       const msg = startForm.dataset.freeStartMessage
-        || 'هذي فئتك المجانية الوحيدة. متأكد إنك عايز تبدأ؟';
+        || 'هذي فئتك المجانية الوحيدة. متأكد تبي تبدأ؟';
       const ok = typeof window.showConfirm === 'function'
         ? await window.showConfirm(msg)
         : window.confirm(msg);

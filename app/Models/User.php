@@ -23,15 +23,16 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'phone_code',
+        'birth_date',
+        'avatar',
+        // Admin/system only — never accept these from public form $request->all()
         'is_admin',
         'is_active',
         'play_blocked',
         'play_blocked_at',
         'play_blocked_reason',
-        'phone',
-        'phone_code',
-        'birth_date',
-        'avatar',
         'free_category_id',
     ];
 

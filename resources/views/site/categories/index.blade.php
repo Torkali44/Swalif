@@ -75,8 +75,8 @@
       </div>
     @elseif(!empty($freeLocked))
       <div class="free-lock-banner" style="margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.25);font-weight:700">
-        خلصت التجربة المجانية (فئة واحدة). عشان تلعب فئة تانية
-        <a href="{{ route('subscription.index') }}" style="color:var(--uae-red);font-weight:900">اشترك الآن</a>.
+        انتهت تجربتك المجانية (فئة واحدة). عشان تلعب فئة ثانية
+        <a href="{{ route('subscription.index') }}" style="color:var(--uae-red);font-weight:900">اشترك الحين</a>.
       </div>
     @endif
     <div class="grid" id="categoryGrid">
@@ -102,7 +102,7 @@
           <span class="card__tag">{{ $isLocked ? '🔒 مقفول' : $category->classificationName() }}</span>
           <div class="card__icon">
             @if($category->imageUrl())
-              <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}">
+              <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async" width="280" height="180">
             @else
               {{ $category->icon ?: '🎯' }}
             @endif

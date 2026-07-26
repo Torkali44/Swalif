@@ -62,9 +62,10 @@ class UserController extends Controller
 
     public function toggleActive(User $user)
     {
+        abort_if($user->is_admin, 403, 'لا يمكن إيقاف أو تعديل حالة حساب مدير.');
         abort_if($user->id === auth()->id(), 403, 'لا يمكنك تعطيل حسابك الحالي.');
 
-        $user->update(['is_active' => ! $user->is_active]);
+        $user->forceFill(['is_active' => ! $user->is_active])->save();
 
         return back()->with('success', $user->is_active ? 'تم تفعيل المستخدم.' : 'تم إيقاف المستخدم.');
     }

@@ -11,13 +11,11 @@ Route::get('/categories', [Site\CategoryController::class, 'index'])->name('cate
 Route::get('/categories/{category:slug}', [Site\CategoryController::class, 'show'])->name('categories.show');
 
 Route::middleware('auth')->group(function () {
-    Route::prefix('game')->name('game.')->middleware('play.access')->group(function () {
+    Route::prefix('game')->name('game.')->middleware(['play.access', 'free.trial'])->group(function () {
         Route::get('/setup/{category}', [Site\GameController::class, 'setup'])->name('setup');
         Route::post('/start', [Site\GameController::class, 'start'])->name('start');
         Route::get('/{game}/board', [Site\GameController::class, 'board'])->name('board');
-        Route::get('/{game}/question/{question}', [Site\GameController::class, 'question'])
-            ->middleware('free.trial')
-            ->name('question');
+        Route::get('/{game}/question/{question}', [Site\GameController::class, 'question'])->name('question');
         Route::get('/{game}/answer/{gameQuestion}', [Site\GameController::class, 'answer'])->name('answer');
         Route::post('/{game}/answer/{gameQuestion}', [Site\GameController::class, 'answer'])->name('answer.store');
         Route::post('/{game}/assign/{gameQuestion}', [Site\GameController::class, 'assign'])->name('assign');

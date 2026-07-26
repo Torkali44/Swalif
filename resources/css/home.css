@@ -331,11 +331,17 @@ body.dark .nav {
   display: grid;
   place-items: center;
   position: relative;
+  flex-shrink: 0;
 }
+/* Absolute fill beats Tailwind preflight (img { height:auto }) that was clipping circles */
 .cat-circle__ring img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 .cat-circle__emoji {

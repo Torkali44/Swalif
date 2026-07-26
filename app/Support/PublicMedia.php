@@ -17,8 +17,9 @@ class PublicMedia
     ];
 
     /**
-     * Build a browser URL for a file stored on the public disk.
-     * Uses asset() so it works with APP_URL / reverse proxies / subfolders.
+     * Build a browser URL for a file on the public disk.
+     * Uses a root-relative path so a wrong APP_URL on shared hosting
+     * does not break images/logos under /storage/...
      */
     public static function url(?string $path): ?string
     {
@@ -32,14 +33,32 @@ class PublicMedia
             return $path;
         }
 
-        if (str_starts_with($path, '/storage/')) {
-            return asset(ltrim($path, '/'));
+        $path = preg_replace('#^/?storage/#', '', $path) ?? $path;
+        $suffix = 'storage/'.ltrim($path, '/');
+
+        // CLI / queued jobs: fall back to asset()
+        if (! app()->runningInConsole() && app()->bound('request') && request()) {
+            $base = rtrim((string) request()->getBasePath(), '/');
+
+            return ($base === '' ? '' : $base).'/'.$suffix;
         }
 
-        if (str_starts_with($path, 'storage/')) {
-            return asset($path);
-        }
+        return asset($suffix);
+    }
 
-        return asset('storage/'.ltrim($path, '/'));
+    /**
+     * Absolute filesystem directory where public media is stored (web-accessible).
+     */
+    public static function rootPath(): string
+    {
+        return public_path('storage');
+    }
+
+    /**
+     * Legacy Laravel path (storage/app/public) — used only for one-time migration.
+     */
+    public static function legacyRootPath(): string
+    {
+        return storage_path('app/public');
     }
 }

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Support\MediaStore;
 use App\Support\PublicMedia;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -55,13 +57,14 @@ class CategoryController extends Controller
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('categories', PublicMedia::DISK);
+            $data['image'] = MediaStore::store($request->file('image'), 'categories', 1000);
         }
 
         $category = Category::create($data);
 
         $desired = (int) $request->input('sort_order', 0);
         $this->applyOrdering($category, $desired >= 1 ? $desired : PHP_INT_MAX);
+        Cache::forget('home.active_categories');
 
         return redirect()->route('admin.categories.index')->with('success', 'تمت إضافة الفئة بنجاح.');
     }
@@ -86,13 +89,14 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteImage($category->image);
-            $data['image'] = $request->file('image')->store('categories', PublicMedia::DISK);
+            $data['image'] = MediaStore::store($request->file('image'), 'categories', 1000);
         }
 
         $category->update($data);
 
         $desired = (int) $request->input('sort_order', 0);
         $this->applyOrdering($category, $desired >= 1 ? $desired : PHP_INT_MAX);
+        Cache::forget('home.active_categories');
 
         return redirect()->route('admin.categories.index')->with('success', 'تم حفظ التعديلات بنجاح.');
     }
@@ -101,6 +105,7 @@ class CategoryController extends Controller
     {
         $this->deleteImage($category->image);
         $category->delete();
+        Cache::forget('home.active_categories');
 
         return back()->with('success', 'تم حذف الفئة.');
     }
@@ -108,6 +113,7 @@ class CategoryController extends Controller
     public function toggle(Category $category)
     {
         $category->update(['is_active' => ! $category->is_active]);
+        Cache::forget('home.active_categories');
 
         return back()->with('success', 'تم تحديث حالة الفئة.');
     }

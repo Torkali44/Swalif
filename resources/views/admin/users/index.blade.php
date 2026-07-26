@@ -88,7 +88,11 @@
               @endif
             </td>
             <td class="row-actions">
-              @if($user->id !== auth()->id())
+              @if($user->id === auth()->id())
+                <span class="muted">أنت</span>
+              @elseif($user->is_admin)
+                <span class="muted">حساب مدير</span>
+              @else
                 <form class="inline" method="POST" action="{{ route('admin.users.toggleActive', $user) }}">
                   @csrf
                   @method('PATCH')
@@ -96,26 +100,22 @@
                     {{ $user->is_active ? 'إيقاف حساب' : 'تفعيل حساب' }}
                   </button>
                 </form>
-                @unless($user->is_admin)
-                  <form class="inline" method="POST" action="{{ route('admin.users.togglePlay', $user) }}">
-                    @csrf
-                    @method('PATCH')
-                    <button class="btn btn-sm {{ $user->play_blocked ? 'btn-primary' : 'btn-ghost' }}" type="submit"
-                      onclick="return confirm('{{ $user->play_blocked ? 'فتح اللعب لهذا اللاعب؟' : 'قفل اللعب؟ مش هيقدر يلعب غير لما تفتحله أو يشترك.' }}')">
-                      {{ $user->play_blocked ? 'فتح اللعب' : 'قفل اللعب' }}
-                    </button>
-                  </form>
-                  <form class="inline" method="POST" action="{{ route('admin.users.destroy', $user) }}">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn btn-sm" style="color: #ef4444; background: transparent; border: 1px solid #ef4444;" type="submit"
-                      onclick="return confirm('هل أنت متأكد من حذف هذا المستخدم بشكل نهائي؟')">
-                      حذف
-                    </button>
-                  </form>
-                @endunless
-              @else
-                <span class="muted">أنت</span>
+                <form class="inline" method="POST" action="{{ route('admin.users.togglePlay', $user) }}">
+                  @csrf
+                  @method('PATCH')
+                  <button class="btn btn-sm {{ $user->play_blocked ? 'btn-primary' : 'btn-ghost' }}" type="submit"
+                    onclick="return confirm('{{ $user->play_blocked ? 'فتح اللعب لهذا اللاعب؟' : 'قفل اللعب؟ مش هيقدر يلعب غير لما تفتحله أو يشترك.' }}')">
+                    {{ $user->play_blocked ? 'فتح اللعب' : 'قفل اللعب' }}
+                  </button>
+                </form>
+                <form class="inline" method="POST" action="{{ route('admin.users.destroy', $user) }}">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn btn-sm" style="color: #ef4444; background: transparent; border: 1px solid #ef4444;" type="submit"
+                    onclick="return confirm('هل أنت متأكد من حذف هذا المستخدم بشكل نهائي؟')">
+                    حذف
+                  </button>
+                </form>
               @endif
             </td>
           </tr>

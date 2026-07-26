@@ -1,9 +1,10 @@
 <x-layouts.app>
+<x-auth-dark-fix />
 <section class="auth-wrap">
   <form class="auth-card" method="POST" action="{{ route('register.store') }}" id="registerForm">
     @csrf
     <h1>إنشاء حساب</h1>
-    <p>سجّل بالإيميل ورقم الموبايل عشان تبدأ اللعب.</p>
+    <p>سجّل بالإيميل ورقم الجوال عشان تبدأ تلعب.</p>
 
     <label>الاسم
       <input name="name" value="{{ old('name') }}" placeholder="اسمك" required autofocus>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClassificationRequest;
 use App\Models\Classification;
+use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -45,7 +46,7 @@ class ClassificationController extends Controller
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('classifications', PublicMedia::DISK);
+            $data['image'] = MediaStore::store($request->file('image'), 'classifications', 800);
         }
 
         $classification = Classification::create($data);
@@ -72,7 +73,7 @@ class ClassificationController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteImage($classification->image);
-            $data['image'] = $request->file('image')->store('classifications', PublicMedia::DISK);
+            $data['image'] = MediaStore::store($request->file('image'), 'classifications', 800);
         }
 
         $classification->update($data);

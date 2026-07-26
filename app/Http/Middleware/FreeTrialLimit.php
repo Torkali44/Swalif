@@ -20,6 +20,11 @@ class FreeTrialLimit
             return $next($request);
         }
 
+        // Allow viewing finished-game results from history even if play is blocked
+        if ($request->routeIs('game.result')) {
+            return $next($request);
+        }
+
         if ($this->playAccess->isBlocked($user)) {
             return redirect()
                 ->route('subscription.index')

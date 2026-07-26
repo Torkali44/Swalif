@@ -50,7 +50,7 @@
 .btn--white:hover { background: #FFF3EC; transform: translateY(-2px); }
 
 /* ============ HOME WRAPPER ============ */
-.home { background: #fff; overflow: clip; }
+.home { background: #fff; overflow-x: clip; overflow-y: visible; }
 .home h2 { font-family: "Cairo", sans-serif; }
 
 /* ============ HERO ============ */
@@ -89,8 +89,18 @@
 .hp-hero__live { color: var(--hp-ink); font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 .hp-hero__live i { width: 10px; height: 10px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 0 rgba(34,197,94,.5); animation: hpPulse 1.8s infinite; }
 @keyframes hpPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.5);} 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} }
-.hp-hero__art { position: relative; text-align: center; }
-.hp-hero__art img { width: 100%; max-width: 520px; height: auto; filter: drop-shadow(0 30px 45px rgba(24,32,51,.18)); animation: hpFloat 6s ease-in-out infinite; }
+.hp-hero__art { position: relative; text-align: center; min-height: 280px; }
+.hp-hero__art img {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  max-height: none;
+  display: block;
+  margin-inline: auto;
+  filter: drop-shadow(0 30px 45px rgba(24,32,51,.18));
+  animation: hpFloat 6s ease-in-out infinite;
+  content-visibility: auto;
+}
 .hero-img-dark { display: none !important; }
 body.dark .hero-img-dark { display: block !important; }
 body.dark .hero-img-light { display: none !important; }
@@ -153,10 +163,25 @@ body.dark .hero-img-light { display: none !important; }
 }
 .hp-cat:hover { transform: translateY(-6px); box-shadow: var(--hp-card-shadow); border-color: transparent; }
 .hp-cat__icon {
-  width: 68px; height: 68px; border-radius: 20px; display: grid; place-items: center;
-  font-size: 32px; margin-bottom: 8px; overflow: hidden;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  position: relative;
 }
-.hp-cat__icon img { width: 100%; height: 100%; object-fit: cover; }
+.hp-cat__icon img {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover;
+  object-position: center;
+}
 .hp-cat h3 { font-family: "Cairo", sans-serif; font-size: 17px; font-weight: 800; color: var(--hp-ink); }
 .hp-cat p { color: var(--hp-muted); font-size: 13px; font-weight: 600; }
 .hp-cat__btn {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Subscription\PlayAccessService;
 use App\Services\Subscription\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -13,8 +14,10 @@ use Illuminate\Validation\Rule;
 
 class SubscriberController extends Controller
 {
-    public function __construct(private SubscriptionService $subscriptions)
-    {
+    public function __construct(
+        private SubscriptionService $subscriptions,
+        private PlayAccessService $playAccess,
+    ) {
     }
 
     public function index(Request $request)
@@ -95,6 +98,14 @@ class SubscriberController extends Controller
             'status' => 'cancelled',
             'ends_at' => now(),
         ]);
+
+        $user = $subscription->user;
+        if ($user && ! $user->is_admin && ! $user->hasActiveSubscription()) {
+            $this->playAccess->block(
+                $user,
+                'تم إلغاء اشتراكك. اشترك من جديد أو تواصل مع الإدارة لفتح اللعب.'
+            );
+        }
 
         return back()->with('success', 'تم إلغاء الاشتراك.');
     }

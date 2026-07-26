@@ -13,7 +13,7 @@
           $status = $game->status->value ?? $game->status;
           $isFinished = $status === 'finished';
         @endphp
-        <a class="history-item" href="{{ route('game.board', $game) }}">
+        <a class="history-item" href="{{ $isFinished ? route('game.result', $game) : route('game.board', $game) }}">
           <div class="history-item__main">
             <div class="history-item__icon">{{ $game->category->icon ?: '🎯' }}</div>
             <div>

@@ -50,7 +50,7 @@
 
   <div class="nav__inner">
     <a href="{{ route('home') }}" class="nav__logo">
-      <img src="{{ asset('images/logo.png') }}" alt="سوالف" class="logo-img">
+      <img src="{{ asset(file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg') }}" alt="سوالف" class="logo-img" width="120" height="40" decoding="async" fetchpriority="high">
       <span class="logo-text">سوالف</span>
     </a>
 

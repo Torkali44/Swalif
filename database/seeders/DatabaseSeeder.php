@@ -9,7 +9,6 @@ use App\Models\Question;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -18,53 +17,33 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'omjori_Swalif_Admin_009@gmail.com'],
-            [
-                'name' => 'omjori',
-                'password' => Hash::make('Omjori@2026$Admin'),
-                'phone' => '0501000001',
-                'phone_code' => '+971',
-                'is_admin' => true,
-                'is_active' => true,
-            ]
-        );
+        $seedAdmin = function (string $email, string $name, string $password, string $phone) {
+            $user = User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => $password,
+                    'phone' => $phone,
+                    'phone_code' => '+971',
+                ]
+            );
+            $user->forceFill(['is_admin' => true, 'is_active' => true])->save();
+        };
 
-        User::updateOrCreate(
-            ['email' => 'hamda_Swalif_Admin_009@gmail.com'],
-            [
-                'name' => 'hamda',
-                'password' => Hash::make('Hamda@2026$Admin'),
-                'phone' => '0501000002',
-                'phone_code' => '+971',
-                'is_admin' => true,
-                'is_active' => true,
-            ]
-        );
+        $seedAdmin('omjori_Swalif_Admin_009@gmail.com', 'omjori', 'Omjori@2026$Admin', '0501000001');
+        $seedAdmin('hamda_Swalif_Admin_009@gmail.com', 'hamda', 'Hamda@2026$Admin', '0501000002');
+        $seedAdmin('tork_Swalif_Admin_009@gmail.com', 'tork', 'Tork_Elzohry#123@Admin', '0501000003');
 
-        User::updateOrCreate(
-            ['email' => 'tork_Swalif_Admin_009@gmail.com'],
-            [
-                'name' => 'tork',
-                'password' => Hash::make('Tork_Elzohry#123@Admin'),
-                'phone' => '0501000003',
-                'phone_code' => '+971',
-                'is_admin' => true,
-                'is_active' => true,
-            ]
-        );
-
-        User::updateOrCreate(
+        $player = User::updateOrCreate(
             ['email' => 'player@swalif.test'],
             [
                 'name' => 'لاعب تجريبي',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'phone' => '0501999999',
                 'phone_code' => '+971',
-                'is_admin' => false,
-                'is_active' => true,
             ]
         );
+        $player->forceFill(['is_admin' => false, 'is_active' => true])->save();
 
         // إيقاف الحساب القديم لو موجود
         User::where('email', 'admin@swalif.test')->update(['is_admin' => false, 'is_active' => false]);

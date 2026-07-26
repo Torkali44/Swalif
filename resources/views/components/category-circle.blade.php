@@ -34,7 +34,7 @@
    ]) }}>
   <div class="cat-circle__ring">
     @if($category->imageUrl())
-      <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}">
+      <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async" width="120" height="120">
     @else
       <span class="cat-circle__emoji">{{ $category->icon ?: '🎯' }}</span>
     @endif

@@ -34,7 +34,7 @@
         <div class="cat-circle cat-circle--admin">
           <div class="cat-circle__ring">
             @if($classification->imageUrl())
-              <img src="{{ $classification->imageUrl() }}" alt="{{ $classification->name_ar }}">
+              <img src="{{ $classification->imageUrl() }}" alt="{{ $classification->name_ar }}" width="136" height="136" decoding="async" loading="lazy">
             @else
               <span class="cat-circle__emoji">{{ $classification->icon ?: '🏷️' }}</span>
             @endif

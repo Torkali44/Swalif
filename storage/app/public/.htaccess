@@ -1,0 +1,7 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(?i:jpe?g|png|gif|webp|avif|svg|mp4|webm|mp3|wav|ogg|m4a)$">
+    Header set Cache-Control "public, max-age=2592000, immutable"
+  </FilesMatch>
+</IfModule>

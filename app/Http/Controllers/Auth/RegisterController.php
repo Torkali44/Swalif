@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
@@ -49,15 +48,17 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
-        $user = User::create([
+        $user = new User([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],
             'phone' => $phone,
             'phone_code' => $data['phone_code'] ?? '+971',
+        ]);
+        $user->forceFill([
             'is_admin' => false,
             'is_active' => true,
-        ]);
+        ])->save();
 
         Auth::login($user);
         $request->session()->regenerate();

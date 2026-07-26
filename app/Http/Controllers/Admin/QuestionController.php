@@ -8,6 +8,7 @@ use App\Http\Requests\StoreQuestionRequest;
 use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Question;
+use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,15 @@ class QuestionController extends Controller
         }
 
         $categories = $categoriesQuery
-            ->with('classification')
+            ->with('classification:id,name_ar,icon')
             ->with(['questions' => function ($query) use ($request) {
-                $query->orderBy('level')->orderBy('points')->orderBy('id');
+                $query->select([
+                    'id', 'category_id', 'type', 'question_text', 'level', 'points',
+                    'time_limit', 'is_active', 'image', 'created_at',
+                ])
+                    ->orderBy('level')
+                    ->orderBy('points')
+                    ->orderBy('id');
 
                 if ($request->filled('level')) {
                     $query->where('level', $request->string('level'));
@@ -73,20 +80,9 @@ class QuestionController extends Controller
 
     public function create()
     {
-        $categories = Category::with('classification')
-            ->withCount('questions')
-            ->withCount([
-                'questions as easy_count' => fn ($q) => $q->where('level', 'easy'),
-                'questions as medium_count' => fn ($q) => $q->where('level', 'medium'),
-                'questions as hard_count' => fn ($q) => $q->where('level', 'hard'),
-            ])
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
-
         return view('admin.questions.form', [
             'question' => new Question,
-            'categories' => $categories,
+            'categories' => $this->formCategories(),
             'questionTypes' => QuestionType::options(),
             'maxQuestionsPerCategory' => (int) config('game.max_questions_per_category', 18),
             'maxPerLevel' => (int) config('game.questions_per_level', 6),
@@ -106,16 +102,7 @@ class QuestionController extends Controller
 
         return view('admin.questions.form', [
             'question' => $question,
-            'categories' => Category::with('classification')
-                ->withCount('questions')
-                ->withCount([
-                    'questions as easy_count' => fn ($q) => $q->where('level', 'easy'),
-                    'questions as medium_count' => fn ($q) => $q->where('level', 'medium'),
-                    'questions as hard_count' => fn ($q) => $q->where('level', 'hard'),
-                ])
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->get(),
+            'categories' => $this->formCategories(),
             'questionTypes' => QuestionType::options(),
             'maxQuestionsPerCategory' => (int) config('game.max_questions_per_category', 18),
             'maxPerLevel' => (int) config('game.questions_per_level', 6),
@@ -149,7 +136,27 @@ class QuestionController extends Controller
     {
         $data = $request->validated();
 
-        DB::transaction(function () use ($request, $question, $data) {
+        // Upload files outside the DB transaction (much faster on shared hosting)
+        $newImagePath = null;
+        $newAnswerImagePath = null;
+        $oldImage = $question->image;
+        $oldAnswerImage = $question->answer_image;
+
+        if ($request->hasFile('image')) {
+            $folder = match ($data['type']) {
+                'video' => 'questions/videos',
+                'audio' => 'questions/audio',
+                default => 'questions',
+            };
+            $maxWidth = $data['type'] === 'image_guess' || $data['type'] === 'puzzle' ? 1400 : 1200;
+            $newImagePath = MediaStore::store($request->file('image'), $folder, $maxWidth);
+        }
+
+        if ($request->hasFile('answer_image')) {
+            $newAnswerImagePath = MediaStore::store($request->file('answer_image'), 'questions', 1200);
+        }
+
+        DB::transaction(function () use ($question, $data, $newImagePath, $newAnswerImagePath) {
             $payload = [
                 'category_id' => $data['category_id'],
                 'type' => $data['type'],
@@ -162,29 +169,20 @@ class QuestionController extends Controller
                 'is_active' => $data['is_active'] ?? true,
             ];
 
-            if (! empty($data['remove_image']) && $question->image) {
-                $this->deleteImage($question->image);
+            if (! empty($data['remove_image'])) {
                 $payload['image'] = null;
             }
 
-            if (! empty($data['remove_answer_image']) && $question->answer_image) {
-                $this->deleteImage($question->answer_image);
+            if (! empty($data['remove_answer_image'])) {
                 $payload['answer_image'] = null;
             }
 
-            if ($request->hasFile('image')) {
-                $this->deleteImage($question->image);
-                $folder = match ($data['type']) {
-                    'video' => 'questions/videos',
-                    'audio' => 'questions/audio',
-                    default => 'questions',
-                };
-                $payload['image'] = $request->file('image')->store($folder, PublicMedia::DISK);
+            if ($newImagePath !== null) {
+                $payload['image'] = $newImagePath;
             }
 
-            if ($request->hasFile('answer_image')) {
-                $this->deleteImage($question->answer_image);
-                $payload['answer_image'] = $request->file('answer_image')->store('questions', PublicMedia::DISK);
+            if ($newAnswerImagePath !== null) {
+                $payload['answer_image'] = $newAnswerImagePath;
             }
 
             $question->fill($payload)->save();
@@ -205,6 +203,30 @@ class QuestionController extends Controller
                 }
             }
         });
+
+        if ($newImagePath !== null || ! empty($data['remove_image'])) {
+            $this->deleteImage($oldImage);
+        }
+
+        if ($newAnswerImagePath !== null || ! empty($data['remove_answer_image'])) {
+            $this->deleteImage($oldAnswerImage);
+        }
+    }
+
+    private function formCategories()
+    {
+        return Category::query()
+            ->select(['id', 'name_ar', 'icon', 'classification_id', 'sort_order', 'is_active'])
+            ->with(['classification:id,name_ar,icon'])
+            ->withCount('questions')
+            ->withCount([
+                'questions as easy_count' => fn ($q) => $q->where('level', 'easy'),
+                'questions as medium_count' => fn ($q) => $q->where('level', 'medium'),
+                'questions as hard_count' => fn ($q) => $q->where('level', 'hard'),
+            ])
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
     }
 
     private function buildMeta(array $data): ?array

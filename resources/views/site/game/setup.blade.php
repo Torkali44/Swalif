@@ -35,7 +35,7 @@
       action="{{ route('game.start') }}"
       @if(!empty($aboutToClaimFree))
         data-free-start-confirm="1"
-        data-free-start-message="هذي فئتك المجانية الوحيدة. بعد ما تبدأ مينفعش تلعب فئة تانية غير بالاشتراك. متأكد؟"
+        data-free-start-message="هذي فئتك المجانية الوحيدة. بعد ما تبدأ ما تقدر تلعب فئة ثانية إلا بالاشتراك. متأكد تبي تبدأ؟"
       @endif
     >
       @csrf

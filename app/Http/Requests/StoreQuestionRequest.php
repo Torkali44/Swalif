@@ -18,10 +18,11 @@ class StoreQuestionRequest extends FormRequest
     {
         $type = (string) $this->input('type', 'standard');
 
+        // Prefer mimes (extension) over heavy mimetypes sniffing on large uploads
         $mediaRules = match ($type) {
-            'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime,video/x-msvideo', 'max:51200'],
-            'audio' => ['nullable', 'file', 'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a', 'max:20480'],
-            default => ['nullable', 'image', 'max:5120'],
+            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,avi', 'max:51200'],
+            'audio' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac', 'max:20480'],
+            default => ['nullable', 'image', 'max:4096'],
         };
 
         return [

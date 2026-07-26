@@ -179,7 +179,7 @@
         </div>
       @elseif($question->imageUrl())
         <div class="question-card__media">
-          <img src="{{ $question->imageUrl() }}" alt="صورة السؤال" loading="lazy">
+          <img src="{{ $question->imageUrl() }}" alt="صورة السؤال" loading="eager" decoding="async" fetchpriority="high">
         </div>
       @endif
 
