@@ -251,11 +251,13 @@
           if (answerPath) answerPath.value = '';
           document.querySelectorAll('[data-async-file]').forEach((input) => {
             input.value = '';
-            const status = input.closest('label')?.querySelector('[data-upload-status]');
-            if (status) {
-              status.hidden = true;
-              status.textContent = '';
-            }
+            const label = input.closest('label');
+            // Clear status
+            const status = label?.querySelector('[data-upload-status]');
+            if (status) { status.hidden = true; status.textContent = ''; }
+            // Clear async preview and remove button
+            label?.querySelector('.async-preview-wrap')?.remove();
+            label?.querySelector('.btn-remove-preview')?.remove();
           });
         };
 

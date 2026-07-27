@@ -139,9 +139,7 @@
     font-size: .92rem;
     color: var(--muted, #6C7799);
   }
-  .upload-status.is-progress {
-    color: #c45c00;
-  }
+  .upload-status.is-progress { color: #c45c00; }
   .upload-status.is-done { color: #1a7f37; }
   .upload-status.is-error { color: #C8102E; }
   .upload-status__bar {
@@ -156,60 +154,88 @@
     height: 100%;
     width: 0;
     background: #ff6d00;
-    transition: width .15s linear;
+    transition: width .2s linear;
   }
+  /* Async image/video preview */
+  .async-preview-wrap {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .async-preview-wrap img,
+  .async-preview-wrap video {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: rgba(0,0,0,.04);
+    display: block;
+  }
+  .async-preview-wrap audio {
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-remove-preview {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #C8102E;
+    background: rgba(200,16,46,.08);
+    color: #C8102E;
+    font-weight: 700;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    align-self: flex-start;
+  }
+  .btn-remove-preview:hover {
+    background: rgba(200,16,46,.18);
+    transform: scale(1.03);
+  }
+  .btn-remove-preview:active { transform: scale(.97); }
 </style>
 <script>
-/* Compress images + async pre-upload so Save doesn't wait on large video/audio */
+/* Async pre-upload: instant preview, remove button, strict double-submit guard */
 (() => {
   const MAX = 1200;
   const QUALITY = 0.72;
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
+  /* ── Image compression ── */
   async function compressFile(file) {
-    if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
-      return file;
-    }
+    if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
     if (file.size < 250 * 1024) return file;
-
     const bitmap = await createImageBitmap(file);
-    let w = bitmap.width;
-    let h = bitmap.height;
-    if (w > MAX) {
-      h = Math.round(h * (MAX / w));
-      w = MAX;
-    }
+    let w = bitmap.width, h = bitmap.height;
+    if (w > MAX) { h = Math.round(h * (MAX / w)); w = MAX; }
     const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
+    canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close?.();
-
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', QUALITY));
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', QUALITY));
     if (!blob || blob.size >= file.size) return file;
-
-    const name = file.name.replace(/\.\w+$/, '') + '.jpg';
-    return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
   }
 
+  /* ── Status bar ── */
   function statusEl(input) {
     return input.closest('label')?.querySelector('[data-upload-status]') || null;
   }
-
   function setStatus(input, text, state, percent) {
     const el = statusEl(input);
     if (!el) return;
     el.hidden = !text;
     el.className = 'upload-status' + (state ? ' is-' + state : '');
-    const barWidth = typeof percent === 'number' ? Math.max(0, Math.min(100, percent)) : null;
-    el.innerHTML = barWidth === null
-      ? text
-      : `${text}<div class="upload-status__bar"><span style="width:${barWidth}%"></span></div>`;
+    const bar = typeof percent === 'number' ? Math.max(0, Math.min(100, percent)) : null;
+    el.innerHTML = bar === null ? text : `${text}<div class="upload-status__bar"><span style="width:${bar}%"></span></div>`;
   }
 
+  /* ── XHR upload ── */
   function uploadFile(url, file, kind, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -217,17 +243,12 @@
       xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
       xhr.setRequestHeader('Accept', 'application/json');
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable && typeof onProgress === 'function') {
-          onProgress(Math.round((e.loaded / e.total) * 100));
-        }
+        if (e.lengthComputable && typeof onProgress === 'function') onProgress(Math.round((e.loaded / e.total) * 100));
       };
       xhr.onload = () => {
         let data = null;
         try { data = JSON.parse(xhr.responseText); } catch (_) {}
-        if (xhr.status >= 200 && xhr.status < 300 && data?.path) {
-          resolve(data);
-          return;
-        }
+        if (xhr.status >= 200 && xhr.status < 300 && data?.path) { resolve(data); return; }
         let msg = data?.errors?.file?.[0] || data?.message || 'فشل رفع الملف';
         if (typeof msg === 'string' && (msg === 'validation.mimes' || msg.startsWith('validation.'))) {
           msg = 'صيغة الملف غير مدعومة. للفيديو استخدم mp4 أو webm أو mov.';
@@ -242,6 +263,65 @@
     });
   }
 
+  /* ── Instant local preview (before upload finishes) ── */
+  function showPreview(input, file, resultUrl) {
+    const label = input.closest('label');
+    if (!label) return;
+    // Remove any existing preview we injected
+    label.querySelector('.async-preview-wrap')?.remove();
+
+    const wrap = document.createElement('div');
+    wrap.className = 'async-preview-wrap';
+
+    const kind = input.dataset.uploadKind || 'image';
+    let media = null;
+    if (kind === 'video') {
+      media = document.createElement('video');
+      media.src = resultUrl;
+      media.controls = true;
+    } else if (kind === 'audio') {
+      media = document.createElement('audio');
+      media.src = resultUrl;
+      media.controls = true;
+    } else {
+      media = document.createElement('img');
+      media.src = resultUrl;
+      media.alt = 'معاينة';
+    }
+    wrap.appendChild(media);
+    label.appendChild(wrap);
+  }
+
+  /* ── Remove-button shown after successful upload ── */
+  function showRemoveBtn(input, pathInput, objectUrl, oldPreview) {
+    const label = input.closest('label');
+    if (!label) return;
+    label.querySelector('.btn-remove-preview')?.remove();
+
+    const kind = input.dataset.uploadKind || 'image';
+    const kindLabel = kind === 'video' ? 'الفيديو' : kind === 'audio' ? 'الملف الصوتي' : 'الصورة';
+
+    const wrap = label.querySelector('.async-preview-wrap');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-remove-preview';
+    btn.innerHTML = `🗑️ إزالة ${kindLabel}`;
+    btn.addEventListener('click', () => {
+      if (pathInput) pathInput.value = '';
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      wrap?.remove();
+      btn.remove();
+      setStatus(input, '', '');
+      input.value = '';
+      // Restore old server-side preview if it exists
+      if (oldPreview) { oldPreview.hidden = false; oldPreview.style.opacity = ''; }
+    });
+
+    if (wrap) wrap.appendChild(btn);
+    else label.appendChild(btn);
+  }
+
+  /* ── Bind async form ── */
   function bindAsyncForm(form) {
     const uploadUrl = form.dataset.uploadUrl;
     if (!uploadUrl) return;
@@ -253,13 +333,31 @@
       input.addEventListener('change', async () => {
         const file = input.files?.[0];
         const pathInput = document.getElementById(input.dataset.pathInput || '');
+
+        // Clear previous state
+        const labelEl = input.closest('label');
+        labelEl?.querySelector('.async-preview-wrap')?.remove();
+        labelEl?.querySelector('.btn-remove-preview')?.remove();
+        // Hide existing server-side media preview while new one is being uploaded
+        const oldPreview = labelEl?.querySelector('.media-preview');
+        if (oldPreview) oldPreview.style.opacity = '0.3';
+
         if (!file) {
           if (pathInput) pathInput.value = '';
           setStatus(input, '', '');
+          if (oldPreview) oldPreview.style.opacity = '';
           return;
         }
 
         const kind = input.dataset.uploadKind || 'image';
+
+        // Show instant preview from local file
+        let objectUrl = null;
+        if (kind === 'image' || kind === 'answer_image' || kind === 'video' || kind === 'audio') {
+          objectUrl = URL.createObjectURL(file);
+          showPreview(input, file, objectUrl);
+        }
+
         const token = Symbol('upload');
         pending.add(token);
         input.dataset.uploading = '1';
@@ -274,12 +372,23 @@
           });
 
           if (pathInput) pathInput.value = result.path;
-          // Avoid re-sending the heavy file on final save
-          input.value = '';
+          input.value = ''; // don't re-send the file on final save
+
+          // Update preview to server URL and hide the old server-side preview
+          const label = input.closest('label');
+          const prevImg = label?.querySelector('.async-preview-wrap img, .async-preview-wrap video, .async-preview-wrap audio');
+          if (prevImg) prevImg.src = result.url;
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          if (oldPreview) oldPreview.hidden = true;
+
           setStatus(input, 'تم رفع الملف بنجاح ✓', 'done');
+          showRemoveBtn(input, pathInput, null, oldPreview);
         } catch (err) {
           console.error(err);
           if (pathInput) pathInput.value = '';
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          input.closest('label')?.querySelector('.async-preview-wrap')?.remove();
+          if (oldPreview) { oldPreview.style.opacity = ''; oldPreview.hidden = false; }
           setStatus(input, err.message || 'فشل رفع الملف', 'error');
         } finally {
           pending.delete(token);
@@ -288,9 +397,21 @@
       });
     });
 
+    /* ── Submit guard: prevent double-submit ── */
     form.addEventListener('submit', async (e) => {
-      if (form.dataset.asyncReady === '1') return;
+      // Already cleared for final submit
+      if (form.dataset.asyncReady === '1') {
+        form.dataset.asyncReady = '';
+        return;
+      }
 
+      // Already submitting — block completely
+      if (form.dataset.submitting === '1') {
+        e.preventDefault();
+        return;
+      }
+
+      // Still uploading — wait
       if (pending.size > 0 || form.querySelector('[data-async-file][data-uploading="1"]')) {
         e.preventDefault();
         const btn = form.querySelector('button[type="submit"], input[type="submit"]');
@@ -299,26 +420,28 @@
           btn.dataset.oldText = btn.dataset.oldText || btn.textContent;
           btn.textContent = 'جاري إكمال الرفع...';
         }
-        const wait = () => new Promise((r) => {
+        // Wait for all uploads to finish
+        await new Promise((r) => {
           const t = setInterval(() => {
             if (pending.size === 0 && !form.querySelector('[data-async-file][data-uploading="1"]')) {
-              clearInterval(t);
-              r();
+              clearInterval(t); r();
             }
-          }, 120);
+          }, 100);
         });
-        await wait();
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = btn.dataset.oldText || 'حفظ السؤال';
-        }
+        if (btn) { btn.disabled = false; btn.textContent = btn.dataset.oldText || 'حفظ السؤال'; }
         form.dataset.asyncReady = '1';
+        form.dataset.submitting = '1';
         if (typeof form.requestSubmit === 'function') form.requestSubmit();
         else form.submit();
         return;
       }
 
-      // Clear any leftover file inputs so save is a light request
+      // Normal submit — lock immediately to prevent double click
+      form.dataset.submitting = '1';
+      const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'جاري الحفظ...'; }
+
+      // Clear leftover file inputs
       form.querySelectorAll('[data-async-file]').forEach((input) => {
         const pathInput = document.getElementById(input.dataset.pathInput || '');
         if (pathInput?.value) input.value = '';
@@ -328,27 +451,26 @@
 
   document.querySelectorAll('form[data-async-upload]').forEach(bindAsyncForm);
 
-  // Fallback for other admin forms (categories, etc.): compress images then submit
+  /* ── Fallback: compress images in regular forms before submit ── */
   document.querySelectorAll('form:not([data-async-upload])').forEach((form) => {
     form.addEventListener('submit', async (e) => {
       if (form.dataset.compressDone === '1') return;
+      if (form.dataset.submitting === '1') { e.preventDefault(); return; }
       const inputs = [...form.querySelectorAll('input[type="file"]')].filter((i) => i.files?.length);
-      if (!inputs.length) return;
-
-      e.preventDefault();
-      const btn = form.querySelector('button[type="submit"], input[type="submit"]');
-      if (btn) {
-        btn.disabled = true;
-        btn.dataset.oldText = btn.textContent;
-        btn.textContent = 'جاري رفع الملف...';
+      if (!inputs.length) {
+        form.dataset.submitting = '1';
+        const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+        if (btn) { btn.disabled = true; btn.textContent = 'جاري الحفظ...'; }
+        return;
       }
-
+      e.preventDefault();
+      form.dataset.submitting = '1';
+      const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+      if (btn) { btn.disabled = true; btn.dataset.oldText = btn.textContent; btn.textContent = 'جاري رفع الملف...'; }
       try {
         for (const input of inputs) {
           const dt = new DataTransfer();
-          for (const file of input.files) {
-            dt.items.add(await compressFile(file));
-          }
+          for (const file of input.files) dt.items.add(await compressFile(file));
           input.files = dt.files;
         }
         form.dataset.compressDone = '1';
