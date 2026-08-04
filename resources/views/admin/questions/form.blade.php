@@ -6,11 +6,11 @@
 
   @php
     $selectedType = old('type', $question->type ?? 'standard');
-    $selectedCorrectOption = old('correct_option', $question->options->search(fn ($option) => $option->is_correct));
+    $selectedCorrectOption = old('correct_option', $question->options->search(fn($option) => $option->is_correct));
     $storedOptions = old('options', $question->exists ? $question->options->pluck('option_text')->all() : []);
     $optionValues = collect($storedOptions)->pad(4, '')->take(4)->values();
     $storedOrderItems = old('order_items', $question->orderItems());
-    $orderItems = collect($storedOrderItems)->whenEmpty(fn () => collect(['', '', '', '']))->pad(4, '')->values();
+    $orderItems = collect($storedOrderItems)->whenEmpty(fn() => collect(['', '', '', '']))->pad(4, '')->values();
     $storedMatchPairs = old('match_pairs', $question->matchPairs());
     $matchPairs = collect($storedMatchPairs);
     if ($matchPairs->isEmpty()) {
@@ -24,20 +24,16 @@
   @endphp
 
   @unless($question->exists)
-    <div class="alert alert-info" style="margin-bottom:16px;padding:12px 14px;border-radius:12px;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);font-weight:700">
+    <div class="alert alert-info"
+      style="margin-bottom:16px;padding:12px 14px;border-radius:12px;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);font-weight:700">
       كل فئة: <b>6 سهل (200)</b> + <b>6 متوسط (400)</b> + <b>6 صعب (600)</b> = {{ $maxQuestions }} سؤال.
       لو مستوى اكتمل هيظهر تنبيه، ولو الفئة خلصت: أنشئ فئة جديدة.
     </div>
   @endunless
 
-  <form
-    class="admin-form"
-    method="POST"
+  <form class="admin-form" method="POST"
     action="{{ $question->exists ? route('admin.questions.update', $question) : route('admin.questions.store') }}"
-    enctype="multipart/form-data"
-    data-async-upload
-    data-upload-url="{{ route('admin.media.store') }}"
-  >
+    enctype="multipart/form-data" data-async-upload data-upload-url="{{ route('admin.media.store') }}">
     @csrf
     @if($question->exists) @method('PUT') @endif
     <input type="hidden" name="image_path" id="questionImagePath" value="{{ old('image_path') }}">
@@ -53,18 +49,12 @@
             $medium = (int) ($category->medium_count ?? 0);
             $hard = (int) ($category->hard_count ?? 0);
           @endphp
-          <option
-            value="{{ $category->id }}"
-            data-count="{{ $count }}"
-            data-easy="{{ $easy }}"
-            data-medium="{{ $medium }}"
-            data-hard="{{ $hard }}"
-            data-full="{{ $count >= $maxQuestions ? '1' : '0' }}"
-            @selected(old('category_id', $question->category_id ?: request('category_id')) == $category->id)
-            @disabled(! $question->exists && $count >= $maxQuestions)
-          >
+          <option value="{{ $category->id }}" data-count="{{ $count }}" data-easy="{{ $easy }}"
+            data-medium="{{ $medium }}" data-hard="{{ $hard }}" data-full="{{ $count >= $maxQuestions ? '1' : '0' }}"
+            @selected(old('category_id', $question->category_id ?: request('category_id')) == $category->id) @disabled(!$question->exists && $count >= $maxQuestions)>
             {{ $category->classificationName() }} — {{ $category->name_ar }}
-            ({{ $count }}/{{ $maxQuestions }} · سهل {{ $easy }}/{{ $maxPerLevel }} · متوسط {{ $medium }}/{{ $maxPerLevel }} · صعب {{ $hard }}/{{ $maxPerLevel }})
+            ({{ $count }}/{{ $maxQuestions }} · سهل {{ $easy }}/{{ $maxPerLevel }} · متوسط
+            {{ $medium }}/{{ $maxPerLevel }} · صعب {{ $hard }}/{{ $maxPerLevel }})
             @if($count >= $maxQuestions) — مكتملة @endif
           </option>
         @endforeach
@@ -76,7 +66,8 @@
       نوع السؤال
       <select name="type" required>
         @foreach($questionTypes as $questionType)
-          <option value="{{ $questionType['value'] }}" @selected($selectedType === $questionType['value'])>{{ $questionType['label'] }}</option>
+          <option value="{{ $questionType['value'] }}" @selected($selectedType === $questionType['value'])>
+            {{ $questionType['label'] }}</option>
         @endforeach
       </select>
     </label>
@@ -88,7 +79,8 @@
           <option value="{{ $key }}" @selected(old('level', $question->level?->value) === $key)>{{ $label }}</option>
         @endforeach
       </select>
-      <small id="levelCapacityHint" style="display:block;margin-top:6px;font-weight:700;color:var(--muted,#6C7799)"></small>
+      <small id="levelCapacityHint"
+        style="display:block;margin-top:6px;font-weight:700;color:var(--muted,#6C7799)"></small>
     </label>
     @error('level')<small class="error">{{ $message }}</small>@enderror
 
@@ -100,7 +92,8 @@
 
     <label>
       المؤقت (ثانية)
-      <input type="number" name="time_limit" value="{{ old('time_limit', $question->time_limit ?? 60) }}" min="10" max="300">
+      <input type="number" name="time_limit" value="{{ old('time_limit', $question->time_limit ?? 60) }}" min="10"
+        max="300">
     </label>
 
     <label class="wide">
@@ -108,10 +101,12 @@
       <textarea name="question_text" required>{{ old('question_text', $question->question_text) }}</textarea>
     </label>
 
-    <div class="wide question-section" data-question-section data-types="image_guess,puzzle,complete,video,audio" hidden>
+    <div class="wide question-section" data-question-section data-types="image_guess,puzzle,complete,video,audio"
+      hidden>
       <label class="wide">
         نص الإجابة
-        <textarea name="answer_text" placeholder="مثال: نص الحديث كاملاً…">{{ old('answer_text', $question->answer_text) }}</textarea>
+        <textarea name="answer_text"
+          placeholder="مثال: نص الحديث كاملاً…">{{ old('answer_text', $question->answer_text) }}</textarea>
       </label>
       <small class="muted">هذا الحقل يظهر مع: خمن الصورة، لغز، أكمل الناقص، فيديو، صوتي.</small>
     </div>
@@ -119,11 +114,14 @@
     <div class="wide question-section" data-question-section data-types="video" hidden>
       <label class="wide">
         فيديو السؤال
-        <input type="file" name="image" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v,.avi" data-async-file data-path-input="questionImagePath" data-upload-kind="video">
+        <input type="file" name="image"
+          accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v,.avi" data-async-file
+          data-path-input="questionImagePath" data-upload-kind="video">
         <div class="upload-status" data-upload-status hidden></div>
         @if($question->exists && $question->isVideo() && $question->mediaUrl())
           <div class="media-preview">
-            <video src="{{ $question->mediaUrl() }}" controls style="max-width:100%;border-radius:12px;max-height:240px"></video>
+            <video src="{{ $question->mediaUrl() }}" controls
+              style="max-width:100%;border-radius:12px;max-height:240px"></video>
             <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الفيديو الحالي</label>
           </div>
         @endif
@@ -134,7 +132,8 @@
     <div class="wide question-section" data-question-section data-types="audio" hidden>
       <label class="wide">
         الملف الصوتي
-        <input type="file" name="image" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav" data-async-file data-path-input="questionImagePath" data-upload-kind="audio">
+        <input type="file" name="image" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav" data-async-file
+          data-path-input="questionImagePath" data-upload-kind="audio">
         <div class="upload-status" data-upload-status hidden></div>
         @if($question->exists && $question->isAudio() && $question->mediaUrl())
           <div class="media-preview">
@@ -146,10 +145,12 @@
       </label>
     </div>
 
-    <div class="wide question-section" data-question-section data-types="standard,image_guess,puzzle,complete,order,match" hidden>
+    <div class="wide question-section" data-question-section
+      data-types="standard,image_guess,puzzle,complete,order,match" hidden>
       <label class="wide">
         صورة السؤال (اختياري)
-        <input type="file" name="image" accept="image/*" data-async-file data-path-input="questionImagePath" data-upload-kind="image">
+        <input type="file" name="image" accept="image/*" data-async-file data-path-input="questionImagePath"
+          data-upload-kind="image">
         <div class="upload-status" data-upload-status hidden></div>
         @if($question->imageUrl())
           <div class="media-preview">
@@ -160,10 +161,12 @@
       </label>
     </div>
 
-    <div class="wide question-section" data-question-section data-types="standard,image_guess,puzzle,complete,order,match" hidden>
+    <div class="wide question-section" data-question-section
+      data-types="standard,image_guess,puzzle,complete,order,match" hidden>
       <label class="wide">
         صورة الإجابة (اختياري)
-        <input type="file" name="answer_image" accept="image/*" data-async-file data-path-input="questionAnswerImagePath" data-upload-kind="answer_image">
+        <input type="file" name="answer_image" accept="image/*" data-async-file
+          data-path-input="questionAnswerImagePath" data-upload-kind="answer_image">
         <div class="upload-status" data-upload-status hidden></div>
         @if($question->answerImageUrl())
           <div class="media-preview">
@@ -199,7 +202,8 @@
               <input type="hidden" data-match-index value="{{ $index }}">
               <input name="match_pairs[{{ $index }}][left]" value="{{ $pair['left'] ?? '' }}" placeholder="الطرف الأول">
               <span class="match-row__sep">↔</span>
-              <input name="match_pairs[{{ $index }}][right]" value="{{ $pair['right'] ?? '' }}" placeholder="الطرف الثاني">
+              <input name="match_pairs[{{ $index }}][right]" value="{{ $pair['right'] ?? '' }}"
+                placeholder="الطرف الثاني">
             </div>
           @endforeach
         </div>

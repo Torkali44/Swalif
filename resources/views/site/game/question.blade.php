@@ -143,17 +143,21 @@
         <div class="video-gate__alert">
           <span class="video-gate__icon">🎬</span>
           <div>
-            <b>ركّز في الفيديو كويس</b>
-            <p>الفيديو هيتعرض <em>مرة واحدة فقط</em>، وبعده هيظهر السؤال. لو طفّيته مش هيتشاف تاني.</p>
+            <b>ركّز، الفرصة مرة وحدة فقط</b>
           </div>
         </div>
         <div class="question-card__media question-card__media--video">
+          <div class="question-media__header">
+            <span>🎬 فيديو السؤال</span>
+            <small>شغّل الفيديو ثم تابع</small>
+          </div>
           <video
             id="questionVideo"
             class="question-media question-media--video"
             src="{{ $question->mediaUrl() }}"
             controls
             playsinline
+            preload="metadata"
             controlslist="nodownload noplaybackrate"
             data-play-once="true"
             data-gate-video="true"
@@ -175,7 +179,11 @@
 
       @if($question->isAudio() && $question->mediaUrl())
         <div class="question-card__media question-card__media--audio">
-          <audio class="question-media question-media--audio" src="{{ $question->mediaUrl() }}" controls controlsList="nodownload"></audio>
+          <div class="question-media__header">
+            <span>🎧 صوت السؤال</span>
+            <small>اضغط على المشغل للاستماع</small>
+          </div>
+          <audio class="question-media question-media--audio" src="{{ $question->mediaUrl() }}" controls preload="metadata" controlsList="nodownload"></audio>
         </div>
       @elseif($question->imageUrl())
         <div class="question-card__media">

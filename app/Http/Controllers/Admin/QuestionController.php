@@ -35,16 +35,17 @@ class QuestionController extends Controller
             ->with('classification:id,name_ar,icon')
             ->with(['questions' => function ($query) use ($request) {
                 $query->select([
-                    'id', 'category_id', 'type', 'question_text', 'level', 'points',
-                    'time_limit', 'is_active', 'image', 'created_at',
+                    'id', 'category_id', 'type', 'question_text', 'answer_text', 'meta',
+                    'level', 'points', 'time_limit', 'is_active', 'image', 'created_at',
                 ])
+                    ->with('options:id,question_id,option_text,is_correct')
                     ->orderBy('level')
                     ->orderBy('points')
                     ->orderBy('id');
 
                 if ($request->filled('level')) {
                     $query->where('level', $request->string('level'));
-                }
+                }   
 
                 if ($request->filled('type')) {
                     $query->where('type', $request->string('type'));

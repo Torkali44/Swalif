@@ -212,9 +212,10 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ([
-            ['أسبوعي', 'weekly', 10, 7, false],
-            ['شهري', 'monthly', 25, 30, true],
-            ['سنوي', 'yearly', 199, 365, false],
+            ['عرض 24 ساعة', 'daily', 5, 1, true, 'https://buy.stripe.com/eVq3cx1Nn4aH8pn2KU57W0o', '⚡'],
+            ['أسبوعي', 'weekly', 10, 7, false, null, '💎'],
+            ['شهري', 'monthly', 25, 30, false, null, '🔥'],
+            ['سنوي', 'yearly', 199, 365, false, null, '👑'],
         ] as $index => $plan) {
             Plan::updateOrCreate(
                 ['type' => $plan[1]],
@@ -223,7 +224,9 @@ class DatabaseSeeder extends Seeder
                     'price' => $plan[2],
                     'duration_days' => $plan[3],
                     'currency' => 'AED',
-                    'features' => ['فتح جميع الفئات', 'لعب غير محدود', 'جميع المستويات', 'تحديثات مستمرة'],
+                    'stripe_checkout_url' => $plan[5],
+                    'icon' => $plan[6],
+                    'features' => ['فتح جميع الفئات لمدة 24 ساعة', 'لعب غير محدود دون قيود', 'وصول لجميع المستويات والأسئلة'],
                     'is_recommended' => $plan[4],
                     'is_active' => true,
                     'sort_order' => $index + 1,

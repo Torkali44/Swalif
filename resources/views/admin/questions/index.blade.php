@@ -23,7 +23,8 @@
     <select class="select" name="type">
       <option value="">كل الأنواع</option>
       @foreach($questionTypes as $questionType)
-        <option value="{{ $questionType['value'] }}" @selected(($filters['type'] ?? '') === $questionType['value'])>{{ $questionType['label'] }}</option>
+        <option value="{{ $questionType['value'] }}" @selected(($filters['type'] ?? '') === $questionType['value'])>
+          {{ $questionType['label'] }}</option>
       @endforeach
     </select>
     <select class="select" name="level">
@@ -52,11 +53,13 @@
             <span class="q-group__icon">{{ $category->icon ?: '🎯' }}</span>
             <div>
               <b>{{ $category->name_ar }}</b>
-              <small>{{ $category->classificationName() }} · {{ $category->questions->count() }} سؤال معروض · {{ $category->questions_count }} إجمالي</small>
+              <small>{{ $category->classificationName() }} · {{ $category->questions->count() }} سؤال معروض ·
+                {{ $category->questions_count }} إجمالي</small>
             </div>
           </div>
           <div class="q-group__actions">
-            <a class="btn btn-sm btn-primary" href="{{ route('admin.questions.create', ['category_id' => $category->id]) }}">+ إضافة</a>
+            <a class="btn btn-sm btn-primary"
+              href="{{ route('admin.questions.create', ['category_id' => $category->id]) }}">+ إضافة</a>
             <span class="q-group__chevron">▾</span>
           </div>
         </summary>
@@ -79,43 +82,91 @@
                 </thead>
                 <tbody>
                   @foreach($category->questions as $question)
-                    <tr>
-                      <td class="q-text">{{ $question->question_text }}</td>
-                      <td>
-                        <span class="status-pill admin">
-                          {{ match($question->type ?? 'standard') {
-                            'image_guess' => 'خمن الصورة ( لغز )',
-                            'puzzle' => 'جواب واحد',
-                            'match' => 'توصيل',
-                            'complete' => 'أكمل الناقص',
-                            'order' => 'ترتيب',
-                            default => 'أختياري',
-                          } }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="badge-level lvl-{{ $question->points }}">{{ $question->level->label() }}</span>
-                      </td>
-                      <td>{{ $question->points }}</td>
-                      <td>
-                        <span class="status-pill {{ $question->is_active ? 'on' : 'off' }}">
-                          {{ $question->is_active ? 'مفعّل' : 'موقوف' }}
-                        </span>
-                      </td>
-                      <td class="row-actions">
-                        <a class="btn btn-sm btn-outline" href="{{ route('admin.questions.edit', $question) }}">تعديل</a>
-                        <form class="inline" method="POST" action="{{ route('admin.questions.toggle', $question) }}">
-                          @csrf
-                          @method('PATCH')
-                          <button class="btn btn-sm btn-ghost" type="submit">{{ $question->is_active ? 'إيقاف' : 'تفعيل' }}</button>
-                        </form>
-                        <form class="inline" method="POST" action="{{ route('admin.questions.destroy', $question) }}">
-                          @csrf
-                          @method('DELETE')
-                          <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('حذف السؤال؟')">حذف</button>
-                        </form>
-                      </td>
-                    </tr>
+                            <tr>
+                              <td class="q-text">{{ $question->question_text }}</td>
+                              <td>
+                                @php
+                                  $typeLabel = match ($question->type ?? 'standard') {
+                                    'image_guess' => 'خمن الصورة',
+                                    'puzzle' => 'جواب واحد',
+                                    'match' => 'توصيل',
+                                    'complete' => 'أكمل الناقص',
+                                    'order' => 'ترتيب',
+                                    'video' => 'فيديو',
+                                    'audio' => 'صوتي',
+                                    'standard' => 'اختياري',
+                                    default => \App\Enums\QuestionType::tryFrom($question->type ?? '')?->label() ?? 'اختياري',
+                                  };
+                                  $typeIcon = match ($question->type ?? 'standard') {
+                                    'video' => '🎬',
+                                    'audio' => '🎧',
+                                    'image_guess' => '🖼️',
+                                    'puzzle' => '🧩',
+                                    'match' => '🔗',
+                                    'complete' => '✏️',
+                                    'order' => '🔢',
+                                    default => '📝',
+                                  };
+                                  $typeColor = match ($question->type ?? 'standard') {
+                                    'video' => 'background:rgba(124,58,237,.12);color:#7C3AED;border-color:rgba(124,58,237,.3)',
+                                    'audio' => 'background:rgba(0,180,216,.12);color:#0077A8;border-color:rgba(0,180,216,.3)',
+                                    'image_guess' => 'background:rgba(14,159,110,.1);color:#0E9F6E;border-color:rgba(14,159,110,.3)',
+                                    'match' => 'background:rgba(236,72,153,.1);color:#BE185D;border-color:rgba(236,72,153,.3)',
+                                    'order' => 'background:rgba(255,140,0,.1);color:#B45309;border-color:rgba(255,140,0,.3)',
+                                    'puzzle' => 'background:rgba(239,68,68,.1);color:#B91C1C;border-color:rgba(239,68,68,.3)',
+                                    'complete' => 'background:rgba(59,130,246,.1);color:#1D4ED8;border-color:rgba(59,130,246,.3)',
+                                    default => '',
+                                  };
+                                @endphp
+                                <span class="status-pill admin" style="{{ $typeColor }}">
+                                  {{ $typeIcon }} {{ $typeLabel }}
+                                </span>
+                              </td>
+                              <td>
+                                <span class="badge-level lvl-{{ $question->points }}">{{ $question->level->label() }}</span>
+                              </td>
+                              <td>{{ $question->points }}</td>
+                              <td>
+                                <span class="status-pill {{ $question->is_active ? 'on' : 'off' }}">
+                                  {{ $question->is_active ? 'مفعّل' : 'موقوف' }}
+                                </span>
+                              </td>
+                              <td class="row-actions">
+                                {{-- Blade {{ }} already HTML-escapes, so " → &quot; which is safe in attributes.
+                                     JS getAttribute() auto-decodes, giving valid JSON to JSON.parse(). --}}
+                                <button class="btn btn-sm btn-primary" type="button"
+                                  data-q="{{ json_encode([
+                                    'id'         => $question->id,
+                                    'text'       => $question->question_text,
+                                    'type'       => $question->type ?? 'standard',
+                                    'level'      => $question->level?->label() ?? 'متوسط',
+                                    'levelClass' => match($question->level?->value ?? 'medium') { 'easy' => 'easy', 'hard' => 'hard', default => 'medium' },
+                                    'points'     => $question->points,
+                                    'answer'     => $question->correctAnswerText(),
+                                    'imageUrl'   => $question->imageUrl() ?? null,
+                                    'mediaUrl'   => $question->mediaUrl() ?? null,
+                                    'isVideo'    => $question->isVideo(),
+                                    'isAudio'    => $question->isAudio(),
+                                    'options'    => $question->options->map(fn($o) => ['text' => $o->option_text, 'correct' => (bool)$o->is_correct])->values()->all(),
+                                    'orderItems' => array_values($question->orderItems()),
+                                    'matchPairs' => array_values($question->matchPairs()),
+                                  ], JSON_UNESCAPED_UNICODE) }}"
+                                  onclick="previewQuestionFromBtn(this)">عرض</button>
+                                <a class="btn btn-sm btn-outline" href="{{ route('admin.questions.edit', $question) }}">تعديل</a>
+                                <form class="inline" method="POST" action="{{ route('admin.questions.toggle', $question) }}">
+                                  @csrf
+                                  @method('PATCH')
+                                  <button class="btn btn-sm btn-ghost"
+                                    type="submit">{{ $question->is_active ? 'إيقاف' : 'تفعيل' }}</button>
+                                </form>
+                                <form class="inline" method="POST" action="{{ route('admin.questions.destroy', $question) }}">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button class="btn btn-sm btn-danger" type="submit"
+                                    onclick="return confirm('حذف السؤال؟')">حذف</button>
+                                </form>
+                              </td>
+                            </tr>
                   @endforeach
                 </tbody>
               </table>
@@ -127,4 +178,178 @@
       <div class="empty-panel">لا توجد فئات/أسئلة مطابقة للفلتر.</div>
     @endforelse
   </div>
+
+  {{-- ===== Question Preview Modal ===== --}}
+  <div id="qPreviewModal"
+    style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);overflow-y:auto;"
+    onclick="if(event.target===this)closePreview()">
+    <div
+      style="max-width:680px;margin:40px auto;background:var(--card,#1e2035);border-radius:20px;padding:0;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);">
+
+      {{-- top bar --}}
+      <div
+        style="background:linear-gradient(135deg,#7C3AED,#00B4D8);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="qp-level-chip"
+            style="padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:700;background:rgba(255,255,255,.2);color:#fff"></span>
+          <span id="qp-points-chip"
+            style="padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:700;background:rgba(255,255,255,.15);color:#fff"></span>
+        </div>
+        <button onclick="closePreview()"
+          style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;line-height:1">✕</button>
+      </div>
+
+      {{-- body --}}
+      <div style="padding:28px 24px;">
+        <p style="font-size:.8rem;color:var(--muted,#888);margin:0 0 8px">السؤال</p>
+        <h2 id="qp-text" style="font-size:1.3rem;font-weight:800;line-height:1.6;color:var(--fg,#fff);margin:0 0 20px">
+        </h2>
+
+        <div id="qp-media-wrap" style="display:none;margin-bottom:20px;text-align:center;">
+          <img id="qp-image" src="" alt=""
+            style="display:none;max-width:100%;max-height:240px;border-radius:12px;object-fit:contain;margin:0 auto;">
+          <video id="qp-video" controls playsinline
+            style="display:none;max-width:100%;max-height:300px;border-radius:12px;width:100%;background:#000;margin:0 auto;"></video>
+          <audio id="qp-audio" controls style="display:none;width:100%;margin-top:10px;"></audio>
+        </div>
+
+        {{-- options --}}
+        <div id="qp-options" style="display:grid;gap:10px;margin-bottom:20px;"></div>
+
+        {{-- order --}}
+        <div id="qp-order" style="display:none;margin-bottom:20px;">
+          <p style="font-size:.85rem;color:var(--muted,#888);margin:0 0 8px">الترتيب الصحيح:</p>
+          <ol id="qp-order-list"
+            style="padding-right:20px;display:flex;flex-direction:column;gap:8px;list-style:decimal;"></ol>
+        </div>
+
+        {{-- match --}}
+        <div id="qp-match" style="display:none;margin-bottom:20px;">
+          <p style="font-size:.85rem;color:var(--muted,#888);margin:0 0 8px">الربط الصحيح:</p>
+          <div id="qp-match-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        {{-- answer --}}
+        <div id="qp-answer-wrap"
+          style="background:rgba(14,159,110,.12);border:1px solid rgba(14,159,110,.3);border-radius:12px;padding:14px 16px;">
+          <p style="font-size:.8rem;color:#0E9F6E;margin:0 0 4px;font-weight:700">✅ الإجابة الصحيحة</p>
+          <p id="qp-answer" style="margin:0;font-size:1rem;font-weight:600;color:var(--fg,#fff)"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const keys = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+    const levelLabels = { easy: 'سهل 🟢', medium: 'متوسط 🟡', hard: 'صعب 🔴' };
+
+    // Called from onclick="previewQuestionFromBtn(this)"
+    // Reads JSON safely from data-q attribute (avoids HTML quote-breaking issues)
+    function previewQuestionFromBtn(btn) {
+      try {
+        const q = JSON.parse(btn.getAttribute('data-q'));
+        previewQuestion(q);
+      } catch (err) {
+        console.error('فشل تحليل بيانات السؤال:', err, btn.getAttribute('data-q'));
+      }
+    }
+
+    function previewQuestion(q) {
+      document.getElementById('qp-text').textContent = q.text;
+
+      // level & points chips
+      document.getElementById('qp-level-chip').textContent = levelLabels[q.levelClass] || q.level;
+      document.getElementById('qp-points-chip').textContent = q.points + ' نقطة';
+
+      // media (image / video / audio)
+      const mediaWrap = document.getElementById('qp-media-wrap');
+      const img = document.getElementById('qp-image');
+      const video = document.getElementById('qp-video');
+      const audio = document.getElementById('qp-audio');
+
+      video.pause(); video.removeAttribute('src'); video.load(); video.style.display = 'none';
+      audio.pause(); audio.removeAttribute('src'); audio.load(); audio.style.display = 'none';
+      img.src = ''; img.style.display = 'none';
+      mediaWrap.style.display = 'none';
+
+      if ((q.isVideo || q.type === 'video' || q.type === 'Video') && q.mediaUrl) {
+        video.src = q.mediaUrl;
+        video.style.display = 'block';
+        mediaWrap.style.display = 'block';
+      } else if ((q.isAudio || q.type === 'audio' || q.type === 'Audio') && q.mediaUrl) {
+        audio.src = q.mediaUrl;
+        audio.style.display = 'block';
+        mediaWrap.style.display = 'block';
+      } else if (q.imageUrl) {
+        img.src = q.imageUrl;
+        img.style.display = 'block';
+        mediaWrap.style.display = 'block';
+      }
+
+      // reset sections
+      ['qp-options', 'qp-order', 'qp-match'].forEach(id => { document.getElementById(id).innerHTML = ''; document.getElementById(id).style.display = 'none'; });
+
+      // ✅ Types with multiple-choice options
+      const mcqTypes = ['standard', 'image_guess', 'puzzle', 'complete'];
+      if (mcqTypes.includes(q.type) && q.options && q.options.length) {
+        const wrap = document.getElementById('qp-options');
+        wrap.style.display = 'grid';
+        q.options.forEach((opt, i) => {
+          const btn = document.createElement('div');
+          btn.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:2px solid ' + (opt.correct ? '#0E9F6E' : 'rgba(255,255,255,.12)') + ';background:' + (opt.correct ? 'rgba(14,159,110,.15)' : 'rgba(255,255,255,.04)') + ';color:var(--fg,#fff);';
+          btn.innerHTML = '<span style="min-width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">' + (keys[i] || i + 1) + '</span><span style="flex:1">' + opt.text + '</span>' + (opt.correct ? '<span style="color:#0E9F6E;font-size:1.1rem">✔</span>' : '');
+          wrap.appendChild(btn);
+        });
+
+        // ✅ Order type — orderItems is a plain JS array ["item1", "item2", ...]
+      } else if (q.type === 'order') {
+        const items = Array.isArray(q.orderItems) ? q.orderItems : Object.values(q.orderItems || {});
+        if (items.length) {
+          const wrap = document.getElementById('qp-order');
+          const list = document.getElementById('qp-order-list');
+          wrap.style.display = 'block';
+          items.forEach((text, idx) => {
+            const li = document.createElement('li');
+            li.style.cssText = 'padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--fg,#fff);display:flex;align-items:center;gap:10px;';
+            li.innerHTML = '<span style="min-width:24px;height:24px;background:rgba(255,140,0,.2);color:#FF8C00;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0">' + (idx + 1) + '</span><span>' + text + '</span>';
+            list.appendChild(li);
+          });
+        }
+
+        // ✅ Match type — matchPairs is [{left, right}, ...]
+      } else if (q.type === 'match') {
+        const pairs = Array.isArray(q.matchPairs) ? q.matchPairs : [];
+        if (pairs.length) {
+          const wrap = document.getElementById('qp-match');
+          const list = document.getElementById('qp-match-list');
+          wrap.style.display = 'block';
+          pairs.forEach(pair => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:grid;grid-template-columns:1fr 36px 1fr;gap:8px;align-items:center;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--fg,#fff);';
+            row.innerHTML = '<span style="text-align:right">' + pair.left + '</span><span style="text-align:center;color:#7C3AED;font-weight:900;font-size:1rem">↔</span><span style="text-align:left">' + pair.right + '</span>';
+            list.appendChild(row);
+          });
+        }
+      }
+
+      // answer text
+      const ans = q.answer || (q.options ? (q.options.find(o => o.correct) || {}).text : '') || '—';
+      document.getElementById('qp-answer').textContent = ans;
+
+      document.getElementById('qPreviewModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+      const video = document.getElementById('qp-video');
+      const audio = document.getElementById('qp-audio');
+      if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+      if (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); }
+      document.getElementById('qPreviewModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
+  </script>
+
 </x-layouts.admin>
