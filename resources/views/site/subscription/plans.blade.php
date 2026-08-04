@@ -103,11 +103,27 @@
           <h2>أهلاً بك في <span>سوالف!</span> 🔥</h2>
           <p class="offer-subtitle">إذا تحب التحدي والفراسة, فهذا مكانك! 😍</p>
           <p class="offer-subtext">أسئلة وألعاب تناسب كل الفئات بسعر 5 دراهم فقط.</p>
-          <a href="https://buy.stripe.com/eVq3cx1Nn4aH8pn2KU57W0o" target="_blank" rel="noopener noreferrer" class="offer-btn">
-            <span class="arrow">&lt;</span>
-            <span>ادفع 5 دراهم واشترك الآن</span>
-            <span>🚀</span>
-          </a>
+          @auth
+            {{-- المستخدم مسجل → نمرر الدفع عبر الـ controller لتسجيل الـ payment أولاً --}}
+            <form method="POST" action="{{ route('subscription.opening_offer') }}" style="width:100%;display:flex;justify-content:center;">
+              @csrf
+              <button type="submit" class="offer-btn" style="border:none;cursor:pointer;">
+                <span class="arrow">&lt;</span>
+                <span>ادفع 5 دراهم واشترك الآن</span>
+                <span>🚀</span>
+              </button>
+            </form>
+          @else
+            {{-- الزائر غير مسجل → حوّله لصفحة إنشاء الحساب أولاً --}}
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%">
+              <a href="{{ route('register') }}" class="offer-btn">
+                <span>📝</span>
+                <span>أنشئ حسابك واستفد من العرض</span>
+                <span>🚀</span>
+              </a>
+              <p style="font-size:13px;font-weight:600;color:#6B7280;margin:0">لازم تكون عامل حساب عشان نقدر نفعّل اشتراكك بعد الدفع</p>
+            </div>
+          @endauth
         </div>
 
         <div class="offer-features">

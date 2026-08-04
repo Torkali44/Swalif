@@ -10,6 +10,9 @@ Route::get('/', [Site\HomeController::class, 'index'])->name('home');
 Route::get('/categories', [Site\CategoryController::class, 'index'])->name('categories.index');
 Route::get('/categories/{category:slug}', [Site\CategoryController::class, 'show'])->name('categories.show');
 
+// صفحة الباقات متاحة للجميع (الزوار يشوفونها لكن ما يقدرون يدفعون)
+Route::get('/subscribe', [Site\SubscriptionController::class, 'index'])->name('subscription.index');
+
 Route::middleware('auth')->group(function () {
     Route::prefix('game')->name('game.')->middleware(['play.access', 'free.trial'])->group(function () {
         Route::get('/setup/{category}', [Site\GameController::class, 'setup'])->name('setup');
@@ -24,7 +27,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{game}/team/{team}/adjust-score', [Site\GameController::class, 'adjustScore'])->name('adjustScore');
     });
 
-    Route::get('/subscribe', [Site\SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscribe/opening-offer', [Site\SubscriptionController::class, 'openingOfferCheckout'])->name('subscription.opening_offer');
     Route::post('/subscribe/{plan}', [Site\SubscriptionController::class, 'checkout'])->name('subscription.checkout');
     Route::get('/subscribe/return', [Site\SubscriptionController::class, 'returnFromPayment'])->name('subscription.return');
 

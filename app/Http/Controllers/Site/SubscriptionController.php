@@ -130,4 +130,33 @@ class SubscriptionController extends Controller
                 'استلمنا طلب الدفع. الاشتراك يتفعّل تلقائيًا بعد تأكيد الدفع من بوابة الدفع، أو من لوحة الإدارة.'
             );
     }
+
+    /**
+     * عرض الافتتاح — يشترط تسجيل الدخول أولاً.
+     * بعد التحقق، يسجّل payment معلّق ثم يحوّل المستخدم لرابط Stripe الخارجي.
+     */
+    public function openingOfferCheckout(Request $request)
+    {
+        $user = $request->user();
+
+        // حفظ pending payment لربط الدفع بالمستخدم
+        $payment = Payment::create([
+            'user_id'           => $user->id,
+            'gateway'           => 'stripe_link',
+            'gateway_reference' => 'opening_offer_pending_' . \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(16)),
+            'amount'            => 5.00,
+            'currency'          => 'AED',
+            'status'            => 'pending',
+            'meta'              => [
+                'offer_type'    => 'opening_offer',
+                'plan_name'     => 'عرض الافتتاح',
+                'duration_days' => 1,
+                'created_via'   => 'opening_offer_checkout',
+            ],
+        ]);
+
+        $request->session()->put('pending_payment_id', $payment->id);
+
+        return redirect()->away('https://buy.stripe.com/eVq3cx1Nn4aH8pn2KU57W0o');
+    }
 }
