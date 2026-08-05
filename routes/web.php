@@ -10,10 +10,12 @@ Route::get('/', [Site\HomeController::class, 'index'])->name('home');
 Route::get('/categories', [Site\CategoryController::class, 'index'])->name('categories.index');
 Route::get('/categories/{category:slug}', [Site\CategoryController::class, 'show'])->name('categories.show');
 
-// صفحة الباقات متاحة للجميع (الزوار يشوفونها لكن ما يقدرون يدفعون)
+// Subscription plans visible to all (guests see plans but can't pay)
 Route::get('/subscribe', [Site\SubscriptionController::class, 'index'])->name('subscription.index');
 
 Route::middleware('auth')->group(function () {
+
+    // ── Game Routes ──────────────────────────────────────────────────────────
     Route::prefix('game')->name('game.')->middleware(['play.access', 'free.trial'])->group(function () {
         Route::get('/setup/{category}', [Site\GameController::class, 'setup'])->name('setup');
         Route::post('/start', [Site\GameController::class, 'start'])->name('start');
@@ -27,10 +29,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/{game}/team/{team}/adjust-score', [Site\GameController::class, 'adjustScore'])->name('adjustScore');
     });
 
+    // ── Subscription / Payment Routes ────────────────────────────────────────
+
+    // Checkout (creates pending payment, redirects to Stripe)
     Route::post('/subscribe/opening-offer', [Site\SubscriptionController::class, 'openingOfferCheckout'])->name('subscription.opening_offer');
     Route::post('/subscribe/{plan}', [Site\SubscriptionController::class, 'checkout'])->name('subscription.checkout');
+
+    // Return URL — Stripe redirects here after payment (NO auto-activation)
     Route::get('/subscribe/return', [Site\SubscriptionController::class, 'returnFromPayment'])->name('subscription.return');
 
+    // "I have paid" button — moves pending → waiting_review (ONE-TIME)
+    Route::post('/subscribe/claim', [Site\SubscriptionController::class, 'claimPayment'])->name('subscription.claim');
+
+    // Success page — only accessible with an active subscription
+    Route::get('/subscribe/success', [Site\SubscriptionController::class, 'success'])->name('subscription.success');
+
+    // ── Profile / History ────────────────────────────────────────────────────
     Route::get('/profile', [User\ProfileController::class, 'show'])->name('profile');
     Route::put('/profile', [User\ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [User\ProfileController::class, 'updatePassword'])->name('profile.password');

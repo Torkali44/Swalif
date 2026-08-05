@@ -107,9 +107,10 @@ class AdminSubscriptionManagementTest extends TestCase
             'stripe_checkout_url' => 'https://buy.stripe.com/test_live_link',
         ]);
 
-        $this->actingAs($user)
-            ->post(route('subscription.checkout', $plan))
-            ->assertRedirect('https://buy.stripe.com/test_live_link');
+        $response = $this->actingAs($user)
+            ->post(route('subscription.checkout', $plan));
+
+        $this->assertTrue(str_starts_with($response->headers->get('Location'), 'https://buy.stripe.com/test_live_link'));
 
         $this->assertDatabaseHas('payments', [
             'user_id' => $user->id,

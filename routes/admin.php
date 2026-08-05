@@ -36,6 +36,7 @@ Route::patch('subscribers/{subscription}/extend', [SubscriberController::class, 
 
 Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
 Route::post('payments/{payment}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
+Route::patch('payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
 
 Route::get('users', [UserController::class, 'index'])->name('users.index');
 Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');

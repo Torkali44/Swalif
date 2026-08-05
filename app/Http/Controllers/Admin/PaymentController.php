@@ -12,18 +12,66 @@ class PaymentController extends Controller
 {
     public function __construct(private SubscriptionService $subscriptions) {}
 
+    // ─── Index ────────────────────────────────────────────────────────────────
+
     public function index(Request $request)
     {
-        $payments = Payment::query()
+        $query = Payment::query()
             ->with(['user', 'subscription.plan'])
-            ->latest()
-            ->paginate(20);
+            ->latest();
 
-        return view('admin.payments.index', compact('payments'));
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        // User search
+        if ($request->filled('q')) {
+            $q = $request->string('q')->toString();
+            $query->whereHas('user', fn ($b) => $b
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('email', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")
+            );
+        }
+
+        $payments = $query->paginate(20)->withQueryString();
+
+        // Counts for badge display
+        $counts = Payment::query()
+            ->selectRaw("
+                SUM(CASE WHEN status = 'pending'        THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'waiting_review' THEN 1 ELSE 0 END) as waiting_review,
+                SUM(CASE WHEN status = 'paid'           THEN 1 ELSE 0 END) as paid,
+                SUM(CASE WHEN status = 'cancelled'      THEN 1 ELSE 0 END) as cancelled
+            ")
+            ->first();
+
+        return view('admin.payments.index', [
+            'payments' => $payments,
+            'counts'   => $counts,
+            'filters'  => $request->only(['status', 'q']),
+        ]);
     }
 
+    // ─── Confirm (Activate) ───────────────────────────────────────────────────
+
+    /**
+     * Admin confirms the payment and activates the subscription.
+     * Works for both "pending" and "waiting_review" payments.
+     */
     public function confirm(Payment $payment)
     {
+        if ($payment->isPaid() && $payment->subscription_id) {
+            return redirect()
+                ->route('admin.subscribers.edit', $payment->subscription_id)
+                ->with('info', 'الدفع مؤكد بالفعل.');
+        }
+
+        if (! $payment->canBeConfirmed()) {
+            return back()->with('error', 'لا يمكن تأكيد هذه العملية (الحالة: ' . $payment->status . ').');
+        }
+
         try {
             $subscription = $this->subscriptions->markPaymentPaidAndActivate($payment);
         } catch (RuntimeException $e) {
@@ -32,6 +80,23 @@ class PaymentController extends Controller
 
         return redirect()
             ->route('admin.subscribers.edit', $subscription)
-            ->with('success', 'تم تأكيد الدفع وتفعيل الاشتراك حتى '.$subscription->ends_at->format('Y-m-d H:i'));
+            ->with('success', 'تم تأكيد الدفع وتفعيل الاشتراك حتى ' . $subscription->ends_at->format('Y-m-d H:i'));
+    }
+
+    // ─── Cancel ───────────────────────────────────────────────────────────────
+
+    /**
+     * Admin cancels a pending/waiting_review payment.
+     * Does NOT touch any existing subscription.
+     */
+    public function cancel(Payment $payment)
+    {
+        if ($payment->isPaid()) {
+            return back()->with('error', 'لا يمكن إلغاء عملية مدفوعة ومفعّلة.');
+        }
+
+        $payment->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'تم إلغاء عملية الدفع رقم ' . ($payment->payment_reference ?? $payment->id));
     }
 }
