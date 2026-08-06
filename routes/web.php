@@ -2,15 +2,21 @@
 
 use App\Http\Controllers\Site;
 use App\Http\Controllers\User;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
 
+// ── Stripe Webhook (no auth, no CSRF — verified by Stripe-Signature header) ────
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])
+    ->name('stripe.webhook');
+
+// ── Public Site Routes ─────────────────────────────────────────────────────────
 Route::get('/', [Site\HomeController::class, 'index'])->name('home');
 Route::get('/categories', [Site\CategoryController::class, 'index'])->name('categories.index');
 Route::get('/categories/{category:slug}', [Site\CategoryController::class, 'show'])->name('categories.show');
 
-// Subscription plans visible to all (guests see plans but can't pay)
+// Subscription plans — visible to all (guests see plans but cannot pay)
 Route::get('/subscribe', [Site\SubscriptionController::class, 'index'])->name('subscription.index');
 
 Route::middleware('auth')->group(function () {
@@ -31,17 +37,14 @@ Route::middleware('auth')->group(function () {
 
     // ── Subscription / Payment Routes ────────────────────────────────────────
 
-    // Checkout (creates pending payment, redirects to Stripe)
+    // Checkout: creates pending Payment record, appends client_reference_id, redirects to Stripe
     Route::post('/subscribe/opening-offer', [Site\SubscriptionController::class, 'openingOfferCheckout'])->name('subscription.opening_offer');
     Route::post('/subscribe/{plan}', [Site\SubscriptionController::class, 'checkout'])->name('subscription.checkout');
 
-    // Return URL — Stripe redirects here after payment (NO auto-activation)
+    // Return URL — Stripe redirects here after payment (info-only, no activation)
     Route::get('/subscribe/return', [Site\SubscriptionController::class, 'returnFromPayment'])->name('subscription.return');
 
-    // "I have paid" button — moves pending → waiting_review (ONE-TIME)
-    Route::post('/subscribe/claim', [Site\SubscriptionController::class, 'claimPayment'])->name('subscription.claim');
-
-    // Success page — only accessible with an active subscription
+    // Success page — display-only, accessible only when subscription is active
     Route::get('/subscribe/success', [Site\SubscriptionController::class, 'success'])->name('subscription.success');
 
     // ── Profile / History ────────────────────────────────────────────────────

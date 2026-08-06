@@ -6,79 +6,80 @@
     <div class="container" style="max-width: 640px; margin: 0 auto;">
       <x-back-button :href="route('subscription.index')" label="العودة للباقات" />
 
-      <div class="panel" style="margin-top: 24px; padding: 32px 24px; text-align: center; border-radius: 24px; background: rgba(255,255,255,0.95); box-shadow: 0 20px 40px rgba(0,0,0,0.08);">
-        @if(session('success'))
-          <div style="margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; background: rgba(0,200,83,.12); border: 1px solid rgba(0,200,83,.28); font-weight: 700; color: #00843D">
-            {{ session('success') }}
-          </div>
-        @endif
+      <div class="panel" style="margin-top: 24px; padding: 36px 28px; text-align: center; border-radius: 24px; background: rgba(255,255,255,0.97); box-shadow: 0 20px 40px rgba(0,0,0,0.08);">
 
         @if(session('info'))
-          <div style="margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; background: rgba(0,229,255,.12); border: 1px solid rgba(0,229,255,.28); font-weight: 700; color: #00838F">
+          <div style="margin-bottom: 20px; padding: 14px 16px; border-radius: 14px; background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.3); font-weight: 700; color: #00838F">
             {{ session('info') }}
           </div>
         @endif
 
-        @if(session('error'))
-          <div style="margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; background: rgba(255,23,68,.1); border: 1px solid rgba(255,23,68,.25); font-weight: 700; color: #d32f2f">
-            {{ session('error') }}
-          </div>
-        @endif
+        {{-- Spinning clock animation --}}
+        <div style="font-size: 56px; margin-bottom: 18px; animation: spin 4s linear infinite;">⏳</div>
 
-        <div style="font-size: 54px; margin-bottom: 16px;">⏳</div>
-        <h1 style="font-size: 26px; font-weight: 900; margin-bottom: 12px; color: #111827;">شكراً لك! تم استلام طلب الدفع</h1>
-        
-        <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin-bottom: 24px;">
-          إذا تم الدفع بنجاح عبر Stripe، فسيتم مراجعة العملية وتفعيل اشتراكك خلال دقائق بواسطة الإدارة.
+        <h1 style="font-size: 24px; font-weight: 900; margin-bottom: 12px; color: #111827;">
+          شكراً! تم استلام طلب الدفع
+        </h1>
+
+        <p style="font-size: 16px; color: #4b5563; line-height: 1.7; margin-bottom: 24px;">
+          إذا تم الدفع بنجاح عبر Stripe، سيتم تفعيل اشتراكك <strong>تلقائياً خلال ثوانٍ</strong> عبر نظام Stripe الآمن.
+          <br><br>
+          يمكنك إعادة تحميل هذه الصفحة بعد لحظات للتحقق من حالة الاشتراك.
         </p>
 
         @if($payment)
           <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 18px; margin-bottom: 24px; text-align: right;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="color: #6b7280; font-size: 14px;">رقم العملية (Reference):</span>
-              <strong dir="ltr" style="color: #111827; font-family: monospace; font-size: 15px;">{{ $payment->payment_reference ?? 'PAY-'.$payment->id }}</strong>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
+              <span style="color: #6b7280; font-size: 14px;">رقم الطلب:</span>
+              <strong dir="ltr" style="font-family: monospace; font-size: 14px; color: #111827; background: #f3f4f6; padding: 3px 10px; border-radius: 8px;">
+                {{ $payment->payment_reference ?? 'PAY-'.$payment->id }}
+              </strong>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
               <span style="color: #6b7280; font-size: 14px;">الباقة:</span>
               <strong style="color: #111827;">{{ $payment->meta['plan_name'] ?? 'باقة الاشتراك' }}</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
               <span style="color: #6b7280; font-size: 14px;">المبلغ:</span>
-              <strong dir="ltr" style="color: #111827;">{{ number_format((float) $payment->amount, 2) }} {{ $payment->currency }}</strong>
+              <strong dir="ltr" style="color: #111827;">
+                {{ number_format((float) $payment->amount, 2) }} {{ $payment->currency }}
+              </strong>
             </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: #6b7280; font-size: 14px;">حالة الطلب:</span>
-              <span>
-                @if($payment->isWaitingReview())
-                  <span class="chip chip--warn" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5;">قيد المراجعة 🔍</span>
-                @elseif($payment->isPending())
-                  <span class="chip" style="background: #f3f4f6; color: #4b5563;">بانتظار التأكيد ⏳</span>
-                @else
-                  <span class="chip">{{ $payment->status }}</span>
-                @endif
-              </span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #6b7280; font-size: 14px;">الحالة:</span>
+              @if($payment->isPaid())
+                <span style="background: #d1fae5; color: #065f46; padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;">✅ مدفوع ومفعّل</span>
+              @else
+                <span style="background: #fef3c7; color: #92400e; padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;">⏳ قيد المعالجة</span>
+              @endif
             </div>
           </div>
         @endif
 
-        @if($payment && $payment->isPending())
-          <form method="POST" action="{{ route('subscription.claim') }}" style="margin-bottom: 16px;">
-            @csrf
-            <button type="submit" class="btn btn--primary btn--block" style="padding: 14px 24px; font-size: 16px; font-weight: 800;">
-              ✅ لقد قمت بالدفع (إرسال للمراجعة)
-            </button>
-          </form>
-        @elseif($payment && $payment->isWaitingReview())
-          <div style="padding: 12px; background: #fff7ed; border-radius: 12px; color: #c2410c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">
-            تم إرسال إشعارك مسبقاً! الإدارة تراجع العملية حالياً وسيتفعل حسابك فور التأكيد.
-          </div>
-        @endif
+        {{-- Auto-refresh after 10 seconds to check if webhook fired --}}
+        <div style="margin-bottom: 20px; padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; font-size: 14px; color: #14532d;">
+          🔄 ستنتقل الصفحة تلقائياً بعد لحظات للتحقق من حالة اشتراكك…
+        </div>
 
-        <a href="{{ route('home') }}" class="btn btn--soft" style="display: inline-block; width: 100%;">
+        <a href="{{ route('subscription.return') }}" class="btn btn--soft" style="display: block; margin-bottom: 12px; font-weight: 700;">
+          🔄 تحقق من الحالة الآن
+        </a>
+        <a href="{{ route('home') }}" class="btn" style="display: block; color: #6b7280; background: transparent; border: 1px solid #e5e7eb;">
           العودة للرئيسية
         </a>
       </div>
     </div>
   </section>
 </div>
+
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+
+{{-- Auto-redirect to return page after 12 seconds to re-check webhook status --}}
+<script>
+setTimeout(function () {
+  window.location.href = "{{ route('subscription.return') }}";
+}, 12000);
+</script>
 </x-layouts.app>

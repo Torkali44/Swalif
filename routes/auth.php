@@ -6,14 +6,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:6,1')->name('login.store');
 
     // توافق خلفي: صفحة الأدمن القديمة توجّه لنفس صفحة الدخول
     Route::get('/login/admin', [LoginController::class, 'adminCreate'])->name('login.admin');
-    Route::post('/login/admin', [LoginController::class, 'adminStore'])->name('login.admin.store');
+    Route::post('/login/admin', [LoginController::class, 'adminStore'])->middleware('throttle:6,1')->name('login.admin.store');
 
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
-    Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:6,1')->name('register.store');
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])

@@ -63,6 +63,12 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        \Illuminate\Support\Facades\Log::info('[Auth] New user registered', [
+            'user_id' => $user->id,
+            'email'   => $user->email,
+            'ip'      => $request->ip(),
+        ]);
+
         return redirect()
             ->route('home')
             ->with('success', 'تم إنشاء حسابك بنجاح. أهلًا بك!');

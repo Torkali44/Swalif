@@ -40,14 +40,26 @@ return [
     | Leave as log (default) for local/demo (code shown on screen).
     */
     'sms' => [
-        'driver' => env('SMS_DRIVER', 'log'),
+        'driver'               => env('SMS_DRIVER', 'log'),
         'default_country_code' => env('SMS_DEFAULT_COUNTRY_CODE', '+971'),
         'twilio' => [
-            'sid' => env('TWILIO_SID'),
-            'token' => env('TWILIO_AUTH_TOKEN', env('TWILIO_TOKEN')),
-            'from' => env('TWILIO_FROM'),
+            'sid'        => env('TWILIO_SID'),
+            'token'      => env('TWILIO_AUTH_TOKEN', env('TWILIO_TOKEN')),
+            'from'       => env('TWILIO_FROM'),
             'verify_sid' => env('TWILIO_VERIFY_SID'),
         ],
+    ],
+
+    /*
+    | Stripe — Payment Links integration.
+    | STRIPE_SECRET_KEY        : sk_live_... or sk_test_...
+    | STRIPE_PUBLISHABLE_KEY   : pk_live_... or pk_test_...
+    | STRIPE_WEBHOOK_SECRET    : whsec_... (from Stripe Dashboard → Webhooks)
+    */
+    'stripe' => [
+        'key'            => env('STRIPE_PUBLISHABLE_KEY'),
+        'secret'         => env('STRIPE_SECRET_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
 ];

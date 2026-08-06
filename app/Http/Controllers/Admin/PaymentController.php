@@ -74,7 +74,20 @@ class PaymentController extends Controller
 
         try {
             $subscription = $this->subscriptions->markPaymentPaidAndActivate($payment);
+
+            \Illuminate\Support\Facades\Log::info('[Admin Audit] Payment confirmed manually', [
+                'admin_id'        => auth()->id(),
+                'payment_id'      => $payment->id,
+                'user_id'         => $payment->user_id,
+                'subscription_id' => $subscription->id,
+            ]);
         } catch (RuntimeException $e) {
+            \Illuminate\Support\Facades\Log::error('[Admin Audit] Manual payment confirm failed', [
+                'admin_id'   => auth()->id(),
+                'payment_id' => $payment->id,
+                'error'      => $e->getMessage(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
 
@@ -96,6 +109,12 @@ class PaymentController extends Controller
         }
 
         $payment->update(['status' => 'cancelled']);
+
+        \Illuminate\Support\Facades\Log::info('[Admin Audit] Payment cancelled manually', [
+            'admin_id'   => auth()->id(),
+            'payment_id' => $payment->id,
+            'user_id'    => $payment->user_id,
+        ]);
 
         return back()->with('success', 'تم إلغاء عملية الدفع رقم ' . ($payment->payment_reference ?? $payment->id));
     }

@@ -19,19 +19,19 @@ class SubscriptionController extends Controller
         private SubscriptionService $subscriptions,
     ) {}
 
-    // ─── Public: Subscription Plans Page ─────────────────────────────────────
+    // ─── Subscription Plans Page ──────────────────────────────────────────────
 
     public function index(Request $request)
     {
         $user = $request->user();
 
         return view('site.subscription.plans', [
-            'plans'               => $this->plans->activePlans(),
-            'activeSubscription'  => $user ? $this->subscriptions->activeSubscription($user) : null,
+            'plans'              => $this->plans->activePlans(),
+            'activeSubscription' => $user ? $this->subscriptions->activeSubscription($user) : null,
         ]);
     }
 
-    // ─── Checkout: Regular Plans (Stripe Payment Link) ────────────────────────
+    // ─── Checkout: Regular Plan via Stripe Payment Link ───────────────────────
 
     public function checkout(Plan $plan, Request $request)
     {
@@ -39,7 +39,7 @@ class SubscriptionController extends Controller
 
         $user = $request->user();
 
-        // Plans with an external Stripe Payment Link
+        // ── Path A: External Stripe Payment Link ──────────────────────────────
         if (filled($plan->stripe_checkout_url)) {
             $ref = Payment::generateReference();
 
@@ -52,25 +52,26 @@ class SubscriptionController extends Controller
                 'currency'          => $plan->currency ?? 'AED',
                 'status'            => 'pending',
                 'meta'              => [
-                    'plan_id'      => $plan->id,
-                    'plan_name'    => $plan->name,
-                    'duration_days'=> $plan->duration_days,
-                    'created_via'  => 'stripe_checkout_url',
+                    'plan_id'       => $plan->id,
+                    'plan_name'     => $plan->name,
+                    'duration_days' => $plan->duration_days,
+                    'created_via'   => 'stripe_payment_link',
                 ],
             ]);
 
-            // Store in session so return page can identify this user's payment
+            // Remember in session so the return page can look up this payment
             $request->session()->put('pending_payment_id', $payment->id);
 
-            // Append client_reference_id so Stripe webhooks (when added later) can link back
-            $stripeUrl = $plan->stripe_checkout_url;
-            $separator = str_contains($stripeUrl, '?') ? '&' : '?';
+            // Stripe Payment Links accept ?client_reference_id= as a query param.
+            // The webhook receives it back in checkout.session.completed.
+            $stripeUrl  = $plan->stripe_checkout_url;
+            $separator  = str_contains($stripeUrl, '?') ? '&' : '?';
             $stripeUrl .= $separator . 'client_reference_id=' . $ref;
 
             return redirect()->away($stripeUrl);
         }
 
-        // Fallback: direct charge via gateway (FakeGateway / future real Stripe)
+        // ── Path B: Direct gateway charge (FakeGateway fallback) ──────────────
         try {
             $result = DB::transaction(function () use ($user, $plan) {
                 $ref    = Payment::generateReference();
@@ -80,7 +81,7 @@ class SubscriptionController extends Controller
 
                 $payment = Payment::create([
                     'user_id'           => $user->id,
-                    'gateway'           => $charge['meta']['gateway'] ?? config('payment.default_gateway', 'fake'),
+                    'gateway'           => $charge['meta']['gateway'] ?? 'fake',
                     'gateway_reference' => $charge['reference'] ?? ('pay_' . Str::lower(Str::random(12))),
                     'payment_reference' => $ref,
                     'amount'            => $plan->price,
@@ -94,14 +95,15 @@ class SubscriptionController extends Controller
                 ]);
 
                 if ($payment->status !== 'paid') {
-                    return ['ok' => false, 'payment' => $payment,
-                            'message' => 'لم يتم تأكيد الدفع بعد. سيُفعَّل الاشتراك بعد المراجعة.'];
+                    return ['ok' => false, 'message' => 'لم يتم تأكيد الدفع بعد. سيُفعَّل الاشتراك خلال لحظات.'];
                 }
 
                 $subscription = $this->subscriptions->activateFromPaidPayment($user, $plan, $payment);
 
-                return ['ok' => true, 'payment' => $payment, 'subscription' => $subscription,
-                        'message' => 'تم تأكيد الدفع وتفعيل اشتراكك حتى ' . $subscription->ends_at->format('Y-m-d H:i')];
+                return [
+                    'ok'      => true,
+                    'message' => 'تم تأكيد الدفع وتفعيل اشتراكك حتى ' . $subscription->ends_at->format('Y-m-d H:i'),
+                ];
             });
         } catch (RuntimeException $e) {
             return redirect()->route('subscription.index')->with('error', $e->getMessage());
@@ -112,59 +114,85 @@ class SubscriptionController extends Controller
             ->with($result['ok'] ? 'success' : 'error', $result['message']);
     }
 
-    // ─── Checkout: Opening Offer ──────────────────────────────────────────────
+    // ─── Checkout: Opening Offer (hardcoded Stripe Payment Link) ─────────────
 
     public function openingOfferCheckout(Request $request)
     {
         $user = $request->user();
+        $ref  = Payment::generateReference();
 
-        $ref = Payment::generateReference();
+        $stripeUrl = 'https://buy.stripe.com/eVq3cx1Nn4aH8pn2KU57W0o';
+
+        // Retrieve or create opening offer plan so plan_id is always stored in payment meta
+        $plan = Plan::where('stripe_checkout_url', $stripeUrl)->first()
+            ?? Plan::where('type', 'daily')->first()
+            ?? Plan::where('price', 5.00)->first();
+
+        if (! $plan) {
+            $plan = Plan::create([
+                'name'                => 'عرض الافتتاح',
+                'type'                => 'daily',
+                'price'               => 5.00,
+                'currency'            => 'AED',
+                'duration_days'       => 1,
+                'stripe_checkout_url' => $stripeUrl,
+                'is_active'           => true,
+                'is_recommended'      => true,
+                'sort_order'          => 1,
+            ]);
+        }
 
         $payment = Payment::create([
             'user_id'           => $user->id,
             'gateway'           => 'stripe_link',
             'gateway_reference' => 'opening_offer_pending_' . Str::lower(Str::random(16)),
             'payment_reference' => $ref,
-            'amount'            => 5.00,
-            'currency'          => 'AED',
+            'amount'            => $plan->price,
+            'currency'          => $plan->currency ?? 'AED',
             'status'            => 'pending',
             'meta'              => [
+                'plan_id'       => $plan->id,
+                'plan_name'     => $plan->name,
+                'duration_days' => $plan->duration_days,
                 'offer_type'    => 'opening_offer',
-                'plan_name'     => 'عرض الافتتاح',
-                'duration_days' => 1,
                 'created_via'   => 'opening_offer_checkout',
             ],
         ]);
 
         $request->session()->put('pending_payment_id', $payment->id);
 
-        $stripeUrl  = 'https://buy.stripe.com/eVq3cx1Nn4aH8pn2KU57W0o';
-        $stripeUrl .= '?client_reference_id=' . $ref;
+        $stripeUrlWithRef = $stripeUrl . (str_contains($stripeUrl, '?') ? '&' : '?') . 'client_reference_id=' . $ref;
 
-        return redirect()->away($stripeUrl);
+        return redirect()->away($stripeUrlWithRef);
     }
 
-    // ─── Return from Stripe (Success URL) ────────────────────────────────────
+    // ─── Return URL (Stripe redirects here after payment) ─────────────────────
 
     /**
-     * Stripe redirects here after a completed payment.
-     * We do NOT activate the subscription automatically — we just show a
-     * thank-you screen and let the user self-report ("I have paid").
-     * Activation is done by the admin via the payments panel.
+     * Stripe redirects here after the customer completes (or closes) the payment page.
      *
-     * SECURITY: We never trust the mere visit to this URL as proof of payment.
+     * This page is PURELY informational. It does NOT activate subscriptions.
+     * Activation is handled exclusively by the Stripe Webhook (checkout.session.completed).
+     *
+     * We check if the webhook has already fired and activated the subscription before
+     * the user arrives here — if so, we redirect to the success page immediately.
      */
     public function returnFromPayment(Request $request)
     {
+        $user      = $request->user();
         $paymentId = (int) $request->session()->get('pending_payment_id');
-        $payment   = $paymentId
-            ? Payment::query()
-                ->where('user_id', $request->user()->id)
-                ->find($paymentId)
+
+        $payment = $paymentId
+            ? Payment::query()->where('user_id', $user->id)->find($paymentId)
             : null;
 
-        // If the payment was already confirmed by admin before the user returned
+        // Webhook may have fired already — if subscription is active, go to success
         if ($payment && $payment->isPaid() && $payment->subscription_id) {
+            return redirect()->route('subscription.success');
+        }
+
+        // Also check if user already has an active subscription from a previous session
+        if ($this->subscriptions->activeSubscription($user)) {
             return redirect()->route('subscription.success');
         }
 
@@ -173,60 +201,12 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    // ─── "I Have Paid" Claim ──────────────────────────────────────────────────
+    // ─── Success Page (display-only — no activation) ──────────────────────────
 
     /**
-     * User self-reports that they completed the payment.
-     * Moves the payment from "pending" → "waiting_review" so the admin sees
-     * it highlighted in the payments panel and can confirm quickly.
-     *
-     * Rules:
-     *   - Only the owner of the payment can claim it.
-     *   - Only works if status is still "pending".
-     *   - Cannot be triggered more than once (idempotent).
-     */
-    public function claimPayment(Request $request)
-    {
-        $paymentId = (int) $request->session()->get('pending_payment_id');
-
-        if (! $paymentId) {
-            return redirect()->route('subscription.index')
-                ->with('error', 'لم يتم العثور على عملية دفع مرتبطة بجلستك الحالية.');
-        }
-
-        $payment = Payment::query()
-            ->where('user_id', $request->user()->id)
-            ->find($paymentId);
-
-        if (! $payment) {
-            return redirect()->route('subscription.index')
-                ->with('error', 'العملية غير موجودة أو لا تخصك.');
-        }
-
-        if ($payment->isPaid() && $payment->subscription_id) {
-            // Already activated — send to success page
-            return redirect()->route('subscription.success');
-        }
-
-        if (! $payment->canBeClaimed()) {
-            // Already claimed or cancelled — just show the return page again
-            return redirect()->route('subscription.return')
-                ->with('info', 'تم إرسال طلبك للمراجعة مسبقاً. سنتواصل معك قريباً.');
-        }
-
-        // Advance status: pending → waiting_review
-        $payment->update(['status' => 'waiting_review']);
-
-        return redirect()->route('subscription.return')
-            ->with('success', 'تم إرسال طلبك. سيقوم فريقنا بمراجعة الدفع وتفعيل اشتراكك خلال دقائق.');
-    }
-
-    // ─── Success Page (Active Subscribers Only) ───────────────────────────────
-
-    /**
-     * A "gate" success page — only accessible if the user has an active
-     * subscription right now.  Cannot be opened by typing the URL manually
-     * unless the subscription really is active.
+     * Shown after Stripe redirects back AND the webhook has activated the subscription.
+     * This page only DISPLAYS the active subscription — it performs no activation.
+     * Only accessible when the user actually has an active subscription.
      */
     public function success(Request $request)
     {
@@ -234,11 +214,14 @@ class SubscriptionController extends Controller
         $subscription = $this->subscriptions->activeSubscription($user);
 
         if (! $subscription) {
-            // Not yet active — redirect to return page (or plans if no pending payment)
             $hasPending = $request->session()->has('pending_payment_id');
-            return redirect()->route($hasPending ? 'subscription.return' : 'subscription.index')
-                ->with('error', 'لم يتم تفعيل الاشتراك بعد. انتظر مراجعة الفريق.');
+            return redirect()
+                ->route($hasPending ? 'subscription.return' : 'subscription.index')
+                ->with('info', 'جاري معالجة دفعتك. ستُفعَّل الألعاب خلال لحظات بعد تأكيد Stripe.');
         }
+
+        // Clear session reference after confirming subscription is active
+        $request->session()->forget('pending_payment_id');
 
         return view('site.subscription.success', [
             'subscription' => $subscription,
