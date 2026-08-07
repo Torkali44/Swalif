@@ -31,10 +31,8 @@ class EndToEndUserJourneyTest extends TestCase
         // ── 1. Create a new user via registration ────────────────────────────
         $registerResponse = $this->post(route('register.store'), [
             'name'       => 'سارة الأحمد',
-            'email'      => 'sara@example.com',
-            'phone'      => '0501234567',
+            'identifier' => 'sara@example.com',
             'password'   => 'Secret123!',
-            'password_confirmation' => 'Secret123!',
             'terms'      => '1',
         ]);
 

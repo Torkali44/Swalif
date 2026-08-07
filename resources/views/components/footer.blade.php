@@ -3,8 +3,8 @@
     <div class="foot__brand">
       <a href="{{ route('home') }}" class="nav__logo">
         <img
-          src="{{ asset('images/logo.webp') }}"
-          onerror="this.onerror=null;this.src='{{ asset('images/logo.png') }}'"
+          src="{{ asset('images/mainLogo.jpg') }}"
+          onerror="this.onerror=null;this.src='{{ asset('images/logo.jpg') }}'"
           width="58" height="58" alt="سوالف" class="logo-img" loading="lazy" decoding="async">
         <span class="logo-text">سوالف</span>
       </a>

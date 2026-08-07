@@ -4,35 +4,35 @@
   <form class="auth-card" method="POST" action="{{ route('register.store') }}" id="registerForm">
     @csrf
     <h1>إنشاء حساب</h1>
-    <p>سجّل بالإيميل ورقم الجوال عشان تبدأ تلعب.</p>
+    <p>سجّل بإيميلك أو رقم جوالك وابدأ اللعب.</p>
 
     <label>الاسم
       <input name="name" value="{{ old('name') }}" placeholder="اسمك" required autofocus>
     </label>
 
-    <label>البريد الإلكتروني
-      <input name="email" type="email" value="{{ old('email') }}" placeholder="you@email.com" required dir="ltr">
+    <label id="identifierLabel">البريد الإلكتروني أو رقم الجوال
+      <input
+        id="identifierInput"
+        name="identifier"
+        value="{{ old('identifier') }}"
+        placeholder="example@email.com أو 05XXXXXXXX"
+        required
+        autocomplete="username"
+        inputmode="email"
+        dir="ltr"
+      >
+      <small style="color:var(--muted,#6b7280);font-size:12px;margin-top:4px;display:block">
+        اكتب بريدك الإلكتروني أو رقم الجوال — أيّهما تفضّل
+      </small>
     </label>
 
-    <label>رمز الدولة
-      <select name="phone_code">
-        <option value="+971" @selected(old('phone_code', '+971') === '+971')>+971 الإمارات</option>
-        <option value="+966" @selected(old('phone_code') === '+966')>+966 السعودية</option>
-        <option value="+20" @selected(old('phone_code') === '+20')>+20 مصر</option>
-      </select>
-    </label>
-
-    <label>رقم الموبايل
-      <input name="phone" type="tel" inputmode="numeric" value="{{ old('phone') }}" placeholder="5XXXXXXXX" required dir="ltr">
-    </label>
+    @error('identifier')<small class="error">{{ $message }}</small>@enderror
 
     <label>كلمة المرور
-      <input name="password" type="password" required>
+      <input name="password" type="password" required autocomplete="new-password">
     </label>
 
-    <label>تأكيد كلمة المرور
-      <input name="password_confirmation" type="password" required>
-    </label>
+    @error('password')<small class="error">{{ $message }}</small>@enderror
 
     <label class="check terms-check">
       <input type="checkbox" name="terms" value="1" id="termsCheck" @checked(old('terms')) required>
@@ -43,9 +43,6 @@
     </label>
 
     @error('name')<small class="error">{{ $message }}</small>@enderror
-    @error('email')<small class="error">{{ $message }}</small>@enderror
-    @error('phone')<small class="error">{{ $message }}</small>@enderror
-    @error('password')<small class="error">{{ $message }}</small>@enderror
     @error('terms')<small class="error">{{ $message }}</small>@enderror
 
     <button class="btn btn--primary btn--block" type="submit">إنشاء الحساب</button>
@@ -69,7 +66,7 @@
         <li>الحساب شخصي، ومسؤوليتك الحفاظ على سرية بيانات الدخول.</li>
         <li>يُمنع استخدام المنصة لأي غرض مخالف للقوانين أو مسيء للمستخدمين الآخرين.</li>
         <li>المحتوى والأسئلة والتصاميم ملك للمنصة، ولا يجوز نسخها أو إعادة نشرها دون إذن.</li>
-        <li>الاشتراكات تُفعَّل بعد تأكيد الدفع، وتنتهي في التاريخ المحدد في حسابك.</li>
+        <li>الاشتراكات تُفعَّل بعد تأكيد الدفع، وتنتهي في التاريخ المحدد في حسابك.</li>
         <li>الفئة المجانية متاحة مرة واحدة للمستخدم الجديد وفق سياسة المنصة.</li>
         <li>يحق للإدارة إيقاف أو حذف أي حساب يخالف الشروط أو يسيء استخدام اللعب.</li>
         <li>قد نحدّث هذه الشروط من وقت لآخر، ويستمر استخدامك للمنصة بعد التحديث موافقةً عليها.</li>
@@ -118,14 +115,25 @@ body.dark .terms-modal__close{background:rgba(255,255,255,.08)}
 
 <script>
 (() => {
-  const modal = document.getElementById('termsModal');
-  const openBtn = document.getElementById('openTerms');
+  // Auto-switch inputmode based on what the user types
+  const inp = document.getElementById('identifierInput');
+  if (inp) {
+    inp.addEventListener('input', () => {
+      const v = inp.value.trim();
+      const looksLikePhone = /^[+\d\s()-]{0,}$/.test(v) && /\d/.test(v[0] || '');
+      inp.inputMode = looksLikePhone ? 'tel' : 'email';
+    });
+  }
+
+  // Terms modal
+  const modal     = document.getElementById('termsModal');
+  const openBtn   = document.getElementById('openTerms');
   const acceptBtn = document.getElementById('acceptTerms');
-  const check = document.getElementById('termsCheck');
+  const check     = document.getElementById('termsCheck');
   if (!modal || !openBtn || !acceptBtn || !check) return;
 
-  const open = () => { modal.hidden = false; document.body.style.overflow = 'hidden'; };
-  const close = () => { modal.hidden = true; document.body.style.overflow = ''; };
+  const open  = () => { modal.hidden = false; document.body.style.overflow = 'hidden'; };
+  const close = () => { modal.hidden = true;  document.body.style.overflow = ''; };
 
   openBtn.addEventListener('click', open);
   acceptBtn.addEventListener('click', () => { check.checked = true; close(); });

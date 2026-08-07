@@ -20,7 +20,8 @@ class StoreClassificationRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:500'],
             'sort_order' => ['required', 'integer', 'min:1'],
             'is_active' => ['nullable', 'boolean'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image'        => ['nullable', 'image', 'max:5120'],
+            'image_path'   => ['nullable', 'string', 'max:500'],
             'remove_image' => ['nullable', 'boolean'],
         ];
     }

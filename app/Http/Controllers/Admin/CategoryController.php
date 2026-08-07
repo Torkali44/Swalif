@@ -52,11 +52,14 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request)
     {
-        $data = $request->safe()->except(['image', 'remove_image']);
+        $data = $request->safe()->except(['image', 'image_path', 'remove_image']);
         $data['group'] = Classification::findOrFail($data['classification_id'])->name_ar;
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
-        if ($request->hasFile('image')) {
+        // Async pre-upload: image was already stored, we just got the path
+        if ($request->filled('image_path')) {
+            $data['image'] = $request->input('image_path');
+        } elseif ($request->hasFile('image')) {
             $data['image'] = MediaStore::store($request->file('image'), 'categories', 480);
         }
 
@@ -79,7 +82,7 @@ class CategoryController extends Controller
 
     public function update(StoreCategoryRequest $request, Category $category)
     {
-        $data = $request->safe()->except(['image', 'remove_image']);
+        $data = $request->safe()->except(['image', 'image_path', 'remove_image']);
         $data['group'] = Classification::findOrFail($data['classification_id'])->name_ar;
 
         if ($request->boolean('remove_image') && $category->image) {
@@ -87,7 +90,15 @@ class CategoryController extends Controller
             $data['image'] = null;
         }
 
-        if ($request->hasFile('image')) {
+        // Async pre-upload: image was already stored, we just got the path back
+        if ($request->filled('image_path')) {
+            $newPath = $request->input('image_path');
+            // Only swap if actually a new image (path changed)
+            if ($newPath !== $category->image) {
+                $this->deleteImage($category->image);
+            }
+            $data['image'] = $newPath;
+        } elseif ($request->hasFile('image')) {
             $this->deleteImage($category->image);
             $data['image'] = MediaStore::store($request->file('image'), 'categories', 480);
         }

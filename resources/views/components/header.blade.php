@@ -51,8 +51,8 @@
   <div class="nav__inner">
     <a href="{{ route('home') }}" class="nav__logo">
       <img
-        src="{{ asset('images/logo.webp') }}"
-        onerror="this.onerror=null;this.src='{{ asset('images/logo.png') }}'"
+        src="{{ asset('images/mainLogo.jpg') }}"
+        onerror="this.onerror=null;this.src='{{ asset('images/logo.jpg') }}'"
         alt="سوالف" class="logo-img" width="58" height="58" decoding="async" fetchpriority="high">
       <span class="logo-text">سوالف</span>
     </a>

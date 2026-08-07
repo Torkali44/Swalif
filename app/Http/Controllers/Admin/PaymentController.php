@@ -118,4 +118,24 @@ class PaymentController extends Controller
 
         return back()->with('success', 'تم إلغاء عملية الدفع رقم ' . ($payment->payment_reference ?? $payment->id));
     }
+
+    // ─── Destroy ──────────────────────────────────────────────────────────────
+
+    /**
+     * Admin deletes a payment record.
+     */
+    public function destroy(Payment $payment)
+    {
+        $ref = $payment->payment_reference ?? ('PAY-' . $payment->id);
+
+        $payment->delete();
+
+        \Illuminate\Support\Facades\Log::info('[Admin Audit] Payment deleted manually', [
+            'admin_id'   => auth()->id(),
+            'payment_id' => $payment->id,
+            'ref'        => $ref,
+        ]);
+
+        return back()->with('success', "تم حذف عملية الدفع {$ref} بنجاح.");
+    }
 }

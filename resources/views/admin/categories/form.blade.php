@@ -4,7 +4,13 @@
 
   <x-back-button :href="route('admin.categories.index')" label="رجوع للفئات" />
 
-  <form class="admin-form" method="POST" action="{{ $category->exists ? route('admin.categories.update', $category) : route('admin.categories.store') }}" enctype="multipart/form-data">
+  <form
+    class="admin-form"
+    method="POST"
+    action="{{ $category->exists ? route('admin.categories.update', $category) : route('admin.categories.store') }}"
+    data-async-upload
+    data-upload-url="{{ route('admin.media.store') }}"
+  >
     @csrf
     @if($category->exists) @method('PUT') @endif
 
@@ -38,9 +44,20 @@
       <textarea name="description">{{ old('description', $category->description) }}</textarea>
     </label>
 
+    {{-- ─── Async image upload ─── --}}
     <label class="wide">
       صورة الفئة (تظهر في اللوحة وبطاقة الفئة)
-      <input type="file" name="image" accept="image/*">
+      <input
+        type="file"
+        accept="image/*"
+        data-async-file
+        data-upload-kind="image"
+        data-path-input="category_image_path"
+      >
+      <span data-upload-status hidden></span>
+      {{-- Hidden field carries the pre-uploaded path to the controller --}}
+      <input type="hidden" name="image_path" id="category_image_path"
+             value="{{ old('image_path', $category->image) }}">
       @if($category->imageUrl())
         <div class="media-preview">
           <img src="{{ $category->imageUrl() }}" alt="صورة الفئة">

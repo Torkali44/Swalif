@@ -33,10 +33,12 @@ Route::put('subscribers/{subscription}', [SubscriberController::class, 'update']
 Route::patch('subscribers/{subscription}/cancel', [SubscriberController::class, 'cancel'])->name('subscribers.cancel');
 Route::patch('subscribers/{subscription}/activate', [SubscriberController::class, 'activate'])->name('subscribers.activate');
 Route::patch('subscribers/{subscription}/extend', [SubscriberController::class, 'extend'])->name('subscribers.extend');
+Route::delete('subscribers/{subscription}', [SubscriberController::class, 'destroy'])->name('subscribers.destroy');
 
 Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
 Route::post('payments/{payment}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
 Route::patch('payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
+Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
 
 Route::get('users', [UserController::class, 'index'])->name('users.index');
 Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');

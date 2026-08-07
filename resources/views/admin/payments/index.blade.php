@@ -117,9 +117,16 @@
                   <a class="btn btn-sm btn-outline" href="{{ route('admin.subscribers.edit', $payment->subscription) }}">
                     عرض الاشتراك
                   </a>
-                @else
-                  <span class="muted" style="font-size:12px;">—</span>
                 @endif
+
+                {{-- Delete action for admin --}}
+                <form method="POST" action="{{ route('admin.payments.destroy', $payment) }}" onsubmit="return confirm('حذف سجل السداد هذا نهائياً؟ لا يمكن التراجع!')">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn btn-sm" type="submit" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
+                    🗑 حذف
+                  </button>
+                </form>
               </div>
             </td>
           </tr>

@@ -61,7 +61,7 @@
   <aside class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-head">
       <a class="brand" href="{{ route('admin.dashboard') }}">
-        <img src="{{ asset(file_exists(public_path('images/logo.png')) ? 'images/logo.png' : (file_exists(public_path('images/logo-nav.jpg')) ? 'images/logo-nav.jpg' : 'images/logo.jpg')) }}" alt="سوالف" class="brand-logo" width="52" height="52" decoding="async">
+        <img src="{{ asset('images/mainLogo.jpg') }}" alt="سوالف" class="brand-logo" width="52" height="52" decoding="async">
         <div>
           <div class="brand-title">سوالف</div>
           <div class="brand-sub">لوحة التحكم</div>

@@ -76,6 +76,11 @@
                 <input type="number" name="days" value="30" min="1" max="365" class="days-inp" title="أيام التمديد" aria-label="أيام التمديد">
                 <button class="btn btn-sm btn-outline" type="submit">تمديد</button>
               </form>
+              <form class="inline" method="POST" action="{{ route('admin.subscribers.destroy', $subscription) }}" onsubmit="return confirm('حذف هذا الاشتراك نهائياً؟ لا يمكن التراجع!')">
+                @csrf
+                @method('DELETE')
+                <button class="btn btn-sm" type="submit" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">حذف</button>
+              </form>
             </td>
           </tr>
         @empty

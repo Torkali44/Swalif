@@ -79,74 +79,74 @@ class MediaStore
 
     public static function storeImage(UploadedFile $file, string $folder, int $maxWidth = 1000): string
     {
-        $folder = trim($folder, '/');
+        $folder   = trim($folder, '/');
         $pathName = $file->getRealPath() ?: $file->getPathname();
 
         if (! function_exists('imagecreatefromstring') || ! function_exists('imagejpeg')) {
             return self::storeBinary($file, $folder);
         }
 
-        $binary = is_string($pathName) && is_file($pathName)
-            ? @file_get_contents($pathName)
-            : false;
-
-        if ($binary === false || $binary === '') {
+        if (! is_string($pathName) || ! is_file($pathName)) {
             return self::storeBinary($file, $folder);
         }
 
-        $source = @imagecreatefromstring($binary);
-        unset($binary);
+        // Read source directly from disk path — avoids loading entire file into a PHP string
+        $source = @imagecreatefromstring((string) @file_get_contents($pathName));
         if ($source === false) {
             return self::storeBinary($file, $folder);
         }
 
-        $width = imagesx($source);
+        $width  = imagesx($source);
         $height = imagesy($source);
 
-        $needsResize = $width > $maxWidth;
-        $newWidth = $needsResize ? $maxWidth : $width;
-        $newHeight = $needsResize
-            ? (int) max(1, round($height * ($maxWidth / $width)))
-            : $height;
-
-        $canvas = imagecreatetruecolor($newWidth, $newHeight);
-        if ($canvas === false) {
+        if ($width > $maxWidth) {
+            $newWidth  = $maxWidth;
+            $newHeight = (int) max(1, round($height * ($maxWidth / $width)));
+            $canvas    = imagecreatetruecolor($newWidth, $newHeight);
+            if ($canvas === false) {
+                imagedestroy($source);
+                return self::storeBinary($file, $folder);
+            }
+            // White background for transparent PNGs
+            imagefilledrectangle($canvas, 0, 0, $newWidth, $newHeight,
+                imagecolorallocate($canvas, 255, 255, 255));
+            imagecopyresampled($canvas, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
             imagedestroy($source);
+        } else {
+            // No resize needed — use source canvas directly
+            $canvas = $source;
+        }
 
+        // Write to a temp file on disk (no ob_start memory buffering)
+        $tmp = @tempnam(sys_get_temp_dir(), 'mstore_');
+        if (! $tmp) {
+            imagedestroy($canvas);
             return self::storeBinary($file, $folder);
         }
 
-        $white = imagecolorallocate($canvas, 255, 255, 255);
-        imagefilledrectangle($canvas, 0, 0, $newWidth, $newHeight, $white);
-        imagecopyresampled($canvas, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-        imagedestroy($source);
-
-        // Always baseline JPEG — progressive files paint band-by-band and feel "slow"
-        ob_start();
-        imageinterlace($canvas, false);
-        imagejpeg($canvas, null, 80);
-        $jpeg = ob_get_clean();
-
-        // Also generate WebP version if supported by PHP GD
-        $webp = null;
-        if (function_exists('imagewebp')) {
-            ob_start();
-            imagewebp($canvas, null, 80);
-            $webp = ob_get_clean();
-        }
-
+        imageinterlace($canvas, false); // baseline JPEG — fastest first paint
+        $ok = @imagejpeg($canvas, $tmp, 82);
         imagedestroy($canvas);
 
-        if (! is_string($jpeg) || $jpeg === '') {
+        if (! $ok || ! is_file($tmp)) {
+            @unlink($tmp);
             return self::storeBinary($file, $folder);
         }
 
         $uuid = Str::uuid()->toString();
         $path = $folder.'/'.$uuid.'.jpg';
-        Storage::disk(PublicMedia::DISK)->put($path, $jpeg);
 
-        if (is_string($webp) && $webp !== '') {
-            Storage::disk(PublicMedia::DISK)->put($path.'.webp', $webp);
+        $disk = Storage::disk(PublicMedia::DISK);
+        $disk->makeDirectory($folder);
+        $dest = $disk->path($path);
+
+        if (@rename($tmp, $dest) || @copy($tmp, $dest)) {
+            @unlink($tmp);
+            @chmod($dest, 0644);
+        } else {
+            // Fallback: stream from temp file
+            $disk->put($path, (string) file_get_contents($tmp));
+            @unlink($tmp);
         }
 
         return $path;

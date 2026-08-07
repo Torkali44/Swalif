@@ -4,7 +4,13 @@
 
   <x-back-button :href="route('admin.classifications.index')" label="رجوع للتصنيفات" />
 
-  <form class="admin-form" method="POST" action="{{ $classification->exists ? route('admin.classifications.update', $classification) : route('admin.classifications.store') }}" enctype="multipart/form-data">
+  <form
+    class="admin-form"
+    method="POST"
+    action="{{ $classification->exists ? route('admin.classifications.update', $classification) : route('admin.classifications.store') }}"
+    data-async-upload
+    data-upload-url="{{ route('admin.media.store') }}"
+  >
     @csrf
     @if($classification->exists) @method('PUT') @endif
 
@@ -24,9 +30,19 @@
       <textarea name="description">{{ old('description', $classification->description) }}</textarea>
     </label>
 
+    {{-- ─── Async image upload ─── --}}
     <label class="wide">
       صورة التصنيف
-      <input type="file" name="image" accept="image/*">
+      <input
+        type="file"
+        accept="image/*"
+        data-async-file
+        data-upload-kind="image"
+        data-path-input="classification_image_path"
+      >
+      <span data-upload-status hidden></span>
+      <input type="hidden" name="image_path" id="classification_image_path"
+             value="{{ old('image_path', $classification->image) }}">
       @if($classification->imageUrl())
         <div class="media-preview">
           <img src="{{ $classification->imageUrl() }}" alt="صورة التصنيف">

@@ -30,6 +30,37 @@
 <x-layouts.app title="سوالف — العب، تعلّم، واربح">
 <div class="home">
 
+  <style>
+    .hp-hero__art { display: flex; justify-content: center; align-items: center; }
+    .hero-main-img {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 24px 38px rgba(0,0,0,0.18));
+      transition: transform 0.3s ease, filter 0.3s ease;
+      animation: heroFloat 4s ease-in-out infinite alternate;
+    }
+    body.dark .hero-main-img {
+      filter: drop-shadow(0 24px 44px rgba(0,0,0,0.65));
+    }
+    @keyframes heroFloat {
+      0%   { transform: translateY(0); }
+      100% { transform: translateY(-10px); }
+    }
+    @media (max-width: 920px) {
+      .hp-hero__inner { grid-template-columns: 1fr !important; text-align: center; gap: 20px !important; }
+      .hp-hero__text { align-items: center; gap: 16px !important; }
+      .hp-hero__art { display: flex !important; justify-content: center; margin-top: 10px; }
+      .hero-main-img { max-width: min(340px, 86vw) !important; }
+      .hp-hero__title { font-size: clamp(24px, 5.5vw, 36px) !important; line-height: 1.3 !important; }
+      .hp-hero__sub { font-size: 14px !important; max-width: 92% !important; margin: 0 auto; line-height: 1.6 !important; }
+      .hp-hero__cta { justify-content: center !important; }
+      .hp-hero__players { justify-content: center !important; }
+      .hp-hero { padding: 36px 0 28px !important; min-height: auto !important; }
+    }
+  </style>
+
   {{-- ============ HERO ============ --}}
   <section class="hp-hero">
     <div class="hp-hero__blob hp-hero__blob--1"></div>
@@ -60,19 +91,12 @@
       </div>
 
       <div class="hp-hero__art">
-        {{-- Hero: WebP served directly; if missing browser auto-falls to PNG via onerror --}}
         <img
-          src="{{ asset('images/hero-dark.webp') }}"
-          onerror="this.onerror=null;this.src='{{ asset('images/hero-character-dark.png') }}'"
-          alt="العب سوالف" width="800" height="647"
+          src="{{ asset('images/mainPhoto.png') }}"
+          alt="منصة ألعاب سوالف"
+          width="800" height="600"
           decoding="async" fetchpriority="high"
-          class="hero-img-dark">
-        <img
-          src="{{ asset('images/hero-light.webp') }}"
-          onerror="this.onerror=null;this.src='{{ asset('images/hero-character-custom.png') }}'"
-          alt="العب سوالف" width="800" height="647"
-          decoding="async" fetchpriority="high"
-          class="hero-img-light">
+          class="hero-main-img">
       </div>
     </div>
   </section>

@@ -42,10 +42,12 @@ class ClassificationController extends Controller
 
     public function store(StoreClassificationRequest $request)
     {
-        $data = $request->safe()->except(['image', 'remove_image']);
+        $data = $request->safe()->except(['image', 'image_path', 'remove_image']);
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('image_path')) {
+            $data['image'] = $request->input('image_path');
+        } elseif ($request->hasFile('image')) {
             $data['image'] = MediaStore::store($request->file('image'), 'classifications', 480);
         }
 
@@ -64,14 +66,20 @@ class ClassificationController extends Controller
 
     public function update(StoreClassificationRequest $request, Classification $classification)
     {
-        $data = $request->safe()->except(['image', 'remove_image']);
+        $data = $request->safe()->except(['image', 'image_path', 'remove_image']);
 
         if ($request->boolean('remove_image') && $classification->image) {
             $this->deleteImage($classification->image);
             $data['image'] = null;
         }
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('image_path')) {
+            $newPath = $request->input('image_path');
+            if ($newPath !== $classification->image) {
+                $this->deleteImage($classification->image);
+            }
+            $data['image'] = $newPath;
+        } elseif ($request->hasFile('image')) {
             $this->deleteImage($classification->image);
             $data['image'] = MediaStore::store($request->file('image'), 'classifications', 480);
         }

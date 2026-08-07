@@ -355,4 +355,45 @@ class AdminSubscriptionManagementTest extends TestCase
             'answer_text' => 'النشيد الوطني',
         ]);
     }
+
+    public function test_admin_can_delete_subscription(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user  = User::factory()->create(['is_admin' => false]);
+        $plan  = Plan::create([
+            'name' => 'Test Plan', 'type' => 'monthly', 'price' => 10,
+            'currency' => 'AED', 'duration_days' => 30, 'sort_order' => 1,
+        ]);
+        $subscription = Subscription::create([
+            'user_id' => $user->id, 'plan_id' => $plan->id,
+            'starts_at' => now(), 'ends_at' => now()->addDays(30), 'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.subscribers.destroy', $subscription))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('subscriptions', ['id' => $subscription->id]);
+    }
+
+    public function test_admin_can_delete_payment(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user  = User::factory()->create(['is_admin' => false]);
+        $payment = \App\Models\Payment::create([
+            'user_id' => $user->id, 'gateway' => 'stripe_link',
+            'gateway_reference' => 'ref_del', 'amount' => 10,
+            'currency' => 'AED', 'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.payments.destroy', $payment))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('payments', ['id' => $payment->id]);
+    }
 }

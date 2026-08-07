@@ -42,21 +42,18 @@ class AuthAndSubscriptionTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
+        // Test with email as identifier
         $this->post(route('register.store'), [
-            'name' => 'لاعب جديد',
-            'email' => 'new.player@swalif.test',
-            'phone' => '0501888777',
-            'phone_code' => '+971',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-            'terms' => '1',
+            'name'       => 'لاعب جديد',
+            'identifier' => 'new.player@swalif.test',
+            'password'   => 'Password123!',
+            'terms'      => '1',
         ])->assertRedirect(route('home'));
 
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', [
             'email' => 'new.player@swalif.test',
-            'phone' => '0501888777',
-            'name' => 'لاعب جديد',
+            'name'  => 'لاعب جديد',
         ]);
     }
 
@@ -65,12 +62,9 @@ class AuthAndSubscriptionTest extends TestCase
         $this->withoutVite();
 
         $this->post(route('register.store'), [
-            'name' => 'لاعب',
-            'email' => 'no.terms@swalif.test',
-            'phone' => '0501777666',
-            'phone_code' => '+971',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
+            'name'       => 'لاعب',
+            'identifier' => 'no.terms@swalif.test',
+            'password'   => 'Password123!',
         ])->assertSessionHasErrors('terms');
     }
 

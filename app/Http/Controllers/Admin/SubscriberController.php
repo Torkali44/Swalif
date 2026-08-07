@@ -183,4 +183,26 @@ class SubscriberController extends Controller
             ->orderBy('name')
             ->get();
     }
+
+    public function destroy(Subscription $subscription)
+    {
+        $id = $subscription->id;
+        $user = $subscription->user;
+
+        $subscription->delete();
+
+        if ($user && ! $user->is_admin && ! $user->hasActiveSubscription()) {
+            $this->playAccess->block(
+                $user,
+                'تم حذف اشتراكك. اشترك من جديد أو تواصل مع الإدارة لفتح اللعب.'
+            );
+        }
+
+        \Illuminate\Support\Facades\Log::info('[Admin Audit] Subscription deleted manually', [
+            'admin_id'        => auth()->id(),
+            'subscription_id' => $id,
+        ]);
+
+        return back()->with('success', "تم حذف الاشتراك رقم {$id} بنجاح.");
+    }
 }
