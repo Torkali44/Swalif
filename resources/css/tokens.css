@@ -1,0 +1,60 @@
+/* ============================================================
+   سين جيم الإمارات — Design Tokens
+   مستوحى من resources/views/style + admin prototype
+   ============================================================ */
+:root {
+  /* UAE identity */
+  --uae-red: #c8102e;
+  --uae-red-deep: #a50d25;
+  --uae-green: #00843d;
+  --uae-black: #0b1f3a;
+  --uae-white: #fbf7f0;
+
+  /* Desert palette */
+  --sand-50: #fbf7f0;
+  --sand-100: #f3e1c3;
+  --sand-200: #e8d5b7;
+  --sand-400: #c9a876;
+  --sand-600: #8b6b3a;
+
+  /* Accents */
+  --gold: #d4af37;
+  --gold-soft: #e8c86b;
+  --coral: #e85d3a;
+
+  /* Semantics */
+  --bg: var(--sand-50);
+  --bg-alt: #f3efe5;
+  --surface: #ffffff;
+  --text: var(--uae-black);
+  --muted: #5b6478;
+  --border: #e7dfce;
+  --primary: var(--uae-red);
+  --primary-2: var(--uae-red-deep);
+  --success: var(--uae-green);
+  --ink: var(--uae-black);
+  --night: var(--uae-black);
+  --night2: #122a4a;
+  --teal: #1f5c5e;
+  --cream: var(--sand-50);
+  --maroon: #7c2e2a;
+
+  /* Shadows / radii */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --shadow-sm: 0 2px 8px rgba(11, 31, 58, 0.06);
+  --shadow-md: 0 8px 24px rgba(11, 31, 58, 0.1);
+  --shadow-lg: 0 20px 50px rgba(11, 31, 58, 0.14);
+  --glow-red: 0 0 28px rgba(200, 16, 46, 0.35);
+  --glow-gold: 0 0 24px rgba(212, 175, 55, 0.4);
+
+  --gradient-hero: linear-gradient(135deg, var(--uae-red) 0%, var(--coral) 55%, var(--gold) 100%);
+  --gradient-fire: linear-gradient(135deg, var(--uae-red), var(--coral) 60%, var(--gold));
+  --gradient-cool: linear-gradient(135deg, #1f5c5e, #00843d);
+  --gradient-sand: linear-gradient(180deg, var(--sand-50), var(--sand-100));
+
+  --container: 1200px;
+  --font: 'Tajawal', system-ui, -apple-system, sans-serif;
+  --font-display: 'Cairo', var(--font);
+}

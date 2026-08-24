@@ -1,0 +1,13 @@
+/* Hide images until fully decoded — prevents progressive band-by-band paint */
+img.sw-img {
+  opacity: 0;
+  transition: opacity .18s ease;
+  background: #e8edf7;
+}
+img.sw-img.is-ready {
+  opacity: 1;
+}
+/* Keep layout for broken/missing */
+img.sw-img.is-error {
+  opacity: 1;
+}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+.title>شاشة اللعب — سوالف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="gamePlayDesign.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ===== TOP BAR ===== -->
+  <header class="topbar">
+    <div class="category-badge">
+      <span class="category-badge__icon">🕌</span>
+      <div>
+        <small>الفئة</small>
+        <b>معالم الإمارات</b>
+      </div>
+    </div>
+
+    <div class="level-chip level-chip--medium">
+      <span></span><span></span><span></span>
+      <em>متوسط • 400 نقطة</em>
+    </div>
+
+    <button class="icon-btn" title="خروج">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M6 18L18 6"/></svg>
+    </button>
+  </header>
+
+  <!-- ===== TEAMS SCOREBOARD ===== -->
+  <section class="teams">
+    <div class="team team--a active">
+      <div class="team__avatar" style="background:linear-gradient(135deg,#FF1744,#7C3AED)">A</div>
+      <div>
+        <b>فريق الصقور</b>
+        <div class="team__score">1,200 <em>نقطة</em></div>
+      </div>
+      <div class="team__lifelines">
+        <button title="حذف إجابتين">50/50</button>
+        <button title="مساعدة الجمهور">👥</button>
+        <button title="وقت إضافي">⏱️</button>
+      </div>
+      <div class="team__turn">🎯 دورهم</div>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <div class="team team--b">
+      <div class="team__avatar" style="background:linear-gradient(135deg,#00E5FF,#00843D)">B</div>
+      <div>
+        <b>فريق النخيل</b>
+        <div class="team__score">1,000 <em>نقطة</em></div>
+      </div>
+      <div class="team__lifelines">
+        <button>50/50</button>
+        <button>👥</button>
+        <button>⏱️</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TIMER + Q# ===== -->
+  <div class="meta-row">
+    <div class="q-index">
+      السؤال <b>5</b> <span>من</span> <b>10</b>
+      <div class="q-progress"><i style="width:50%"></i></div>
+    </div>
+
+    <div class="timer" id="timer">
+      <svg viewBox="0 0 120 120" class="timer__ring">
+        <circle cx="60" cy="60" r="52" class="timer__track"/>
+        <circle cx="60" cy="60" r="52" class="timer__bar" id="timerBar"/>
+      </svg>
+      <div class="timer__value"><b id="timerValue">30</b><small>ثانية</small></div>
+    </div>
+
+    <div class="q-points">
+      <span>مكافأة</span>
+      <b>400</b>
+      <small>نقطة</small>
+    </div>
+  </div>
+
+  <!-- ===== QUESTION ===== -->
+  <main class="question-card">
+    <div class="question-card__glow"></div>
+    <span class="question-card__label">السؤال</span>
+    <h1 class="question-card__text" id="questionText">
+      أي من المعالم التالية يقع في إمارة أبوظبي ويُعدّ من أكبر المساجد في العالم؟
+    </h1>
+
+    <!-- optional media -->
+    <div class="question-card__media" id="questionMedia" hidden>
+      <img src="" alt="صورة السؤال">
+    </div>
+
+    <div class="answers" id="answers">
+      <button class="answer" data-key="A" data-correct="true">
+        <span class="answer__key">أ</span>
+        <span class="answer__text">جامع الشيخ زايد الكبير</span>
+        <span class="answer__mark"></span>
+      </button>
+      <button class="answer" data-key="B">
+        <span class="answer__key">ب</span>
+        <span class="answer__text">برج خليفة</span>
+        <span class="answer__mark"></span>
+      </button>
+      <button class="answer" data-key="C">
+        <span class="answer__key">ج</span>
+        <span class="answer__text">قلعة الجاهلي</span>
+        <span class="answer__mark"></span>
+      </button>
+      <button class="answer" data-key="D">
+        <span class="answer__key">د</span>
+        <span class="answer__text">حصن الفهيدي</span>
+        <span class="answer__mark"></span>
+      </button>
+    </div>
+
+    <!-- Action bar (shown after selection) -->
+    <div class="action-bar" id="actionBar" hidden>
+      <button class="btn btn--ghost" id="skipBtn">تخطي</button>
+      <button class="btn btn--fire" id="confirmBtn">✔ تأكيد الإجابة</button>
+    </div>
+  </main>
+
+  <!-- ===== ASSIGN POINTS (post reveal) ===== -->
+  <section class="assign-panel" id="assignPanel" hidden>
+    <h3>من الفريق اللي أجاب صح؟</h3>
+    <div class="assign-grid">
+      <button class="assign-btn assign-btn--a">
+        <b>فريق الصقور</b>
+        <span>+400 نقطة</span>
+      </button>
+      <button class="assign-btn assign-btn--b">
+        <b>فريق النخيل</b>
+        <span>+400 نقطة</span>
+      </button>
+      <button class="assign-btn assign-btn--none">
+        <b>ولا فريق</b>
+        <span>الإجابة خاطئة</span>
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<script src="gamePlayDesign.js"></script>
+</body>
+</html>

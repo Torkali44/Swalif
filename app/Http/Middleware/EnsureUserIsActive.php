@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
+
+class EnsureUserIsActive
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $user = $request->user();
+
+        // Strict false only — null/missing must not log users out in tests/legacy rows
+        if ($user && $user->is_active === false) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->with('error', 'تم إيقاف هذا الحساب. تواصل مع الإدارة.');
+        }
+
+        return $next($request);
+    }
+}
