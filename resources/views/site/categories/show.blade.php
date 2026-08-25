@@ -36,12 +36,7 @@
 
     <div class="category-show-actions">
       @auth
-        <a class="btn btn--primary btn--lg"
-           href="{{ route('game.setup', $category) }}"
-           data-category-play
-           data-play-url="{{ route('game.setup', $category) }}"
-           data-total="{{ (int) ($categoryPlayMeta['total'] ?? $category->questions_count) }}"
-           data-remaining="{{ (int) ($categoryPlayMeta['remaining'] ?? $category->questions_count) }}">ابدأ لعبة جديدة</a>
+        <a class="btn btn--primary btn--lg" href="{{ route('game.setup', $category) }}">ابدأ لعبة جديدة</a>
       @else
         <a class="btn btn--primary btn--lg" href="{{ route('login') }}">سجّل دخولك للعب</a>
       @endauth

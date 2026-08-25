@@ -1022,6 +1022,8 @@ window.swalifHandleCategoryPlay = async function(url, meta = {}) {
   const remaining = parseInt(meta.remaining, 10);
   const knowsTotal = Number.isFinite(total);
   const knowsRemaining = Number.isFinite(remaining);
+  // When set, skip the "replay?" confirmation and navigate directly
+  const noReplayConfirm = !!meta.noReplayConfirm;
 
   try {
     // Empty category: warn, then still allow opening the page
@@ -1037,7 +1039,9 @@ window.swalifHandleCategoryPlay = async function(url, meta = {}) {
       return false;
     }
 
-    if (knowsRemaining && knowsTotal && remaining <= 0 && total > 0) {
+    // Show replay confirmation only on pages that opt-in (e.g. categories index).
+    // Pages with data-no-replay-confirm (category show, game setup) go directly.
+    if (!noReplayConfirm && knowsRemaining && knowsTotal && remaining <= 0 && total > 0) {
       let replay = true;
       if (typeof window.showConfirm === 'function') {
         replay = await window.showConfirm('خلّصت كل أسئلة هالفئة! تبي تلعبها من جديد؟');
@@ -1065,6 +1069,7 @@ document.addEventListener('click', (e) => {
     Promise.resolve(window.swalifHandleCategoryPlay(url, {
       total: el.dataset.total,
       remaining: el.dataset.remaining,
+      noReplayConfirm: el.hasAttribute('data-no-replay-confirm'),
     })).catch(() => window.location.assign(url));
   } catch (_) {
     window.location.assign(url);

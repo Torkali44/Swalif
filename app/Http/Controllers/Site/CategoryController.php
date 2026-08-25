@@ -65,13 +65,11 @@ class CategoryController extends Controller
         }
 
         return view('site.categories.show', [
-            'category' => $category,
+            'category'         => $category,
             'categoryPlayMeta' => [
-                'total' => (int) ($category->questions_count ?? 0),
+                'total'     => (int) ($category->questions_count ?? 0),
                 'remaining' => (int) ($category->remaining_questions ?? $category->questions_count ?? 0),
             ],
-            'freeLeaveWarn' => $user && $this->freeTrial->shouldWarnOnLeave($user),
-            'leaveWarningMessage' => $this->freeTrial->leaveWarningMessage(),
         ]);
     }
 }

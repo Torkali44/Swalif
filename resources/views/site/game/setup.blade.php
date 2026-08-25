@@ -1,10 +1,6 @@
 <x-layouts.app title="تجهيز اللعبة — سوالف">
 <div
   class="setup-page-wrapper"
-  @if(!empty($freeLeaveWarn))
-    data-free-leave-guard="1"
-    data-free-leave-message="{{ $leaveWarningMessage }}"
-  @endif
 >
   <!-- Blurred Category Show Background -->
   <div class="setup-page-bg">
@@ -85,25 +81,18 @@
     if (setupForm) {
       setupForm.addEventListener('submit', async (e) => {
         const total = parseInt(playMeta.total, 10);
-        const remaining = parseInt(playMeta.remaining, 10);
 
         if (Number.isFinite(total) && total <= 0) {
           e.preventDefault();
-          if (typeof window.swalifHandleCategoryPlay === 'function') {
-            await window.swalifHandleCategoryPlay(null, playMeta);
+          if (typeof window.showPopup === 'function') {
+            await window.showPopup(
+              'هالفئة فاضية الحين 🎯<br>بنضيف لها أسئلة قريب — ارجع لها بعدين وتقدر تلعب!',
+              'error'
+            );
+          } else {
+            alert('هالفئة فاضية الحين — بنضيف أسئلة قريب، ارجع لها بعدين.');
           }
           return;
-        }
-
-        if (Number.isFinite(remaining) && Number.isFinite(total) && remaining <= 0 && total > 0) {
-          e.preventDefault();
-          let replay = true;
-          if (typeof window.showConfirm === 'function') {
-            replay = await window.showConfirm('خلّصت كل أسئلة هالفئة! تبي تلعبها من جديد؟');
-          }
-          if (replay) {
-            HTMLFormElement.prototype.submit.call(setupForm);
-          }
         }
       });
     }

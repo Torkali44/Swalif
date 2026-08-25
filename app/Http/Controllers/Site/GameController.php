@@ -47,18 +47,17 @@ class GameController extends Controller
         $category = $this->playPool->decorateCategories(collect([$category]), $user)->first();
 
         return view('site.game.setup', [
-            'category' => $category,
+            'category'         => $category,
             'categoryPlayMeta' => [
-                'total' => (int) ($category->questions_count ?? 0),
+                'total'     => (int) ($category->questions_count ?? 0),
                 'remaining' => (int) ($category->remaining_questions ?? $category->questions_count ?? 0),
             ],
-            'freeLeaveWarn' => $user && $this->freeTrial->shouldWarnOnLeave($user),
-            'leaveWarningMessage' => $this->freeTrial->leaveWarningMessage(),
             'aboutToClaimFree' => $user
                 && $this->freeTrial->isLimitedFreeUser($user)
                 && ! $this->freeTrial->hasConsumedFreeCategory($user),
         ]);
     }
+
 
     public function start(StoreGameRequest $request)
     {
