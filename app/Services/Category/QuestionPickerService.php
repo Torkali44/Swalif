@@ -4,25 +4,37 @@ namespace App\Services\Category;
 
 use App\Enums\Difficulty;
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 class QuestionPickerService
 {
+    public function __construct(private CategoryPlayPoolService $pool) {}
+
     /**
-     * Pick a fixed board: 6 questions per difficulty (easy / medium / hard).
+     * Pick a play board: 2 questions per difficulty by default (easy / medium / hard).
+     * For authenticated users, skips questions they already consumed in this category.
      */
-    public function forBoard(Category $category, ?int $perLevel = null): Collection
+    public function forBoard(Category $category, ?int $perLevel = null, ?User $user = null): Collection
     {
-        $perLevel ??= (int) config('game.questions_per_level', 6);
+        $perLevel ??= $this->pool->boardPerLevel();
+        $excludeIds = collect();
+
+        if ($user) {
+            $this->pool->resetIfExhausted($user, $category);
+            $excludeIds = $this->pool->playedQuestionIds($user, (int) $category->id);
+        }
 
         $picked = collect();
         $pickedIds = collect();
 
         foreach (Difficulty::cases() as $level) {
-            $questions = $category->questions()
+            $query = $category->questions()
                 ->where('is_active', true)
                 ->where('level', $level->value)
-                ->whereNotIn('id', $pickedIds)
+                ->whereNotIn('id', $pickedIds->merge($excludeIds));
+
+            $questions = (clone $query)
                 ->inRandomOrder()
                 ->limit($perLevel)
                 ->get();
@@ -32,7 +44,7 @@ class QuestionPickerService
                 $byPoints = $category->questions()
                     ->where('is_active', true)
                     ->where('points', $level->points())
-                    ->whereNotIn('id', $questions->pluck('id')->merge($pickedIds))
+                    ->whereNotIn('id', $questions->pluck('id')->merge($pickedIds)->merge($excludeIds))
                     ->inRandomOrder()
                     ->limit($perLevel - $questions->count())
                     ->get();

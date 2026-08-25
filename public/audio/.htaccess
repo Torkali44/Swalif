@@ -1,0 +1,7 @@
+AddType audio/wav .wav
+AddType audio/mpeg .mp3
+AddType audio/ogg .ogg
+
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>

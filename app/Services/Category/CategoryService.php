@@ -10,8 +10,12 @@ class CategoryService
     public function activeOrdered()
     {
         return Category::query()
+            ->select([
+                'id', 'name_ar', 'name_en', 'slug', 'icon', 'image', 'group',
+                'classification_id', 'description', 'is_active', 'sort_order',
+            ])
             ->where('is_active', true)
-            ->with('classification')
+            ->with(['classification:id,name_ar,name_en,icon,image,is_active,sort_order'])
             ->withCount(['questions' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('sort_order')
             ->orderBy('id')

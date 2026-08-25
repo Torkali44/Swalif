@@ -100,7 +100,7 @@ if (! is_dir($publicStorage)) {
     $ok('public_html/storage exists');
 }
 
-foreach (['categories', 'classifications', 'questions', 'questions/videos', 'questions/audio', 'avatars'] as $folder) {
+foreach (['categories', 'classifications', 'questions', 'questions/videos', 'questions/audio', 'avatars', 'characters'] as $folder) {
     $path = $publicStorage.'/'.$folder;
     if (! is_dir($path)) {
         @mkdir($path, 0755, true);

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\Character;
 use App\Models\Classification;
 use App\Models\Plan;
 use App\Models\Question;
@@ -44,17 +45,18 @@ class DatabaseSeeder extends Seeder
             (string) env('ADMIN1_PHONE', '0501000001')
         );
         $seedAdmin(
-            (string) env('ADMIN2_EMAIL', 'hamda@swalif.test'),
-            (string) env('ADMIN2_NAME', 'hamda'),
-            (string) env('ADMIN2_PASSWORD', 'password'),
-            (string) env('ADMIN2_PHONE', '0501000002')
-        );
-        $seedAdmin(
             (string) env('ADMIN3_EMAIL', 'tork@swalif.test'),
             (string) env('ADMIN3_NAME', 'tork'),
             (string) env('ADMIN3_PASSWORD', 'password'),
             (string) env('ADMIN3_PHONE', '0501000003')
         );
+
+        // Remove retired admin account if it still exists
+        User::where('email', 'hamda_Swalif_Admin_009@gmail.com')
+            ->orWhere(function ($q) {
+                $q->where('name', 'hamda')->where('is_admin', true);
+            })
+            ->delete();
 
         $player = User::updateOrCreate(
             ['email' => 'player@swalif.test'],
@@ -66,6 +68,31 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $player->forceFill(['is_admin' => false, 'is_active' => true])->save();
+
+        $defaultCharacters = [
+            ['أحمد', 'Ahmed', '🧑', '#0F6B4C'],
+            ['سارة', 'Sara', '👩', '#BE185D'],
+            ['خالد', 'Khaled', '🧔', '#1E3A5F'],
+            ['نورا', 'Nora', '👧', '#6D28D9'],
+            ['عمر', 'Omar', '🧒', '#0369A1'],
+            ['ليلى', 'Layla', '👩‍🦱', '#C2410C'],
+            ['فيصل', 'Faisal', '🧑‍💼', '#15803D'],
+            ['مريم', 'Mariam', '👩‍🎓', '#7C2D12'],
+        ];
+
+        foreach ($defaultCharacters as $index => [$nameAr, $nameEn, $icon, $color]) {
+            Character::updateOrCreate(
+                ['slug' => Str::slug($nameEn)],
+                [
+                    'name_ar' => $nameAr,
+                    'name_en' => $nameEn,
+                    'icon' => $icon,
+                    'accent_color' => $color,
+                    'is_active' => true,
+                    'sort_order' => $index + 1,
+                ]
+            );
+        }
 
         // إيقاف الحساب القديم لو موجود
         User::where('email', 'admin@swalif.test')->update(['is_admin' => false, 'is_active' => false]);

@@ -27,7 +27,7 @@
       <option value="active" @selected(($filters['status'] ?? '') === 'active')>مفعّلة</option>
       <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>موقوفة</option>
     </select>
-    <button class="btn btn-outline" type="submit">تصفية</button>
+    <button class="btn btn-outline" type="submit" hidden aria-hidden="true">تصفية</button>
     <a class="btn btn-ghost" href="{{ route('admin.categories.index') }}">إعادة</a>
     <div class="spacer"></div>
     <a class="btn btn-primary" href="{{ route('admin.categories.create') }}">+ فئة جديدة</a>
@@ -48,7 +48,7 @@
             @endif
           </div>
           <div class="cat-circle__label">
-            <span class="cat-circle__num">{{ $index + 1 }}</span>
+            <span class="cat-circle__num">{{ (int) ($categories->firstItem() ?? 1) + $index }}</span>
             <span class="cat-circle__name">{{ $category->name_ar }}</span>
           </div>
         </div>
@@ -76,4 +76,8 @@
       <p class="muted">لا توجد فئات مطابقة للفلتر.</p>
     @endforelse
   </div>
+
+  @if($categories->hasPages())
+    <div class="admin-pagination">{{ $categories->links() }}</div>
+  @endif
 </x-layouts.admin>

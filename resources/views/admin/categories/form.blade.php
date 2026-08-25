@@ -25,7 +25,7 @@
         <option value="" disabled @selected(! old('classification_id', $category->classification_id))>اختر التصنيف</option>
         @foreach($classifications as $classification)
           <option value="{{ $classification->id }}" @selected((string) old('classification_id', $category->classification_id) === (string) $classification->id)>
-            {{ $classification->icon }} {{ $classification->name_ar }}
+            {{ $classification->icon }} {{ $classification->name_ar }}@unless($classification->is_active) (موقوف)@endunless
           </option>
         @endforeach
       </select>

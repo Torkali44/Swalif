@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Question;
+use App\Support\AudioUpload;
 use App\Support\UploadedMediaPath;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,10 +20,10 @@ class StoreQuestionRequest extends FormRequest
     {
         $type = (string) $this->input('type', 'standard');
 
-        // Prefer extensions over mimes: MIME sniffing rejects many valid phone/WhatsApp videos.
+        // Prefer extensions over mimes: MIME sniffing rejects many valid phone/WhatsApp videos/audio.
         $mediaRules = match ($type) {
             'video' => ['nullable', 'file', 'extensions:mp4,webm,mov,avi,m4v', 'max:51200'],
-            'audio' => ['nullable', 'file', 'extensions:mp3,wav,ogg,m4a,aac', 'max:20480'],
+            'audio' => ['nullable', 'file', AudioUpload::extensionsRule(), 'max:'.AudioUpload::maxKilobytes()],
             default => ['nullable', 'image', 'max:4096'],
         };
 
@@ -153,54 +154,7 @@ class StoreQuestionRequest extends FormRequest
 
     protected function validateLevelCapacity(Validator $validator, ?Question $existingQuestion): void
     {
-        $categoryId = (int) $this->input('category_id');
-        $level = (string) $this->input('level');
-
-        if ($categoryId <= 0 || ! in_array($level, ['easy', 'medium', 'hard'], true)) {
-            return;
-        }
-
-        $perLevel = (int) config('game.questions_per_level', 6);
-        $maxPerCategory = $perLevel * 3;
-
-        $baseQuery = Question::query()
-            ->where('category_id', $categoryId)
-            ->when($existingQuestion, fn ($q) => $q->where('id', '!=', $existingQuestion->id));
-
-        $totalCount = (clone $baseQuery)->count();
-        $levelCount = (clone $baseQuery)->where('level', $level)->count();
-
-        $isNew = ! $existingQuestion;
-        $changedCategory = $existingQuestion && (int) $existingQuestion->category_id !== $categoryId;
-        $changedLevel = $existingQuestion && (string) ($existingQuestion->level?->value ?? $existingQuestion->level) !== $level;
-        $consumesSlot = $isNew || $changedCategory || $changedLevel;
-
-        if (! $consumesSlot) {
-            return;
-        }
-
-        $levelLabels = [
-            'easy' => 'السهل',
-            'medium' => 'المتوسط',
-            'hard' => 'الصعب',
-        ];
-
-        if ($totalCount >= $maxPerCategory) {
-            $validator->errors()->add(
-                'category_id',
-                'الفئة مكتملة وكل المستويات مكتملة. قم بإنشاء فئة جديدة.'
-            );
-
-            return;
-        }
-
-        if ($levelCount >= $perLevel) {
-            $label = $levelLabels[$level] ?? $level;
-            $validator->errors()->add(
-                'level',
-                "أسئلة المستوى {$label} مكتملة ({$perLevel}/{$perLevel}). أكمل باقي المستويات."
-            );
-        }
+        // Unlimited questions per category — capacity checks removed.
     }
 
     public function messages(): array
@@ -212,7 +166,7 @@ class StoreQuestionRequest extends FormRequest
             'level.required' => 'اختر مستوى السؤال.',
             'image.mimetypes' => 'صيغة الملف غير مدعومة لهذا النوع.',
             'image.mimes' => 'صيغة الملف غير مدعومة لهذا النوع.',
-            'image.extensions' => 'صيغة الملف غير مدعومة. للفيديو: mp4/webm/mov — للصوت: mp3/wav/ogg.',
+            'image.extensions' => 'صيغة الملف غير مدعومة. للفيديو: mp4/webm/mov — للصوت: '.AudioUpload::humanFormats().'.',
             'image.max' => 'حجم الملف كبير جدًا.',
             'image.image' => 'الملف يجب أن يكون صورة.',
             'file.extensions' => 'صيغة الملف غير مدعومة.',

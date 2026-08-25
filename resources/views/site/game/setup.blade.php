@@ -13,7 +13,7 @@
         <div class="cat-circle cat-circle--lg" style="background: linear-gradient(135deg, #0F6B4C, #084A34)">
           <div class="cat-circle__ring">
             @if($category->imageUrl())
-              <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}">
+              <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" data-no-sw-img>
             @else
               <span class="cat-circle__emoji">{{ $category->icon ?: '🎯' }}</span>
             @endif
@@ -79,6 +79,35 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    const setupForm = document.querySelector('.setup-modal-card');
+    const playMeta = @json($categoryPlayMeta ?? ['total' => 0, 'remaining' => 0]);
+
+    if (setupForm) {
+      setupForm.addEventListener('submit', async (e) => {
+        const total = parseInt(playMeta.total, 10);
+        const remaining = parseInt(playMeta.remaining, 10);
+
+        if (Number.isFinite(total) && total <= 0) {
+          e.preventDefault();
+          if (typeof window.swalifHandleCategoryPlay === 'function') {
+            await window.swalifHandleCategoryPlay(null, playMeta);
+          }
+          return;
+        }
+
+        if (Number.isFinite(remaining) && Number.isFinite(total) && remaining <= 0 && total > 0) {
+          e.preventDefault();
+          let replay = true;
+          if (typeof window.showConfirm === 'function') {
+            replay = await window.showConfirm('خلّصت كل أسئلة هالفئة! تبي تلعبها من جديد؟');
+          }
+          if (replay) {
+            HTMLFormElement.prototype.submit.call(setupForm);
+          }
+        }
+      });
+    }
+
     document.querySelectorAll('.setup-modal-counter').forEach(counter => {
       const minus = counter.querySelector('.minus');
       const plus = counter.querySelector('.plus');

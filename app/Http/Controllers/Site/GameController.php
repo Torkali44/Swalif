@@ -10,6 +10,7 @@ use App\Models\Game;
 use App\Models\GameQuestion;
 use App\Models\Question;
 use App\Models\Team;
+use App\Services\Category\CategoryPlayPoolService;
 use App\Services\Game\GameSessionService;
 use App\Services\Game\ScoringService;
 use App\Services\Game\TimerService;
@@ -17,6 +18,7 @@ use App\Services\Game\WinnerCalculator;
 use App\Services\Subscription\FreeTrialService;
 use App\Services\Subscription\PlayAccessService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class GameController extends Controller
 {
@@ -27,6 +29,7 @@ class GameController extends Controller
         private TimerService $timer,
         private FreeTrialService $freeTrial,
         private PlayAccessService $playAccess,
+        private CategoryPlayPoolService $playPool,
     ) {}
 
     public function setup(Category $category)
@@ -40,8 +43,15 @@ class GameController extends Controller
                 ->with('error', $this->playAccess->blockMessage($user));
         }
 
+        $category->loadCount(['questions' => fn ($q) => $q->where('is_active', true)]);
+        $category = $this->playPool->decorateCategories(collect([$category]), $user)->first();
+
         return view('site.game.setup', [
             'category' => $category,
+            'categoryPlayMeta' => [
+                'total' => (int) ($category->questions_count ?? 0),
+                'remaining' => (int) ($category->remaining_questions ?? $category->questions_count ?? 0),
+            ],
             'freeLeaveWarn' => $user && $this->freeTrial->shouldWarnOnLeave($user),
             'leaveWarningMessage' => $this->freeTrial->leaveWarningMessage(),
             'aboutToClaimFree' => $user
@@ -62,7 +72,14 @@ class GameController extends Controller
         }
 
         // Create the game first so a failed start does not burn the free trial
-        $game = $this->sessions->start($user, $request->validated());
+        try {
+            $game = $this->sessions->start($user, $request->validated());
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('categories.show', Category::findOrFail($categoryId))
+                ->with('error', $e->validator->errors()->first() ?: 'ما في أسئلة كافية في هالفئة الحين.');
+        }
+
         $this->freeTrial->claimFreeCategory($user, $categoryId);
 
         return redirect()->route('game.board', $game);
@@ -76,7 +93,7 @@ class GameController extends Controller
         $freeLeaveWarn = $user && $this->freeTrial->shouldWarnOnLeave($user);
         $leaveWarningMessage = $this->freeTrial->leaveWarningMessage();
 
-        $perLevel = (int) config('game.questions_per_level', 6);
+        $perLevel = max(1, (int) config('game.board_questions_per_level', 2));
         $expected = $perLevel * 3;
 
         // Only show the locked game set — never pull the full category pool

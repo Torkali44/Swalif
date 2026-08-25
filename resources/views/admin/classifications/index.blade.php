@@ -40,7 +40,7 @@
             @endif
           </div>
           <div class="cat-circle__label">
-            <span class="cat-circle__num">{{ $index + 1 }}</span>
+            <span class="cat-circle__num">{{ (int) ($classifications->firstItem() ?? 1) + $index }}</span>
             <span class="cat-circle__name">{{ $classification->name_ar }}</span>
           </div>
         </div>
@@ -67,4 +67,8 @@
       <p class="muted">لا توجد تصنيفات مطابقة للفلتر.</p>
     @endforelse
   </div>
+
+  @if($classifications->hasPages())
+    <div class="admin-pagination">{{ $classifications->links() }}</div>
+  @endif
 </x-layouts.admin>

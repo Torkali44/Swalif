@@ -2,13 +2,15 @@
   <x-slot:heading>الأسئلة</x-slot:heading>
   <x-slot:subheading>كل فئة وأسئلةها تحتها — سهولة الوصول والمراجعة</x-slot:subheading>
 
-  <form class="toolbar toolbar--tight" method="GET" action="{{ route('admin.questions.index') }}">
+  <form class="toolbar toolbar--tight" method="GET" action="{{ route('admin.questions.index') }}" data-auto-filter>
     <input class="search-inp" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث في نص السؤال…">
-    <select class="select" name="category_id">
-      <option value="">كل الفئات</option>
+    <input class="search-inp" type="search" id="categoryFinder" placeholder="ابحث عن فئة بالاسم…" autocomplete="off" data-category-finder>
+    <select class="select" name="category_id" id="filterCategorySelect">
+      <option value="">كل الفئات (الأحدث أولاً)</option>
       @foreach($categories as $category)
         <option value="{{ $category->id }}" @selected((string) ($filters['category_id'] ?? '') === (string) $category->id)>
           {{ $category->icon }} {{ $category->name_ar }}
+          @if(isset($category->questions_count)) ({{ $category->questions_count }}) @endif
         </option>
       @endforeach
     </select>
@@ -38,16 +40,17 @@
       <option value="active" @selected(($filters['status'] ?? '') === 'active')>مفعّل</option>
       <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>موقوف</option>
     </select>
-    <button class="btn btn-outline" type="submit">تصفية</button>
     <a class="btn btn-ghost" href="{{ route('admin.questions.index') }}">إعادة</a>
     <div class="spacer"></div>
-    <a class="btn btn-primary" href="{{ route('admin.questions.create') }}">+ سؤال جديد</a>
+    <a class="btn btn-primary" href="{{ route('admin.questions.create', array_filter(['category_id' => $filters['category_id'] ?? null])) }}">+ سؤال جديد</a>
   </form>
 
-  <div class="q-groups">
+  <div class="q-groups" id="qGroups">
     @forelse($groupedCategories as $category)
-      @continue($category->questions->isEmpty())
-      <details class="q-group" data-category-id="{{ $category->id }}" @if(($filters['category_id'] ?? null) || $loop->first) open @endif>
+      @php
+        $forceOpen = (string) ($filters['open'] ?? $filters['category_id'] ?? '') === (string) $category->id;
+      @endphp
+      <details class="q-group" data-category-id="{{ $category->id }}" data-category-name="{{ mb_strtolower($category->name_ar.' '.($category->name_en ?? '')) }}" @if($forceOpen) open @endif>
         <summary class="q-group__head">
           <div class="q-group__title">
             <span class="q-group__icon">{{ $category->icon ?: '🎯' }}</span>
@@ -66,7 +69,10 @@
 
         <div class="q-group__body">
           @if($category->questions->isEmpty())
-            <p class="muted">لا توجد أسئلة مطابقة داخل هذه الفئة.</p>
+            <div class="empty-panel" style="margin:12px 0">
+              لا توجد أسئلة داخل هذه الفئة بعد.
+              <a class="btn btn-sm btn-primary" href="{{ route('admin.questions.create', ['category_id' => $category->id]) }}">أضف أول سؤال</a>
+            </div>
           @else
             <div class="table-wrap">
               <table class="data-table">
@@ -150,7 +156,7 @@
                                     'matchPairs' => array_values($question->matchPairs()),
                                   ], JSON_UNESCAPED_UNICODE) }}"
                                   onclick="previewQuestionFromBtn(this)">عرض</button>
-                                <a class="btn btn-sm btn-outline" href="{{ route('admin.questions.edit', $question) }}">تعديل</a>
+                                <a class="btn btn-sm btn-outline" href="{{ route('admin.questions.edit', $question) }}?return_category={{ $category->id }}">تعديل</a>
                                 <form class="inline" method="POST" action="{{ route('admin.questions.toggle', $question) }}">
                                   @csrf
                                   @method('PATCH')
@@ -176,6 +182,72 @@
       <div class="empty-panel">لا توجد فئات/أسئلة مطابقة للفلتر.</div>
     @endforelse
   </div>
+
+  <script>
+    /* Keep opened categories sticky until the admin closes them */
+    (() => {
+      const KEY = 'swalif.admin.qOpenCategories';
+      const groups = [...document.querySelectorAll('details.q-group[data-category-id]')];
+      if (!groups.length) return;
+
+      const readOpen = () => {
+        try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (_) { return []; }
+      };
+      const writeOpen = (ids) => {
+        try { localStorage.setItem(KEY, JSON.stringify([...new Set(ids.map(String))])); } catch (_) {}
+      };
+
+      const forcedOpen = @json((string) ($filters['open'] ?? $filters['category_id'] ?? ''));
+      const focusId = @json((string) ($filters['focus'] ?? ''));
+      let openIds = readOpen();
+
+      if (forcedOpen) {
+        openIds = [...new Set([...openIds, String(forcedOpen)])];
+        writeOpen(openIds);
+      }
+
+      groups.forEach((el) => {
+        const id = String(el.dataset.categoryId || '');
+        if (openIds.includes(id) || (forcedOpen && forcedOpen === id)) {
+          el.open = true;
+        }
+
+        el.addEventListener('toggle', () => {
+          const current = readOpen().filter((x) => x !== id);
+          if (el.open) current.push(id);
+          writeOpen(current);
+        });
+      });
+
+      // Instant category name finder (client-side) for large catalogs
+      const finder = document.querySelector('[data-category-finder]');
+      if (finder) {
+        finder.addEventListener('input', () => {
+          const q = (finder.value || '').trim().toLowerCase();
+          groups.forEach((el) => {
+            const name = (el.dataset.categoryName || '').toLowerCase();
+            const match = !q || name.includes(q);
+            el.hidden = !match;
+            if (match && q && q.length >= 2) el.open = true;
+          });
+        });
+      }
+
+      const scrollTarget = focusId
+        ? document.getElementById('q-row-' + focusId)
+        : (forcedOpen ? document.querySelector('details.q-group[data-category-id="' + forcedOpen + '"]') : null);
+
+      if (scrollTarget) {
+        setTimeout(() => {
+          scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (scrollTarget.tagName === 'TR') {
+            scrollTarget.style.outline = '2px solid rgba(255,109,0,.55)';
+            setTimeout(() => { scrollTarget.style.outline = ''; }, 2500);
+          }
+        }, 120);
+      }
+    })();
+  </script>
 
   {{-- ===== Question Preview Modal ===== --}}
   <div id="qPreviewModal"
@@ -409,15 +481,20 @@
       document.body.style.overflow = '';
     }
 
+    let deleteInFlight = false;
+
     document.getElementById('deleteConfirmSubmitBtn').addEventListener('click', function() {
-      if (!pendingDeleteForm) return;
+      if (!pendingDeleteForm || deleteInFlight) return;
 
       const btn = this;
-      btn.disabled = true;
-      btn.textContent = 'جاري الحذف...';
-
+      const rowId = pendingQuestionRowId;
+      const catDetail = pendingCatDetailEl;
       const url = pendingDeleteForm.action;
       const formData = new FormData(pendingDeleteForm);
+
+      deleteInFlight = true;
+      btn.disabled = true;
+      btn.textContent = 'جاري الحذف...';
 
       fetch(url, {
         method: 'POST',
@@ -427,22 +504,37 @@
           'Accept': 'application/json'
         }
       })
-      .then(res => res.json())
+      .then(async (res) => {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {}
+
+        if (!res.ok) {
+          if (res.status === 404 && rowId) {
+            return { success: true };
+          }
+          throw new Error(data.message || 'تعذّر حذف السؤال.');
+        }
+
+        return data;
+      })
       .then(data => {
         btn.disabled = false;
         btn.textContent = 'حذف النهائي';
+        deleteInFlight = false;
         closeDeleteModal();
 
         if (data.success) {
-          const row = document.getElementById(pendingQuestionRowId);
+          const row = rowId ? document.getElementById(rowId) : null;
           if (row) {
             row.style.transition = 'all 0.3s ease';
             row.style.opacity = '0';
             row.style.transform = 'translateX(20px)';
             setTimeout(() => {
               row.remove();
-              if (pendingCatDetailEl) {
-                const shownEl = pendingCatDetailEl.querySelector('.shown-count');
+              if (catDetail) {
+                const shownEl = catDetail.querySelector('.shown-count');
                 if (shownEl) {
                   const currentCount = parseInt(shownEl.textContent) || 0;
                   if (currentCount > 0) shownEl.textContent = currentCount - 1;
@@ -463,8 +555,9 @@
       .catch(err => {
         btn.disabled = false;
         btn.textContent = 'حذف النهائي';
+        deleteInFlight = false;
         closeDeleteModal();
-        alert('حدث خطأ بالاتصال. حاول مجدداً.');
+        alert(err.message || 'حدث خطأ بالاتصال. حاول مجدداً.');
       });
     });
 

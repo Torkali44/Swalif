@@ -76,7 +76,7 @@
 
         <div class="hp-hero__cta">
           <a href="{{ route('categories.index') }}" class="btn btn--primary btn--lg">🎮 ابدأ اللعب الآن</a>
-          <a href="{{ route('custom-game.create') }}" class="btn btn--lg" style="background:linear-gradient(135deg,#FF6D00,#FF1744);color:#fff;font-weight:800">🚀 أنشئ لعبتك الخاصة</a>
+          <!-- <a href="{{ route('custom-game.create') }}" class="btn btn--lg" style="background:linear-gradient(135deg,#FF6D00,#FF1744);color:#fff;font-weight:800">🚀 أنشئ لعبتك الخاصة</a> -->
         </div>
 
         <div class="hp-hero__players">
@@ -140,18 +140,24 @@
         @foreach($homeCats as $i => $category)
           @php $tile = $catTiles[$i % count($catTiles)]; @endphp
           <article class="hp-cat">
-            <div class="hp-cat__icon" style="background:{{ $tile[0] }};color:{{ $tile[1] }}">
-              @if($category->imageUrl())
-                <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async" width="160" height="160">
-              @else
-                {{ $category->icon ?: '🎯' }}
-              @endif
+            <div class="hp-cat__body">
+              <div class="hp-cat__icon" style="background:{{ $tile[0] }};color:{{ $tile[1] }}">
+                @if($category->imageUrl())
+                  <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async" width="160" height="160" data-no-sw-img>
+                @else
+                  {{ $category->icon ?: '🎯' }}
+                @endif
+              </div>
+              <h3>{{ $category->name_ar }}</h3>
+              <p>{{ $category->remaining_badge ?? (number_format($category->questions_count).' سؤال') }}</p>
             </div>
-            <h3>{{ $category->name_ar }}</h3>
-            <p>{{ number_format($category->questions_count) }} سؤال</p>
-            <a href="{{ route('categories.show', $category) }}"
+            <a href="{{ route('game.setup', $category) }}"
                class="hp-cat__btn"
-               style="--tc:{{ $tile[1] }}">ابدأ اللعب</a>
+               style="--tc:{{ $tile[1] }}"
+               data-category-play
+               data-play-url="{{ route('game.setup', $category) }}"
+               data-total="{{ (int) $category->questions_count }}"
+               data-remaining="{{ (int) ($category->remaining_questions ?? $category->questions_count) }}">ابدأ اللعب</a>
           </article>
         @endforeach
       </div>

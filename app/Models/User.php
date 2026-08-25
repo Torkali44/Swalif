@@ -27,6 +27,7 @@ class User extends Authenticatable
         'phone_code',
         'birth_date',
         'avatar',
+        'character_id',
         'free_category_id',
     ];
 
@@ -61,6 +62,40 @@ class User extends Authenticatable
     public function avatarUrl(): ?string
     {
         return PublicMedia::url($this->avatar);
+    }
+
+    public function character()
+    {
+        return $this->belongsTo(Character::class);
+    }
+
+    public function displayAvatarUrl(): ?string
+    {
+        if ($this->avatarUrl()) {
+            return $this->avatarUrl();
+        }
+
+        return $this->character?->imageUrl();
+    }
+
+    public function displayAvatarEmoji(): ?string
+    {
+        if ($this->avatarUrl()) {
+            return null;
+        }
+
+        return $this->character?->icon;
+    }
+
+    public function displayAvatarInitial(): string
+    {
+        return mb_substr($this->name, 0, 1);
+    }
+
+    public function displayAvatarGradient(): string
+    {
+        return $this->character?->accentGradient()
+            ?? 'linear-gradient(135deg,#1E3A5F,#0F2440)';
     }
 
     public function firstName(): string

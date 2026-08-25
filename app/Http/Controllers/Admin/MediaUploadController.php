@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\AudioUpload;
 use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use Illuminate\Http\JsonResponse;
@@ -15,10 +16,10 @@ class MediaUploadController extends Controller
     {
         $kind = (string) $request->input('kind', 'image');
 
-        // Prefer extensions over mimes: MIME sniffing rejects many valid phone/WhatsApp videos.
+        // Prefer extensions over mimes: MIME sniffing rejects many valid phone/WhatsApp videos/audio.
         $fileRules = match ($kind) {
             'video' => ['required', 'file', 'extensions:mp4,webm,mov,avi,m4v', 'max:51200'],
-            'audio' => ['required', 'file', 'extensions:mp3,wav,ogg,m4a,aac', 'max:20480'],
+            'audio' => ['required', 'file', AudioUpload::extensionsRule(), 'max:'.AudioUpload::maxKilobytes()],
             'answer_image' => ['required', 'image', 'max:5120'],
             default => ['required', 'image', 'max:4096'],
         };
@@ -30,11 +31,15 @@ class MediaUploadController extends Controller
             'file.required' => 'اختر ملفًا للرفع.',
             'file.extensions' => match ($kind) {
                 'video' => 'صيغة الفيديو غير مدعومة. استخدم mp4 أو webm أو mov.',
-                'audio' => 'صيغة الصوت غير مدعومة. استخدم mp3 أو wav أو ogg.',
+                'audio' => 'صيغة الصوت غير مدعومة. استخدم '.AudioUpload::humanFormats().'.',
                 default => 'صيغة الملف غير مدعومة.',
             },
             'file.mimes' => 'صيغة الملف غير مدعومة.',
-            'file.max' => 'حجم الملف كبير جدًا.',
+            'file.max' => match ($kind) {
+                'audio' => 'حجم الملف الصوتي كبير جدًا (الحد '.((int) (AudioUpload::maxKilobytes() / 1024)).' ميجابايت).',
+                'video' => 'حجم الفيديو كبير جدًا (الحد 50 ميجابايت).',
+                default => 'حجم الملف كبير جدًا.',
+            },
             'file.image' => 'الملف يجب أن يكون صورة.',
         ]);
 

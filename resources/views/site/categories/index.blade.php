@@ -123,7 +123,6 @@
             data-target="acc-{{ $classification->id }}"
             aria-expanded="true"
           >
-            <span class="accordion-toggle-circle">−</span>
             <div class="accordion-header-title-wrap">
               @if($classification->icon)
                 <span class="accordion-icon">{{ $classification->icon }}</span>
@@ -131,6 +130,7 @@
               <span class="accordion-title">{{ $classification->name_ar }}</span>
               <span class="accordion-count">({{ $classCats->count() }})</span>
             </div>
+            <span class="accordion-toggle-circle" aria-hidden="true">−</span>
           </button>
 
           <!-- Accordion Body: Open by default -->
@@ -147,6 +147,9 @@
                 @endphp
                 <div class="card-item-box {{ $isLocked ? 'is-locked' : '' }}"
                      data-card-url="{{ $playUrl }}"
+                     role="link"
+                     tabindex="0"
+                     onclick="if(window.swalifOpenCategoryCard){return window.swalifOpenCategoryCard(event,this);}if(event.target.closest('[data-info-toggle],[data-info-popover],[data-fav-card-btn]'))return true;var u=this.getAttribute('data-card-url');if(u&&!this.classList.contains('is-locked')){location.href=u;}return false;"
                      @if($isLocked)
                        data-subscribe-lock
                        data-subscribe-message="{{ $subscribeMessage }}"
@@ -155,7 +158,9 @@
                      data-group="{{ $filterKey }}"
                      data-name="{{ $category->name_ar }}"
                      data-category-id="{{ $category->id }}"
-                     data-questions="{{ $category->questions_count }}">
+                     data-total-questions="{{ (int) $category->questions_count }}"
+                     data-remaining-questions="{{ (int) ($category->remaining_questions ?? $category->questions_count) }}"
+                     data-questions="{{ $category->remaining_questions ?? $category->questions_count }}">
 
                   <!-- Favorite Direct Heart Button -->
                   <button type="button" class="card-item-fav-direct" data-fav-card-btn data-category-id="{{ $category->id }}" data-category-name="{{ $category->name_ar }}" title="إضافة للمفضلة">
@@ -164,11 +169,11 @@
 
                   <!-- Image Section -->
                   <div class="card-item-image-wrap">
-                    <span class="card-item-badge">
-                      {{ $isLocked ? '🔒 مقفول' : ($category->questions_count ? '📝 '.$category->questions_count.' سؤال' : 'لعبة ممتعة') }}
+                    <span class="card-item-badge card-item-badge--remaining">
+                      {{ $isLocked ? '🔒 مقفول' : ($category->remaining_badge ?? ($category->questions_count ? $category->questions_count.' سؤال' : 'قريبًا')) }}
                     </span>
                     @if($category->imageUrl())
-                      <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async">
+                      <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async" data-no-sw-img>
                     @else
                       <div class="card-item-fallback-icon">{{ $category->icon ?: '🎯' }}</div>
                     @endif
@@ -194,12 +199,12 @@
             data-target="acc-0"
             aria-expanded="true"
           >
-            <span class="accordion-toggle-circle">−</span>
             <div class="accordion-header-title-wrap">
               <span class="accordion-icon">🎯</span>
               <span class="accordion-title">فئات متنوعة</span>
               <span class="accordion-count">({{ $uncategorized->count() }})</span>
             </div>
+            <span class="accordion-toggle-circle" aria-hidden="true">−</span>
           </button>
 
           <div class="accordion-body is-open" id="acc-0">
@@ -211,6 +216,9 @@
                 @endphp
                 <div class="card-item-box {{ $isLocked ? 'is-locked' : '' }}"
                      data-card-url="{{ $playUrl }}"
+                     role="link"
+                     tabindex="0"
+                     onclick="if(window.swalifOpenCategoryCard){return window.swalifOpenCategoryCard(event,this);}if(event.target.closest('[data-info-toggle],[data-info-popover],[data-fav-card-btn]'))return true;var u=this.getAttribute('data-card-url');if(u&&!this.classList.contains('is-locked')){location.href=u;}return false;"
                      @if($isLocked)
                        data-subscribe-lock
                        data-subscribe-message="{{ $subscribeMessage }}"
@@ -219,7 +227,9 @@
                      data-group="general"
                      data-name="{{ $category->name_ar }}"
                      data-category-id="{{ $category->id }}"
-                     data-questions="{{ $category->questions_count }}">
+                     data-total-questions="{{ (int) $category->questions_count }}"
+                     data-remaining-questions="{{ (int) ($category->remaining_questions ?? $category->questions_count) }}"
+                     data-questions="{{ $category->remaining_questions ?? $category->questions_count }}">
 
                   <button type="button" class="card-item-fav-direct" data-fav-card-btn data-category-id="{{ $category->id }}" data-category-name="{{ $category->name_ar }}" title="إضافة للمفضلة">
                     <span class="fav-heart-icon">🤍</span>
@@ -240,11 +250,11 @@
                   </div>
 
                   <div class="card-item-image-wrap">
-                    <span class="card-item-badge">
-                      {{ $isLocked ? '🔒 مقفول' : ($category->questions_count ? '📝 '.$category->questions_count.' سؤال' : 'لعبة ممتعة') }}
+                    <span class="card-item-badge card-item-badge--remaining">
+                      {{ $isLocked ? '🔒 مقفول' : ($category->remaining_badge ?? ($category->questions_count ? $category->questions_count.' سؤال' : 'قريبًا')) }}
                     </span>
                     @if($category->imageUrl())
-                      <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async">
+                      <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async" data-no-sw-img>
                     @else
                       <div class="card-item-fallback-icon">{{ $category->icon ?: '🎯' }}</div>
                     @endif
@@ -501,34 +511,69 @@ body.dark .free-lock-banner, html.dark .free-lock-banner { color: #FF5252; backg
 .cta-banner-btn { background: #fff !important; color: #FF6D00 !important; font-weight: 900 !important; border-radius: 14px !important; padding: 12px 22px !important; font-size: .95rem !important; flex-shrink: 0; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
 
 /* Accordions */
-.accordion-categories { display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px; }
-.accordion-section { border-radius: 24px; overflow: hidden; background: transparent; }
-.accordion-header {
-  width: 100%;
+.accordion-categories { display: flex; flex-direction: column; gap: 28px; margin-bottom: 40px; }
+.accordion-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 22px;
+  gap: 12px;
+  width: 100%;
+  background: transparent;
+}
+.accordion-header {
+  width: auto;
+  max-width: calc(100% - 16px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 12px 10px 18px;
   background: linear-gradient(135deg, #FF6D00 0%, #FF8F00 100%);
   color: #fff;
   border: none;
-  border-radius: 50px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 16px rgba(255,109,0,.25);
+  box-shadow: 0 4px 14px rgba(255,109,0,.22);
   transition: transform .2s, box-shadow .2s;
-  margin-bottom: 16px;
+  margin: 0;
 }
 body.dark .accordion-header, html.dark .accordion-header {
   background: linear-gradient(135deg, #E65100 0%, #F57C00 100%);
   box-shadow: 0 6px 20px rgba(0,0,0,.4);
 }
-.accordion-header:hover { transform: scale(1.01); box-shadow: 0 6px 20px rgba(255,109,0,.35); }
-.accordion-header-title-wrap { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 800; }
-.accordion-count { font-size: .95rem; opacity: .9; font-weight: 700; }
-.accordion-toggle-circle { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.25); color: #fff; font-size: 18px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+.accordion-header:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,109,0,.32); }
+.accordion-header-title-wrap { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; white-space: nowrap; }
+.accordion-count { font-size: .92rem; opacity: .92; font-weight: 700; }
+.accordion-toggle-circle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .accordion-header.is-open .accordion-toggle-circle { background: rgba(0,0,0,.18); }
-.accordion-body { display: none; padding: 4px 0 16px; }
+.accordion-body {
+  display: none;
+  width: 100%;
+  border: 2px solid rgba(255,109,0,.22);
+  border-radius: 20px;
+  background: rgba(255,255,255,.78);
+  padding: 14px 14px 6px;
+  box-shadow: 0 4px 18px rgba(15,23,42,.06);
+}
+body.dark .accordion-body, html.dark .accordion-body {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,109,0,.28);
+  box-shadow: 0 6px 22px rgba(0,0,0,.28);
+}
 .accordion-body.is-open { display: block; animation: accFadeIn .25s ease; }
 @keyframes accFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -537,7 +582,7 @@ body.dark .accordion-header, html.dark .accordion-header {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
   gap: 20px !important;
-  padding: 12px 0 28px !important;
+  padding: 4px 0 12px !important;
 }
 
 .card-item-box {
@@ -661,19 +706,33 @@ body.dark .card-item-image-wrap, html.dark .card-item-image-wrap {
 
 .card-item-badge {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  top: auto !important;
-  left: auto !important;
+  top: 8px;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translateX(-50%);
   background: linear-gradient(135deg, #FF1744, #D50000);
   color: #ffffff;
-  font-size: .75rem;
+  font-size: .78rem;
   font-weight: 800;
-  padding: 3px 10px;
-  border-radius: 50px;
+  padding: 4px 12px;
+  border-radius: 999px;
   z-index: 15;
   box-shadow: 0 3px 10px rgba(213,0,0,.4);
   pointer-events: none;
+  white-space: nowrap;
+  line-height: 1.2;
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 80px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-item-badge--remaining {
+  letter-spacing: 0;
 }
 
 .card-info-popover {
@@ -734,17 +793,90 @@ body.dark .category-empty-state p, html.dark .category-empty-state p { color: #9
 
 /* Responsive Grid */
 @media (max-width: 600px) {
-  .accordion-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }
-  .card-item-image-wrap { height: 145px !important; }
-  .card-item-footer-bar { padding: 10px 6px !important; font-size: .92rem !important; min-height: 44px !important; }
-  .card-item-name { font-size: .92rem !important; }
+  .accordion-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+  .card-item-image-wrap { height: 132px !important; }
+  .card-item-footer-bar {
+    padding: 8px 8px !important;
+    min-height: 48px !important;
+    align-items: center !important;
+  }
+  .card-item-name {
+    font-size: .82rem !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    text-overflow: unset !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    max-width: 100% !important;
+  }
   .card-item-fav-direct { width: 28px !important; height: 28px !important; font-size: 14px !important; top: 6px !important; left: 6px !important; }
   .card-item-info { width: 28px !important; height: 28px !important; font-size: 14px !important; top: 6px !important; left: 38px !important; }
-  .card-item-badge { bottom: 6px !important; right: 6px !important; font-size: .7rem !important; padding: 2px 8px !important; }
+
+  /* Keep remaining badge as a small pill — never stretch top→bottom */
+  .card-item-badge,
+  .card-item-badge--remaining {
+    top: 6px !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: calc(100% - 72px) !important;
+    font-size: .65rem !important;
+    font-weight: 800 !important;
+    padding: 3px 10px !important;
+    border-radius: 999px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
 }
 </style>
 
 <script>
+/* Available immediately for card onclick — before DOMContentLoaded */
+window.swalifOpenCategoryCard = function (e, card) {
+  if (!card) return false;
+  if (e && e.target && e.target.closest && e.target.closest('[data-info-toggle],[data-info-popover],[data-fav-card-btn]')) {
+    return true;
+  }
+  if (e) {
+    try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+  }
+  if (card.classList.contains('is-locked')) {
+    var lockMsg = card.getAttribute('data-subscribe-message') || '';
+    if (lockMsg) alert(lockMsg);
+    return false;
+  }
+  var url = card.getAttribute('data-card-url');
+  if (!url) return false;
+
+  var meta = {
+    total: card.getAttribute('data-total-questions'),
+    remaining: card.getAttribute('data-remaining-questions'),
+  };
+
+  if (typeof window.swalifHandleCategoryPlay === 'function') {
+    Promise.resolve(window.swalifHandleCategoryPlay(url, meta))
+      .catch(function () { window.location.assign(url); });
+    return false;
+  }
+
+  var total = parseInt(meta.total, 10);
+  if (Number.isFinite(total) && total <= 0) {
+    alert('هالفئة فاضية الحين — بنضيف أسئلة قريب، ارجع لها بعدين.');
+    return false;
+  }
+  window.location.assign(url);
+  return false;
+};
+
 document.addEventListener('DOMContentLoaded', function () {
 
   /* ── Audio Chime Helper (Intact & Preserved) ─────────────────── */
@@ -999,21 +1131,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* ── Card Click vs Info Popover ────────────────────── */
-  document.querySelectorAll('.card-item-box').forEach(function (card) {
-    card.addEventListener('click', function (e) {
-      if (e.target.closest('[data-info-toggle]') || e.target.closest('[data-info-popover]') || e.target.closest('[data-fav-card-btn]')) {
-        return;
-      }
-      var lockMsg = card.dataset.subscribeMessage;
-      if (card.classList.contains('is-locked') && lockMsg) {
-        showToast(lockMsg, 'error');
-        return;
-      }
-      var url = card.dataset.cardUrl;
-      if (url) window.location.href = url;
-    });
-  });
+  /* ── Card Click (handled by window.swalifOpenCategoryCard + onclick) ── */
+  function goCategoryUrl(url, meta) {
+    if (!url) return;
+    if (typeof window.swalifHandleCategoryPlay !== 'function') {
+      window.location.assign(url);
+      return;
+    }
+    Promise.resolve(window.swalifHandleCategoryPlay(url, meta || {}))
+      .catch(function () { window.location.assign(url); });
+  }
 
   /* ── Info Popover Toggle ───────────────── */
   document.querySelectorAll('[data-info-toggle]').forEach(function (btn) {
@@ -1074,7 +1201,10 @@ document.addEventListener('DOMContentLoaded', function () {
       var url  = randomCard.dataset.cardUrl || '#';
 
       document.getElementById('randomResultTitle').textContent = name;
-      document.getElementById('randomPlayLink').href = url;
+      var playLink = document.getElementById('randomPlayLink');
+      playLink.href = url;
+      playLink.dataset.totalQuestions = randomCard.dataset.totalQuestions || '0';
+      playLink.dataset.remainingQuestions = randomCard.dataset.remainingQuestions || '0';
 
       spinnerWrap.style.display = 'none';
       resultWrap.style.display = 'block';
@@ -1084,6 +1214,19 @@ document.addEventListener('DOMContentLoaded', function () {
   if (closeRandomBtn) closeRandomBtn.addEventListener('click', function() { randomModal.hidden = true; });
   if (backdrop) backdrop.addEventListener('click', function() { randomModal.hidden = true; });
   if (spinAgainBtn) spinAgainBtn.addEventListener('click', openRandomPickerModal);
+
+  var randomPlayLink = document.getElementById('randomPlayLink');
+  if (randomPlayLink) {
+    randomPlayLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      var url = randomPlayLink.href;
+      if (!url || url === '#') return;
+      goCategoryUrl(url, {
+        total: randomPlayLink.dataset.totalQuestions,
+        remaining: randomPlayLink.dataset.remainingQuestions,
+      });
+    });
+  }
 
   function showToast(msg, type) {
     var stack = document.getElementById('toastStack');

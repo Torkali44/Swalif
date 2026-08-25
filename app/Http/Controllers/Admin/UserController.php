@@ -27,27 +27,27 @@ class UserController extends Controller
         }
 
         if ($request->filled('role')) {
-            $query->where('is_admin', $request->string('role') === 'admin');
+            $query->where('is_admin', $request->input('role') === 'admin');
         }
 
         if ($request->filled('status')) {
-            $query->where('is_active', $request->string('status') === 'active');
+            $query->where('is_active', $request->input('status') === 'active');
         }
 
         if ($request->filled('play')) {
-            if ($request->string('play') === 'blocked') {
+            if ($request->input('play') === 'blocked') {
                 $query->where('play_blocked', true);
-            } elseif ($request->string('play') === 'open') {
+            } elseif ($request->input('play') === 'open') {
                 $query->where('play_blocked', false);
             }
         }
 
         if ($request->filled('subscription')) {
-            if ($request->string('subscription') === 'active') {
+            if ($request->input('subscription') === 'active') {
                 $query->whereHas('subscriptions', fn ($q) => $q->where('status', 'active')->where('ends_at', '>', now()));
-            } elseif ($request->string('subscription') === 'none') {
+            } elseif ($request->input('subscription') === 'none') {
                 $query->whereDoesntHave('subscriptions', fn ($q) => $q->where('status', 'active')->where('ends_at', '>', now()));
-            } elseif ($request->string('subscription') === 'expiring') {
+            } elseif ($request->input('subscription') === 'expiring') {
                 $query->whereHas('subscriptions', fn ($q) => $q
                     ->where('status', 'active')
                     ->whereBetween('ends_at', [now(), now()->addDays(7)]));

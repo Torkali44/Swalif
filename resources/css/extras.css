@@ -697,11 +697,25 @@ body.dark .error { color: #FCA5A5; }
   font-size: 42px;
 }
 
-.game-body .btn--ghost,
-.game-body .btn-ghost {
+.game-body .play-stage .btn--ghost,
+.game-body .play-stage .btn-ghost,
+.game-body .result-stage .btn--ghost,
+.game-body .result-stage .btn-ghost {
   color: #fff;
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255,255,255,.25);
+}
+
+/* Keep navbar admin/logout readable on the light site header */
+.game-body .nav .btn--ghost,
+.game-body .nav .btn-ghost {
+  color: var(--ink, #1F2430) !important;
+  background: rgba(11, 18, 32, 0.05) !important;
+  border: 1px solid var(--line, #ECE6DE) !important;
+}
+.game-body .nav .btn--ghost:hover,
+.game-body .nav .btn-ghost:hover {
+  background: rgba(11, 18, 32, 0.1) !important;
 }
 
 @media (max-width: 780px) {

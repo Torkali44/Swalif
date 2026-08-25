@@ -305,31 +305,36 @@
   .accordion-categories {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 28px;
     margin-bottom: 44px;
   }
 
   .accordion-section {
-    border-radius: 24px;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
     background: transparent;
   }
 
   .accordion-header {
-    width: 100%;
-    display: flex;
+    width: auto;
+    max-width: calc(100% - 16px);
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 14px 22px;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 12px 10px 18px;
     background: linear-gradient(135deg, #FF6D00 0%, #FF8F00 100%);
     color: #fff;
     border: none;
-    border-radius: 50px;
+    border-radius: 999px;
     cursor: pointer;
     font-family: inherit;
-    box-shadow: 0 4px 16px rgba(255,109,0,.25);
+    box-shadow: 0 4px 14px rgba(255,109,0,.22);
     transition: transform .2s, box-shadow .2s;
-    margin-bottom: 16px;
+    margin: 0;
   }
 
   body.dark .accordion-header, html.dark .accordion-header {
@@ -338,34 +343,52 @@
   }
 
   .accordion-header:hover {
-    transform: scale(1.01);
-    box-shadow: 0 6px 20px rgba(255,109,0,.35);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(255,109,0,.32);
   }
 
   .accordion-header-title-wrap {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.2rem;
+    gap: 8px;
+    font-size: 1.05rem;
     font-weight: 800;
+    white-space: nowrap;
   }
 
   .accordion-toggle-circle {
-    width: 30px;
-    height: 30px;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: rgba(255,255,255,.25);
     color: #fff;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 900;
+    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
+  .accordion-header.is-open .accordion-toggle-circle {
+    background: rgba(0,0,0,.18);
+  }
+
   .accordion-body {
     display: none;
-    padding: 4px 0 16px;
+    width: 100%;
+    border: 2px solid rgba(255,109,0,.22);
+    border-radius: 20px;
+    background: rgba(255,255,255,.78);
+    padding: 14px 14px 6px;
+    box-shadow: 0 4px 18px rgba(15,23,42,.06);
+  }
+
+  body.dark .accordion-body, html.dark .accordion-body {
+    background: rgba(255,255,255,.04);
+    border-color: rgba(255,109,0,.28);
+    box-shadow: 0 6px 22px rgba(0,0,0,.28);
   }
 
   .accordion-body.is-open {
@@ -383,7 +406,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
     gap: 20px !important;
-    padding: 12px 0 28px !important;
+    padding: 4px 0 12px !important;
   }
 
   .card-item-box {
@@ -554,19 +577,21 @@
 
   .card-item-badge {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    top: auto !important;
-    left: auto !important;
+    top: 8px;
+    left: 50%;
+    right: auto;
+    bottom: auto !important;
+    transform: translateX(-50%);
     background: linear-gradient(135deg, #FF1744, #D50000);
     color: #ffffff;
-    font-size: .75rem;
+    font-size: .78rem;
     font-weight: 800;
-    padding: 3px 10px;
-    border-radius: 50px;
+    padding: 4px 12px;
+    border-radius: 10px;
     z-index: 15;
     box-shadow: 0 3px 10px rgba(213,0,0,.4);
     pointer-events: none;
+    white-space: nowrap;
   }
 
   .card-info-popover {
@@ -875,7 +900,6 @@
               data-target="acc-cg-{{ $classification->id }}"
               aria-expanded="true"
             >
-              <span class="accordion-toggle-circle">−</span>
               <div class="accordion-header-title-wrap">
                 @if($classification->icon)
                   <span class="accordion-icon">{{ $classification->icon }}</span>
@@ -883,6 +907,7 @@
                 <span class="accordion-title">{{ $classification->name_ar }}</span>
                 <span class="accordion-count">({{ $classCats->count() }})</span>
               </div>
+              <span class="accordion-toggle-circle" aria-hidden="true">−</span>
             </button>
 
             <!-- Accordion Body -->
@@ -900,7 +925,7 @@
                     data-filter="{{ $filterKey }}"
                     data-group="{{ $filterKey }}"
                     data-name="{{ $category->name_ar }}"
-                    data-questions="{{ $category->questions_count }}"
+                     data-questions="{{ $category->remaining_questions ?? $category->questions_count }}"
                   >
                     <!-- Green Checkmark Badge ✔ for Selected Category Cards -->
                     <div class="selected-check-badge">✔</div>
@@ -912,8 +937,8 @@
 
                     <!-- Image Section -->
                     <div class="card-item-image-wrap">
-                      <span class="card-item-badge">
-                        {{ $category->questions_count ? '📝 '.$category->questions_count.' سؤال' : 'لعبة ممتعة' }}
+                      <span class="card-item-badge card-item-badge--remaining">
+                        {{ $category->remaining_badge ?? ($category->questions_count ? $category->questions_count.' سؤال' : 'قريبًا') }}
                       </span>
                       @if($category->imageUrl())
                         <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async">
@@ -948,12 +973,12 @@
               data-target="acc-cg-0"
               aria-expanded="true"
             >
-              <span class="accordion-toggle-circle">−</span>
               <div class="accordion-header-title-wrap">
                 <span class="accordion-icon">🎯</span>
                 <span class="accordion-title">فئات متنوعة</span>
                 <span class="accordion-count">({{ $uncategorized->count() }})</span>
               </div>
+              <span class="accordion-toggle-circle" aria-hidden="true">−</span>
             </button>
 
             <div class="accordion-body is-open" id="acc-cg-0">
@@ -969,7 +994,7 @@
                     data-filter="general"
                     data-group="general"
                     data-name="{{ $category->name_ar }}"
-                    data-questions="{{ $category->questions_count }}"
+                     data-questions="{{ $category->remaining_questions ?? $category->questions_count }}"
                   >
                     <div class="selected-check-badge">✔</div>
 
@@ -987,8 +1012,8 @@
                     </div>
 
                     <div class="card-item-image-wrap">
-                      <span class="card-item-badge">
-                        {{ $category->questions_count ? '📝 '.$category->questions_count.' سؤال' : 'لعبة ممتعة' }}
+                      <span class="card-item-badge card-item-badge--remaining">
+                        {{ $category->remaining_badge ?? ($category->questions_count ? $category->questions_count.' سؤال' : 'قريبًا') }}
                       </span>
                       @if($category->imageUrl())
                         <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async">

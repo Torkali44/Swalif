@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClassificationRequest;
 use App\Models\Classification;
+use App\Support\ContentCache;
 use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ class ClassificationController extends Controller
         $query = Classification::query()->withCount('categories')->orderBy('sort_order');
 
         if ($request->filled('status')) {
-            $query->where('is_active', $request->string('status') === 'active');
+            $query->where('is_active', $request->input('status') === 'active');
         }
 
         if ($request->filled('q')) {
@@ -30,7 +31,7 @@ class ClassificationController extends Controller
         }
 
         return view('admin.classifications.index', [
-            'classifications' => $query->get(),
+            'classifications' => $query->paginate(60)->withQueryString(),
             'filters' => $request->only(['status', 'q']),
         ]);
     }
@@ -55,6 +56,7 @@ class ClassificationController extends Controller
 
         $desired = (int) $request->input('sort_order', 0);
         $this->applyOrdering($classification, $desired >= 1 ? $desired : PHP_INT_MAX);
+        ContentCache::flushCatalog();
 
         return redirect()->route('admin.classifications.index')->with('success', 'تمت إضافة التصنيف بنجاح.');
     }
@@ -89,6 +91,7 @@ class ClassificationController extends Controller
 
         $desired = (int) $request->input('sort_order', 0);
         $this->applyOrdering($classification, $desired >= 1 ? $desired : PHP_INT_MAX);
+        ContentCache::flushCatalog();
 
         return redirect()->route('admin.classifications.index')->with('success', 'تم حفظ التعديلات بنجاح.');
     }
@@ -101,6 +104,7 @@ class ClassificationController extends Controller
 
         $this->deleteImage($classification->image);
         $classification->delete();
+        ContentCache::flushCatalog();
 
         return back()->with('success', 'تم حذف التصنيف.');
     }
@@ -108,6 +112,7 @@ class ClassificationController extends Controller
     public function toggle(Classification $classification)
     {
         $classification->update(['is_active' => ! $classification->is_active]);
+        ContentCache::flushCatalog();
 
         return back()->with('success', 'تم تحديث حالة التصنيف.');
     }

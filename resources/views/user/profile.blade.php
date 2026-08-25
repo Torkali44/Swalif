@@ -29,18 +29,19 @@
           @method('PUT')
 
           <aside class="account-sidebar">
-            <div class="account-avatar">
-              @if($user->avatarUrl())
-                <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}" id="avatarPreview">
+            <div class="account-avatar" id="accountAvatarWrap">
+              @if($user->displayAvatarUrl())
+                <img src="{{ $user->displayAvatarUrl() }}" alt="{{ $user->name }}" id="avatarPreview">
+                <div class="account-avatar__placeholder" id="avatarPlaceholder" hidden>
+                  <span id="avatarEmojiPreview"></span>
+                </div>
               @else
-                <div class="account-avatar__placeholder" id="avatarPlaceholder">
-                  <svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor" aria-hidden="true">
-                    <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z"/>
-                  </svg>
+                <div class="account-avatar__placeholder" id="avatarPlaceholder" style="background:{{ $user->displayAvatarGradient() }}">
+                  <span id="avatarEmojiPreview">{{ $user->displayAvatarEmoji() ?: $user->displayAvatarInitial() }}</span>
                 </div>
                 <img src="" alt="" id="avatarPreview" hidden>
               @endif
-              <label class="account-avatar__cam" title="تغيير الصورة">
+              <label class="account-avatar__cam" title="رفع صورة شخصية">
                 <input type="file" name="avatar" accept="image/*" id="avatarInput" hidden>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 8h3l2-3h6l2 3h3v11H4V8Z"/><circle cx="12" cy="13" r="3.5"/>
@@ -91,6 +92,44 @@
             <label class="account-field account-field--date">
               <input type="date" name="birth_date" value="{{ old('birth_date', optional($user->birth_date)->format('Y-m-d')) }}">
             </label>
+
+            @if($characters->isNotEmpty())
+              <div class="account-characters">
+                <div class="account-characters__head">
+                  <strong>اختر شخصيتك</strong>
+                  <span class="muted">تظهر في حسابك وأثناء اللعب</span>
+                </div>
+                <input type="hidden" name="character_id" id="characterIdInput" value="{{ old('character_id', $user->character_id) }}">
+                <div class="account-characters__grid" role="listbox" aria-label="اختيار الشخصية">
+                  @foreach($characters as $character)
+                    @php
+                      $selected = (string) old('character_id', $user->character_id) === (string) $character->id;
+                    @endphp
+                    <button
+                      type="button"
+                      class="account-character {{ $selected ? 'is-selected' : '' }}"
+                      data-character-id="{{ $character->id }}"
+                      data-character-name="{{ $character->name_ar }}"
+                      data-character-image="{{ $character->imageUrl() }}"
+                      data-character-icon="{{ $character->icon ?: '🧑' }}"
+                      data-character-gradient="{{ $character->accentGradient() }}"
+                      role="option"
+                      aria-selected="{{ $selected ? 'true' : 'false' }}"
+                      title="{{ $character->name_ar }}"
+                    >
+                      <span class="account-character__face" style="background:{{ $character->accentGradient() }}">
+                        @if($character->imageUrl())
+                          <img src="{{ $character->imageUrl() }}" alt="{{ $character->name_ar }}" loading="lazy" decoding="async">
+                        @else
+                          <span>{{ $character->icon ?: '🧑' }}</span>
+                        @endif
+                      </span>
+                      <span class="account-character__name">{{ $character->name_ar }}</span>
+                    </button>
+                  @endforeach
+                </div>
+              </div>
+            @endif
 
             @if($errors->any() && ! $errors->has('current_password') && ! $errors->has('password'))
               <p class="account-error">{{ $errors->first() }}</p>

@@ -14,6 +14,7 @@ class PublicMedia
         'questions/videos',
         'questions/audio',
         'avatars',
+        'characters',
     ];
 
     /**

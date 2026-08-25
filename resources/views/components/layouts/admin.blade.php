@@ -25,13 +25,22 @@
         min-height: 0 !important;
       }
       .admin-circle-card .cat-actions {
-        flex-direction: column !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         width: 100% !important;
+        gap: 6px !important;
       }
       .admin-circle-card .cat-actions .btn,
       .admin-circle-card .cat-actions a.btn,
       .admin-circle-card .cat-actions form {
+        width: auto !important;
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+      }
+      .admin-circle-card .cat-actions form .btn {
         width: 100% !important;
+        font-size: 11px !important;
+        padding: 6px 4px !important;
       }
       .admin-circle-card .cat-circle__name {
         white-space: normal !important;
@@ -77,6 +86,9 @@
       <a href="{{ route('admin.classifications.index') }}" class="nav-link {{ request()->routeIs('admin.classifications.*') ? 'active' : '' }}">
         <span class="ico">🏷️</span> التصنيفات
       </a>
+      <a href="{{ route('admin.characters.index') }}" class="nav-link {{ request()->routeIs('admin.characters.*') ? 'active' : '' }}">
+        <span class="ico">🧑‍🎤</span> الشخصيات
+      </a>
       <a href="{{ route('admin.categories.index') }}" class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
         <span class="ico">🗂️</span> الفئات
       </a>
@@ -99,10 +111,10 @@
 
     <div class="admin-footer">
       <div class="user-chip">
-        @if(auth()->user()->avatarUrl())
-          <img class="avatar avatar-img" src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}">
+        @if(auth()->user()->displayAvatarUrl())
+          <img class="avatar avatar-img" src="{{ auth()->user()->displayAvatarUrl() }}" alt="{{ auth()->user()->name }}">
         @else
-          <div class="avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</div>
+          <div class="avatar" style="background:{{ auth()->user()->displayAvatarGradient() }}">{{ auth()->user()->displayAvatarEmoji() ?: auth()->user()->displayAvatarInitial() }}</div>
         @endif
         <div>
           <div class="u-name">{{ auth()->user()->name }}</div>
@@ -251,7 +263,9 @@
         if (xhr.status >= 200 && xhr.status < 300 && data?.path) { resolve(data); return; }
         let msg = data?.errors?.file?.[0] || data?.message || 'فشل رفع الملف';
         if (typeof msg === 'string' && (msg === 'validation.mimes' || msg.startsWith('validation.'))) {
-          msg = 'صيغة الملف غير مدعومة. للفيديو استخدم mp4 أو webm أو mov.';
+          msg = kind === 'audio'
+            ? 'صيغة الصوت غير مدعومة. استخدم mp3 أو wav أو ogg أو m4a أو aac.'
+            : 'صيغة الملف غير مدعومة. للفيديو استخدم mp4 أو webm أو mov.';
         }
         reject(new Error(msg));
       };
@@ -350,6 +364,26 @@
         }
 
         const kind = input.dataset.uploadKind || 'image';
+
+        // Guard audio size/format early (shared hosting post_max ~40MB)
+        if (kind === 'audio') {
+          const maxBytes = 40 * 1024 * 1024;
+          const name = (file.name || '').toLowerCase();
+          const okExt = /\.(mp3|wav|ogg|oga|m4a|aac|opus|webm|mp4|mpeg|mpga)$/i.test(name);
+          const okMime = !file.type || /^audio\//i.test(file.type) || file.type === 'video/webm';
+          if (!okExt && !okMime) {
+            setStatus(input, 'صيغة الصوت غير مدعومة. استخدم mp3 / wav / ogg / m4a / aac.', 'error');
+            input.value = '';
+            if (oldPreview) oldPreview.style.opacity = '';
+            return;
+          }
+          if (file.size > maxBytes) {
+            setStatus(input, 'الملف الصوتي كبير جدًا (الحد 40 ميجابايت).', 'error');
+            input.value = '';
+            if (oldPreview) oldPreview.style.opacity = '';
+            return;
+          }
+        }
 
         // Show instant preview from local file
         let objectUrl = null;
@@ -481,6 +515,38 @@
         form.dataset.compressDone = '1';
         form.submit();
       }
+    });
+  });
+})();
+</script>
+<script>
+(() => {
+  /* Auto-apply admin toolbar filters (no need to click تصفية) */
+  document.querySelectorAll('form.toolbar[method="get"], form.toolbar[method="GET"]').forEach((form) => {
+    const submitBtn = [...form.querySelectorAll('button[type="submit"]')]
+      .find((b) => /تصفية|فلتر/i.test((b.textContent || '').trim()));
+    if (submitBtn) {
+      submitBtn.hidden = true;
+      submitBtn.disabled = true;
+    }
+
+    let searchTimer = null;
+    const submitNow = () => {
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+    };
+
+    form.querySelectorAll('select').forEach((el) => {
+      el.addEventListener('change', submitNow);
+    });
+
+    form.querySelectorAll('input[type="search"], input[name="q"]').forEach((el) => {
+      if (el.hasAttribute('data-category-finder') || el.id === 'categoryFinder') return;
+      el.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(submitNow, 450);
+      });
+      el.addEventListener('search', submitNow);
     });
   });
 })();

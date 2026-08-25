@@ -75,10 +75,69 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
   let remaining = total;
   let interval = null;
   let expiredHandled = false;
+  let warnUnlocked = false;
+
+  const warnAudio = document.getElementById('timerWarnSound');
+  const endAudio = document.getElementById('timerEndSound');
+
+  const playTimerSound = (kind) => {
+    // Prefer Web Audio (works even when WAV files missing/blocked on host)
+    const fallback = () => {
+      if (typeof window.SwalifAudio?.play === 'function') {
+        window.SwalifAudio.play(kind === 'warn' ? 'timer-warn' : 'timer-end');
+      }
+    };
+
+    fallback();
+
+    const el = kind === 'warn' ? warnAudio : endAudio;
+    if (!el) return;
+
+    try {
+      const node = el.cloneNode(true);
+      node.volume = 0.85;
+      const p = node.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+    } catch (_) {}
+  };
+
+  const unlockAudio = () => {
+    try {
+      if (typeof window.SwalifAudio?.getCtx === 'function') {
+        window.SwalifAudio.getCtx();
+      }
+    } catch (_) {}
+    [warnAudio, endAudio].forEach((el) => {
+      if (!el) return;
+      try {
+        el.muted = true;
+        const p = el.play();
+        const stop = () => {
+          try {
+            el.pause();
+            el.currentTime = 0;
+            el.muted = false;
+          } catch (_) {}
+        };
+        if (p && typeof p.then === 'function') p.then(stop).catch(() => { el.muted = false; });
+        else stop();
+      } catch (_) {
+        try { el.muted = false; } catch (__) {}
+      }
+    });
+  };
+
+  // Browsers block autoplay until a user gesture — unlock on first interaction.
+  ['pointerdown', 'touchstart', 'keydown'].forEach((evt) => {
+    document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+  });
 
   const goToAnswer = async () => {
     if (expiredHandled) return;
     expiredHandled = true;
+    playTimerSound('end');
     const answerUrl = timerEl.dataset.answerUrl;
     try {
       if (typeof window.showPopup === 'function') {
@@ -98,7 +157,14 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
     remaining -= 1;
     val.textContent = String(Math.max(remaining, 0));
     bar.style.strokeDashoffset = String(circum * (1 - Math.max(remaining, 0) / total));
-    if (remaining <= 5) timerEl.classList.add('warn');
+    if (remaining <= 5 && remaining > 0) {
+      timerEl.classList.add('warn');
+      if (!warnUnlocked) {
+        warnUnlocked = true;
+        unlockAudio();
+      }
+      playTimerSound('warn');
+    }
     if (remaining <= 0) {
       window.clearInterval(interval);
       interval = null;
@@ -128,6 +194,7 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
     }
     total = newSeconds;
     remaining = newSeconds;
+    warnUnlocked = false;
     val.textContent = String(remaining);
     bar.style.strokeDashoffset = '0';
     timerEl.classList.remove('warn', 'expired', 'is-paused');
@@ -460,6 +527,9 @@ if (assignForm) {
 
   const winSound = document.getElementById('winSound');
   const playWinSound = () => {
+    if (typeof window.SwalifAudio?.play === 'function') {
+      try { window.SwalifAudio.play('correct'); } catch (_) {}
+    }
     if (!winSound) return;
     const tryPlay = () => {
       winSound.currentTime = 0;
@@ -592,6 +662,53 @@ if ('IntersectionObserver' in window) {
   const input = document.getElementById('avatarInput');
   const preview = document.getElementById('avatarPreview');
   const placeholder = document.getElementById('avatarPlaceholder');
+  const emojiPreview = document.getElementById('avatarEmojiPreview');
+  const characterInput = document.getElementById('characterIdInput');
+  const characterButtons = document.querySelectorAll('.account-character[data-character-id]');
+
+  const showCharacterPreview = (btn) => {
+    if (!btn) return;
+    const image = btn.dataset.characterImage;
+    const icon = btn.dataset.characterIcon || '🧑';
+    const gradient = btn.dataset.characterGradient || 'linear-gradient(135deg,#1E3A5F,#0F2440)';
+
+    if (image && preview) {
+      preview.src = image;
+      preview.hidden = false;
+      if (placeholder) placeholder.hidden = true;
+      return;
+    }
+
+    if (!placeholder) return;
+
+    if (preview) {
+      preview.hidden = true;
+      preview.removeAttribute('src');
+    }
+
+    placeholder.hidden = false;
+    placeholder.style.background = gradient;
+    if (emojiPreview) {
+      emojiPreview.textContent = icon;
+    } else {
+      placeholder.textContent = icon;
+    }
+  };
+
+  characterButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      characterButtons.forEach((b) => {
+        b.classList.remove('is-selected');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('is-selected');
+      btn.setAttribute('aria-selected', 'true');
+      if (characterInput) characterInput.value = btn.dataset.characterId || '';
+      if (input) input.value = '';
+      showCharacterPreview(btn);
+    });
+  });
+
   input?.addEventListener('change', () => {
     const file = input.files?.[0];
     if (!file || !preview) return;
@@ -811,22 +928,22 @@ window.showPopup = function(message, type = 'success', options = {}) {
 
   const overlay = document.createElement('div');
   overlay.className = 'custom-modal-overlay';
-  
+
   const modal = document.createElement('div');
   modal.className = `custom-modal custom-modal--${type}`;
-  
+
   const icon = type === 'success' ? '✔' : '✖';
   const iconClass = type === 'success' ? 'success' : 'error';
-  
+
   modal.innerHTML = `
     <div class="custom-modal__icon custom-modal__icon--${iconClass}">${icon}</div>
     <div class="custom-modal__message">${message}</div>
     <button class="custom-modal__btn" id="modalOkBtn">موافق</button>
   `;
-  
+
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  
+
   setTimeout(() => overlay.classList.add('is-active'), 10);
 
   const autoCloseMs = Number(options?.autoCloseMs) || 0;
@@ -849,19 +966,6 @@ window.showPopup = function(message, type = 'success', options = {}) {
     }
   });
 };
-
-/* Game-over popup on result page */
-(() => {
-  const resultPage = document.querySelector('[data-result-page][data-game-just-ended]');
-  if (!resultPage) return;
-
-  window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success') // Emirati-friendly
-    .then(() => {
-      if (typeof window.__swalifPlayWinSound === 'function') {
-        window.__swalifPlayWinSound();
-      }
-    });
-})();
 
 window.showConfirm = function(message) {
   document.querySelectorAll('.custom-modal-overlay').forEach(el => el.remove());
@@ -904,6 +1008,75 @@ window.showConfirm = function(message) {
     });
   });
 };
+
+window.swalifHandleCategoryPlay = async function(url, meta = {}) {
+  if (!url) return false;
+
+  const total = parseInt(meta.total, 10);
+  const remaining = parseInt(meta.remaining, 10);
+  const knowsTotal = Number.isFinite(total);
+  const knowsRemaining = Number.isFinite(remaining);
+
+  try {
+    // Empty category: warn, then still allow opening the page
+    if (knowsTotal && total <= 0) {
+      if (typeof window.showPopup === 'function') {
+        await window.showPopup(
+          'هالفئة فاضية الحين 🎯<br>بنضيف لها أسئلة قريب — ارجع لها بعدين وتقدر تلعب!',
+          'error'
+        );
+      } else {
+        alert('هالفئة فاضية الحين — بنضيف أسئلة قريب، ارجع لها بعدين.');
+      }
+      return false;
+    }
+
+    if (knowsRemaining && knowsTotal && remaining <= 0 && total > 0) {
+      let replay = true;
+      if (typeof window.showConfirm === 'function') {
+        replay = await window.showConfirm('خلّصت كل أسئلة هالفئة! تبي تلعبها من جديد؟');
+      }
+      if (!replay) return false;
+    }
+  } catch (_) {
+    // ignore popup errors — still navigate
+  }
+
+  window.location.assign(url);
+  return true;
+};
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-category-play]');
+  if (!el) return;
+  const url = el.dataset.playUrl || el.getAttribute('href') || '';
+  if (!url) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Fail-open: if anything breaks, still go to the URL
+  try {
+    Promise.resolve(window.swalifHandleCategoryPlay(url, {
+      total: el.dataset.total,
+      remaining: el.dataset.remaining,
+    })).catch(() => window.location.assign(url));
+  } catch (_) {
+    window.location.assign(url);
+  }
+});
+
+/* Game-over popup on result page */
+(() => {
+  const resultPage = document.querySelector('[data-result-page][data-game-just-ended]');
+  if (!resultPage) return;
+
+  window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success')
+    .then(() => {
+      if (typeof window.__swalifPlayWinSound === 'function') {
+        window.__swalifPlayWinSound();
+      }
+    });
+})();
 
 /* Init Theme — sync across site + admin */
 (() => {

@@ -33,6 +33,11 @@ class MediaStore
             return self::storeImage($file, $folder, $maxWidth);
         }
 
+        // Normalize audio extensions (m4a/mp4/mpeg aliases) so browsers can play the file later.
+        if (str_starts_with($folder, 'questions/audio') || str_starts_with((string) $mime, 'audio/')) {
+            return self::storeBinary($file, $folder, AudioUpload::normalizeExtension($file));
+        }
+
         return self::storeBinary($file, $folder);
     }
 

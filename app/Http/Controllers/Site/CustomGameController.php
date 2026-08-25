@@ -31,6 +31,7 @@ class CustomGameController extends Controller
         private FreeTrialService $freeTrial,
         private PlayAccessService $playAccess,
         private CategoryService $categories,
+        private \App\Services\Category\CategoryPlayPoolService $playPool,
     ) {}
 
     // ── صفحة إنشاء اللعبة ──────────────────────────────────────
@@ -53,11 +54,12 @@ class CustomGameController extends Controller
                 ->with('error', $this->freeTrial->customGameSubscribeRequiredMessage());
         }
 
-        $allCategories   = Cache::remember('categories.active_ordered', 120, fn () => $this->categories->activeOrdered());
+        $allCategories = Cache::remember('categories.active_ordered', 120, fn () => $this->categories->activeOrdered());
+        $allCategories = $this->playPool->decorateCategories($allCategories, $user);
         $classifications = Cache::remember('classifications.active_ordered', 120, fn () => \App\Models\Classification::where('is_active', true)->orderBy('sort_order')->get());
 
         return view('site.custom-game.create', [
-            'categories'      => $allCategories,
+            'categories' => $allCategories,
             'classifications' => $classifications,
         ]);
     }

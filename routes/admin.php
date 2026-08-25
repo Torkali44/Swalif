@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CharacterController;
 use App\Http\Controllers\Admin\ClassificationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaUploadController;
@@ -18,6 +19,9 @@ Route::patch('categories/{category}/toggle', [CategoryController::class, 'toggle
 
 Route::resource('classifications', ClassificationController::class)->except(['show']);
 Route::patch('classifications/{classification}/toggle', [ClassificationController::class, 'toggle'])->name('classifications.toggle');
+
+Route::resource('characters', CharacterController::class)->except(['show']);
+Route::patch('characters/{character}/toggle', [CharacterController::class, 'toggle'])->name('characters.toggle');
 
 Route::resource('questions', QuestionController::class)->except(['show']);
 Route::patch('questions/{question}/toggle', [QuestionController::class, 'toggle'])->name('questions.toggle');

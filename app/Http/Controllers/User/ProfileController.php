@@ -3,20 +3,30 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Character;
 use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
     public function show(Request $request)
     {
-        $user = $request->user()->load(['subscriptions' => fn ($q) => $q->latest()->with('plan')]);
+        $user = $request->user()->load([
+            'character',
+            'subscriptions' => fn ($q) => $q->latest()->with('plan'),
+        ]);
 
-        return view('user.profile', compact('user'));
+        $characters = Character::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('user.profile', compact('user', 'characters'));
     }
 
     public function update(Request $request)
@@ -30,6 +40,11 @@ class ProfileController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'phone_code' => ['nullable', 'string', 'max:10'],
             'birth_date' => ['nullable', 'date', 'before:today'],
+            'character_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('characters', 'id')->where(fn ($q) => $q->where('is_active', true)),
+            ],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 
@@ -39,6 +54,7 @@ class ProfileController extends Controller
             'phone' => $data['phone'] ?? null,
             'phone_code' => $data['phone_code'] ?? null,
             'birth_date' => $data['birth_date'] ?? null,
+            'character_id' => $data['character_id'] ?? null,
         ];
 
         if ($request->hasFile('avatar')) {

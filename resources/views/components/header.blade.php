@@ -1,8 +1,49 @@
 @php
   $onHome = request()->routeIs('home');
+  $authUser = auth()->user();
+  $isAdmin = $authUser ? (bool) ($authUser->is_admin ?? false) : false;
 @endphp
 <header class="nav">
-    <style>
+  <style>
+    .nav__actions {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav__actions-desktop {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-auth-btns {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .nav-auth-btns .btn {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      visibility: visible !important;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav__links {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav__links::-webkit-scrollbar { display: none; }
+    .nav__inner {
+      overflow: visible !important;
+    }
+
     @media (max-width: 900px) {
       .nav__links {
         display: none;
@@ -15,20 +56,21 @@
         border-bottom: 1px solid var(--line);
         padding: 16px;
         box-shadow: 0 12px 24px rgba(0,0,0,.08);
+        overflow: visible;
       }
       .nav__links.is-open { display: flex; }
       body.dark .nav__links { background: var(--bg); border-color: rgba(255,255,255,.06); }
-      .nav-mobile-extra { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .nav-mobile-extra {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
       body.dark .nav-mobile-extra { border-color: rgba(255,255,255,.06); }
-    }
-    @media (min-width: 901px) {
-      .nav-mobile-extra { display: none; }
-      .nav__toggle { display: none; }
-    }
-    .nav__actions-desktop { display: flex; align-items: center; gap: 12px; }
-    @media (max-width: 900px) {
-      /* Avatar + admin/logout go inside ☰ — hide whole desktop cluster */
-      .nav__actions-desktop { display: none !important; }
+      .nav__actions-desktop,
+      .nav-auth-btns { display: none !important; }
       .nav__toggle {
         display: inline-flex !important;
         align-items: center;
@@ -43,8 +85,13 @@
         padding: 0;
         flex-shrink: 0;
       }
-      .nav__actions { gap: 8px !important; }
       .nav-icon-btn { width: 40px; height: 40px; flex-shrink: 0; }
+    }
+    @media (min-width: 901px) {
+      .nav-mobile-extra { display: none; }
+      .nav__toggle { display: none; }
+      .nav__actions-desktop,
+      .nav-auth-btns { display: flex !important; }
     }
   </style>
 
@@ -64,11 +111,10 @@
       <a href="{{ route('home') }}#plans">الاشتراكات</a>
       <a href="{{ route('home') }}#faq">المزيد</a>
 
-      {{-- Mobile extra links --}}
       <div class="nav-mobile-extra">
         @auth
           <a href="{{ route('profile') }}" class="btn btn--ghost btn--sm">حسابي</a>
-          @if(auth()->user()->is_admin)
+          @if($isAdmin)
             <a href="{{ route('admin.dashboard') }}" class="btn btn--ghost btn--sm">الإدارة</a>
           @endif
           <form method="POST" action="{{ route('logout') }}">
@@ -91,23 +137,23 @@
       <div class="nav__actions-desktop">
         @auth
           <a href="{{ route('profile') }}" class="nav-user" title="حسابي">
-            @if(auth()->user()->avatarUrl())
-              <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" class="nav-avatar">
-            @else
-              <span class="nav-avatar-fallback">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
-            @endif
-            <span class="nav-user__name">{{ auth()->user()->firstName() ?: 'حسابي' }}</span>
+            <x-user-avatar :user="$authUser" size="sm" class="nav-avatar" />
+            <span class="nav-user__name">{{ $authUser->firstName() ?: 'حسابي' }}</span>
           </a>
-          @if(auth()->user()->is_admin)
-            <a class="btn btn--ghost btn--sm" href="{{ route('admin.dashboard') }}">الإدارة</a>
-          @endif
-          <form method="POST" action="{{ route('logout') }}" style="display:inline">
-            @csrf
-            <button class="btn btn--ghost btn--sm" type="submit">خروج</button>
-          </form>
+          <div class="nav-auth-btns">
+            @if($isAdmin)
+              <a class="btn btn--ghost btn--sm" href="{{ route('admin.dashboard') }}">الإدارة</a>
+            @endif
+            <form method="POST" action="{{ route('logout') }}" style="display:inline;margin:0">
+              @csrf
+              <button class="btn btn--ghost btn--sm" type="submit">خروج</button>
+            </form>
+          </div>
         @else
-          <a href="{{ route('login') }}" class="btn btn--ghost btn--sm">تسجيل الدخول</a>
-          <a href="{{ route('register') }}" class="btn btn--primary btn--sm">إنشاء حساب</a>
+          <div class="nav-auth-btns">
+            <a href="{{ route('login') }}" class="btn btn--ghost btn--sm">تسجيل الدخول</a>
+            <a href="{{ route('register') }}" class="btn btn--primary btn--sm">إنشاء حساب</a>
+          </div>
         @endauth
       </div>
 

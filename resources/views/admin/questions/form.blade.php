@@ -2,7 +2,14 @@
   <x-slot:heading>{{ $question->exists ? 'تعديل السؤال' : 'سؤال جديد' }}</x-slot:heading>
   <x-slot:subheading>{{ $question->exists ? 'تحديث بيانات السؤال ونوعه وصوره' : 'إضافة سؤال جديد مع نوعه وتصنيفه' }}</x-slot:subheading>
 
-  <x-back-button :href="route('admin.questions.index')" label="رجوع للأسئلة" />
+  @php
+    $returnCategoryId = old('category_id', $returnCategoryId ?? $question->category_id ?: request('category_id'));
+    $questionsIndexUrl = route('admin.questions.index', array_filter([
+      'category_id' => $returnCategoryId ?: null,
+      'open' => $returnCategoryId ?: null,
+    ]));
+  @endphp
+  <x-back-button :href="$questionsIndexUrl" label="رجوع للأسئلة" />
 
   @php
     $selectedType = old('type', $question->type ?? 'standard');
@@ -26,8 +33,8 @@
   @unless($question->exists)
     <div class="alert alert-info"
       style="margin-bottom:16px;padding:12px 14px;border-radius:12px;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);font-weight:700">
-      كل فئة: <b>6 سهل (200)</b> + <b>6 متوسط (400)</b> + <b>6 صعب (600)</b> = {{ $maxQuestions }} سؤال.
-      لو مستوى اكتمل هيظهر تنبيه، ولو الفئة خلصت: أنشئ فئة جديدة.
+      كل جولة لعب تظهر للاعب <b>6 أسئلة</b> فقط (2 سهل + 2 متوسط + 2 صعب) من رصيد الفئة.
+      يمكنك إضافة أي عدد من الأسئلة لكل مستوى بدون حد أقصى.
     </div>
   @endunless
 
@@ -39,9 +46,14 @@
     <input type="hidden" name="image_path" id="questionImagePath" value="{{ old('image_path') }}">
     <input type="hidden" name="answer_image_path" id="questionAnswerImagePath" value="{{ old('answer_image_path') }}">
 
+    <label class="wide">
+      ابحث عن الفئة
+      <input type="search" id="questionCategorySearch" placeholder="اكتب اسم الفئة للتصفية…" autocomplete="off">
+    </label>
     <label>
       الفئة
-      <select name="category_id" id="questionCategorySelect">
+      <select name="category_id" id="questionCategorySelect" required>
+        <option value="" disabled @selected(! old('category_id', $question->category_id ?: request('category_id')))>اختر الفئة</option>
         @foreach($categories as $category)
           @php
             $count = (int) ($category->questions_count ?? 0);
@@ -49,13 +61,13 @@
             $medium = (int) ($category->medium_count ?? 0);
             $hard = (int) ($category->hard_count ?? 0);
           @endphp
-          <option value="{{ $category->id }}" data-count="{{ $count }}" data-easy="{{ $easy }}"
-            data-medium="{{ $medium }}" data-hard="{{ $hard }}" data-full="{{ $count >= $maxQuestions ? '1' : '0' }}"
-            @selected(old('category_id', $question->category_id ?: request('category_id')) == $category->id) @disabled(!$question->exists && $count >= $maxQuestions)>
+          <option value="{{ $category->id }}"
+            data-search="{{ mb_strtolower(($category->classificationName() ?? '').' '.$category->name_ar.' '.($category->name_en ?? '')) }}"
+            data-count="{{ $count }}" data-easy="{{ $easy }}"
+            data-medium="{{ $medium }}" data-hard="{{ $hard }}"
+            @selected((string) old('category_id', $question->category_id ?: request('category_id')) === (string) $category->id)>
             {{ $category->classificationName() }} — {{ $category->name_ar }}
-            ({{ $count }}/{{ $maxQuestions }} · سهل {{ $easy }}/{{ $maxPerLevel }} · متوسط
-            {{ $medium }}/{{ $maxPerLevel }} · صعب {{ $hard }}/{{ $maxPerLevel }})
-            @if($count >= $maxQuestions) — مكتملة @endif
+            ({{ $count }} سؤال · سهل {{ $easy }} · متوسط {{ $medium }} · صعب {{ $hard }})
           </option>
         @endforeach
       </select>
@@ -132,7 +144,7 @@
     <div class="wide question-section" data-question-section data-types="audio" hidden>
       <label class="wide">
         الملف الصوتي
-        <input type="file" name="image" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav" data-async-file
+        <input type="file" name="image" accept="{{ \App\Support\AudioUpload::acceptAttribute() }}" data-async-file
           data-path-input="questionImagePath" data-upload-kind="audio">
         <div class="upload-status" data-upload-status hidden></div>
         @if($question->exists && $question->isAudio() && $question->mediaUrl())
@@ -141,7 +153,7 @@
             <label class="check"><input type="checkbox" name="remove_image" value="1"> حذف الصوت الحالي</label>
           </div>
         @endif
-        <small class="muted">يبدأ الرفع فور اختيار الملف. الصيغ: mp3 / wav / ogg</small>
+        <small class="muted">يبدأ الرفع فور اختيار الملف. الصيغ: {{ \App\Support\AudioUpload::humanFormats() }} — حتى {{ (int) (\App\Support\AudioUpload::maxKilobytes() / 1024) }}MB</small>
       </label>
     </div>
 
@@ -326,10 +338,9 @@
         const pointsPreview = document.getElementById('pointsPreview');
         const pointsHidden = document.getElementById('pointsHidden');
         const hint = document.getElementById('levelCapacityHint');
-        const maxPerLevel = {{ (int) ($maxPerLevel ?? 6) }};
+        const maxPerLevel = {{ (int) ($maxPerLevel ?? 2) }};
         const pointsMap = { easy: 200, medium: 400, hard: 600 };
         const labels = { easy: 'السهل', medium: 'المتوسط', hard: 'الصعب' };
-        const isEdit = {{ $question->exists ? 'true' : 'false' }};
 
         const sync = () => {
           const level = levelSelect?.value || 'easy';
@@ -342,24 +353,36 @@
 
           const count = Number(opt.dataset[level] || 0);
           const total = Number(opt.dataset.count || 0);
-          if (total >= {{ (int) ($maxQuestions ?? 18) }} && !isEdit) {
-            hint.textContent = 'الفئة مكتملة وكل المستويات مكتملة. قم بإنشاء فئة جديدة.';
-            hint.style.color = '#C8102E';
-            return;
-          }
-
-          hint.textContent = `أسئلة ${labels[level] || level}: ${count}/${maxPerLevel} — النقاط ${points} تلقائيًا`;
-          if (!isEdit && count >= maxPerLevel) {
-            hint.textContent = `أسئلة المستوى ${labels[level]} مكتملة (${maxPerLevel}/${maxPerLevel}). أكمل باقي المستويات.`;
-            hint.style.color = '#C8102E';
-          } else {
-            hint.style.color = '';
-          }
+          hint.style.color = '';
+          hint.textContent = `رصيد الفئة: ${total} سؤال — ${labels[level] || level}: ${count} — كل جولة تأخذ 2 من كل مستوى`;
         };
 
         categorySelect?.addEventListener('change', sync);
         levelSelect?.addEventListener('change', sync);
         sync();
+
+        const categorySearch = document.getElementById('questionCategorySearch');
+        if (categorySearch && categorySelect) {
+          const allOptions = [...categorySelect.options];
+          categorySearch.addEventListener('input', () => {
+            const q = (categorySearch.value || '').trim().toLowerCase();
+            let firstVisible = null;
+            allOptions.forEach((opt) => {
+              if (!opt.value) {
+                opt.hidden = false;
+                return;
+              }
+              const hay = (opt.dataset.search || opt.textContent || '').toLowerCase();
+              const match = !q || hay.includes(q);
+              opt.hidden = !match;
+              if (match && !firstVisible && !opt.disabled) firstVisible = opt;
+            });
+            if (q && firstVisible && categorySelect.selectedOptions[0]?.hidden) {
+              categorySelect.value = firstVisible.value;
+              sync();
+            }
+          });
+        }
       })();
     </script>
 

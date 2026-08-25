@@ -8,6 +8,7 @@ use App\Http\Requests\StoreQuestionRequest;
 use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Question;
+use App\Support\ContentCache;
 use App\Support\MediaStore;
 use App\Support\PublicMedia;
 use App\Support\UploadedMediaPath;
@@ -20,8 +21,8 @@ class QuestionController extends Controller
     public function index(Request $request)
     {
         $categoriesQuery = Category::query()
-            ->orderBy('sort_order')
-            ->orderBy('id');
+            ->orderByDesc('id')
+            ->orderBy('sort_order');
 
         if ($request->filled('category_id')) {
             $categoriesQuery->whereKey($request->integer('category_id'));
@@ -45,7 +46,7 @@ class QuestionController extends Controller
 
                 if ($request->filled('level')) {
                     $query->where('level', $request->string('level'));
-                }   
+                }
 
                 if ($request->filled('type')) {
                     $query->where('type', $request->string('type'));
@@ -56,7 +57,7 @@ class QuestionController extends Controller
                 }
 
                 if ($request->filled('status')) {
-                    $query->where('is_active', $request->string('status') === 'active');
+                    $query->where('is_active', $request->input('status') === 'active');
                 }
 
                 if ($request->filled('q')) {
@@ -67,35 +68,44 @@ class QuestionController extends Controller
             ->withCount('questions')
             ->get();
 
-        if ($request->filled('q') || $request->filled('level') || $request->filled('type') || $request->filled('points') || $request->filled('status')) {
+        // Keep empty categories visible always (so admins can open and add questions).
+        // Only when searching question text, hide categories with zero matches.
+        if ($request->filled('q')) {
             $categories = $categories->filter(fn (Category $category) => $category->questions->isNotEmpty())->values();
         }
 
         return view('admin.questions.index', [
             'groupedCategories' => $categories,
-            'categories' => Category::orderBy('sort_order')->get(['id', 'name_ar', 'icon', 'group', 'classification_id']),
+            'categories' => Category::query()
+                ->withCount('questions')
+                ->orderByDesc('id')
+                ->orderBy('sort_order')
+                ->get(['id', 'name_ar', 'icon', 'group', 'classification_id']),
             'classifications' => Classification::orderBy('sort_order')->get(['id', 'name_ar', 'icon']),
             'questionTypes' => QuestionType::options(),
-            'filters' => $request->only(['category_id', 'classification_id', 'level', 'type', 'points', 'status', 'q']),
+            'filters' => $request->only(['category_id', 'classification_id', 'level', 'type', 'points', 'status', 'q', 'open', 'focus']),
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         return view('admin.questions.form', [
             'question' => new Question,
             'categories' => $this->formCategories(),
             'questionTypes' => QuestionType::options(),
-            'maxQuestionsPerCategory' => (int) config('game.max_questions_per_category', 18),
-            'maxPerLevel' => (int) config('game.questions_per_level', 6),
+            'maxQuestionsPerCategory' => null,
+            'maxPerLevel' => (int) config('game.board_questions_per_level', 2),
+            'returnCategoryId' => $request->integer('category_id') ?: null,
         ]);
     }
 
     public function store(StoreQuestionRequest $request)
     {
-        $this->save($request, new Question);
+        $question = new Question;
+        $this->save($request, $question);
+        ContentCache::flushCatalog();
 
-        return redirect()->route('admin.questions.index')->with('success', 'تمت إضافة السؤال.');
+        return $this->redirectToQuestionsIndex($request, $question)->with('success', 'تمت إضافة السؤال.');
     }
 
     public function edit(Question $question)
@@ -106,16 +116,18 @@ class QuestionController extends Controller
             'question' => $question,
             'categories' => $this->formCategories(),
             'questionTypes' => QuestionType::options(),
-            'maxQuestionsPerCategory' => (int) config('game.max_questions_per_category', 18),
-            'maxPerLevel' => (int) config('game.questions_per_level', 6),
+            'maxQuestionsPerCategory' => null,
+            'maxPerLevel' => (int) config('game.board_questions_per_level', 2),
+            'returnCategoryId' => $question->category_id,
         ]);
     }
 
     public function update(StoreQuestionRequest $request, Question $question)
     {
         $this->save($request, $question);
+        ContentCache::flushCatalog();
 
-        return redirect()->route('admin.questions.index')->with('success', 'تم حفظ السؤال.');
+        return $this->redirectToQuestionsIndex($request, $question)->with('success', 'تم حفظ السؤال.');
     }
 
     public function destroy(Question $question, \Illuminate\Http\Request $request)
@@ -123,6 +135,7 @@ class QuestionController extends Controller
         $this->deleteImage($question->image);
         $this->deleteImage($question->answer_image);
         $question->delete();
+        ContentCache::flushCatalog();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -137,6 +150,7 @@ class QuestionController extends Controller
     public function toggle(Question $question, \Illuminate\Http\Request $request)
     {
         $question->update(['is_active' => ! $question->is_active]);
+        ContentCache::flushCatalog();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -245,6 +259,17 @@ class QuestionController extends Controller
         }
     }
 
+    private function redirectToQuestionsIndex(StoreQuestionRequest $request, Question $question)
+    {
+        $categoryId = (int) ($question->category_id ?: $request->integer('category_id'));
+
+        return redirect()->route('admin.questions.index', array_filter([
+            'category_id' => $categoryId > 0 ? $categoryId : null,
+            'open' => $categoryId > 0 ? $categoryId : null,
+            'focus' => $question->id ?: null,
+        ]));
+    }
+
     private function formCategories()
     {
         return Category::query()
@@ -257,6 +282,7 @@ class QuestionController extends Controller
                 'questions as hard_count' => fn ($q) => $q->where('level', 'hard'),
             ])
             ->where('is_active', true)
+            ->orderByDesc('id')
             ->orderBy('sort_order')
             ->get();
     }

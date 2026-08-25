@@ -110,6 +110,24 @@
               g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.25);
               o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.25);
             });
+          } else if (type === 'timer-warn') {
+            var tw = ctx.createOscillator(); var twg = ctx.createGain();
+            tw.connect(twg); twg.connect(ctx.destination);
+            tw.frequency.setValueAtTime(880, now);
+            tw.frequency.setValueAtTime(988, now + 0.08);
+            twg.gain.setValueAtTime(0.32, now);
+            twg.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+            tw.start(now); tw.stop(now + 0.16);
+          } else if (type === 'timer-end') {
+            [440, 330, 220].forEach(function(freq, i) {
+              var o = ctx.createOscillator(); var g = ctx.createGain();
+              o.type = 'square';
+              o.connect(g); g.connect(ctx.destination);
+              o.frequency.setValueAtTime(freq, now + i * 0.12);
+              g.gain.setValueAtTime(0.28, now + i * 0.12);
+              g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.22);
+              o.start(now + i * 0.12); o.stop(now + i * 0.12 + 0.22);
+            });
           }
         } catch(e) {}
       }

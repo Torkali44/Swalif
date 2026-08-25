@@ -76,13 +76,17 @@ body.game-body.game-body--nav .nav {
 .nav__links a:hover {
   color: var(--uae-red, #FF3B4E) !important;
 }
-.nav-avatar {
+.nav-avatar,
+.nav-user .user-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 59, 78, 0.35);
   display: block;
+}
+.nav-user .user-avatar--fallback {
+  border: 2px solid rgba(255, 59, 78, 0.35);
 }
 .nav-avatar-fallback {
   width: 36px;

@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Support\ContentCache;
 use App\Support\MediaStore;
 use App\Support\PublicMedia;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -24,7 +24,7 @@ class CategoryController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('is_active', $request->string('status') === 'active');
+            $query->where('is_active', $request->input('status') === 'active');
         }
 
         if ($request->filled('q')) {
@@ -36,7 +36,7 @@ class CategoryController extends Controller
         }
 
         return view('admin.categories.index', [
-            'categories' => $query->get(),
+            'categories' => $query->paginate(60)->withQueryString(),
             'classifications' => Classification::orderBy('sort_order')->get(['id', 'name_ar', 'icon']),
             'filters' => $request->only(['classification_id', 'status', 'q']),
         ]);
@@ -46,7 +46,7 @@ class CategoryController extends Controller
     {
         return view('admin.categories.form', [
             'category' => new Category,
-            'classifications' => Classification::where('is_active', true)->orderBy('sort_order')->get(),
+            'classifications' => Classification::orderBy('sort_order')->orderBy('id')->get(),
         ]);
     }
 
@@ -67,7 +67,7 @@ class CategoryController extends Controller
 
         $desired = (int) $request->input('sort_order', 0);
         $this->applyOrdering($category, $desired >= 1 ? $desired : PHP_INT_MAX);
-        Cache::forget('home.active_categories');
+        ContentCache::flushCatalog();
 
         return redirect()->route('admin.categories.index')->with('success', 'تمت إضافة الفئة بنجاح.');
     }
@@ -107,7 +107,7 @@ class CategoryController extends Controller
 
         $desired = (int) $request->input('sort_order', 0);
         $this->applyOrdering($category, $desired >= 1 ? $desired : PHP_INT_MAX);
-        Cache::forget('home.active_categories');
+        ContentCache::flushCatalog();
 
         return redirect()->route('admin.categories.index')->with('success', 'تم حفظ التعديلات بنجاح.');
     }
@@ -116,7 +116,7 @@ class CategoryController extends Controller
     {
         $this->deleteImage($category->image);
         $category->delete();
-        Cache::forget('home.active_categories');
+        ContentCache::flushCatalog();
 
         return back()->with('success', 'تم حذف الفئة.');
     }
@@ -124,7 +124,7 @@ class CategoryController extends Controller
     public function toggle(Category $category)
     {
         $category->update(['is_active' => ! $category->is_active]);
-        Cache::forget('home.active_categories');
+        ContentCache::flushCatalog();
 
         return back()->with('success', 'تم تحديث حالة الفئة.');
     }
