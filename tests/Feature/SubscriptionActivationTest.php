@@ -109,9 +109,11 @@ class SubscriptionActivationTest extends TestCase
             'stripe_checkout_url' => 'https://buy.stripe.com/test_live_link',
         ]);
 
+        // Stripe appends ?client_reference_id=PAY-XXXXXXXX — so we match the base URL only
         $this->actingAs($user)
             ->post(route('subscription.checkout', $plan))
-            ->assertRedirect('https://buy.stripe.com/test_live_link');
+            ->assertRedirectContains('https://buy.stripe.com/test_live_link');
+
 
         $payment = Payment::query()->where('user_id', $user->id)->first();
         $this->assertNotNull($payment);

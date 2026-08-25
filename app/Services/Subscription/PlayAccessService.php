@@ -30,6 +30,7 @@ class PlayAccessService
             ->update(['status' => 'expired']);
 
         $user->unsetRelation('subscriptions');
+        $user->resetSubscriptionCache();
 
         if (! $user->hasActiveSubscription() && ! $user->play_blocked) {
             $this->block(

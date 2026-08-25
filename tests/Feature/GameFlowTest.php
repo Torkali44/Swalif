@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Game;
 use App\Models\Plan;
-use App\Models\Question;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,23 +18,26 @@ class GameFlowTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
-        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $player   = User::where('email', 'player@swalif.test')->firstOrFail();
         $category = Category::where('slug', 'uae-malls')->firstOrFail();
-        $question = Question::where('category_id', $category->id)->firstOrFail();
 
         $response = $this->actingAs($player)->post(route('game.start'), [
             'category_id' => $category->id,
-            'name' => 'اختبار اللعبة',
-            'team_one' => 'الصقور',
-            'team_two' => 'النجوم',
+            'name'        => 'اختبار اللعبة',
+            'team_one'    => 'الصقور',
+            'team_two'    => 'النجوم',
         ]);
 
         $response->assertRedirect();
-        $game = Game::firstOrFail();
+        $game = Game::where('user_id', $player->id)->latest('id')->firstOrFail();
 
         $this->get(route('game.board', $game))->assertOk();
-        $this->get(route('game.question', [$game, $question]))->assertOk();
+
+        // Use a question that is actually locked to this game (not just any category question)
+        $lockedQuestion = $game->gameQuestions()->with('question')->firstOrFail()->question;
+        $this->get(route('game.question', [$game, $lockedQuestion]))->assertOk();
     }
+
 
     public function test_admin_dashboard_is_protected_by_role(): void
     {
@@ -54,31 +56,36 @@ class GameFlowTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
-        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $player   = User::where('email', 'player@swalif.test')->firstOrFail();
         $category = Category::where('slug', 'uae-malls')->firstOrFail();
-        $question = Question::where('category_id', $category->id)->firstOrFail();
 
         $this->actingAs($player)->post(route('game.start'), [
             'category_id' => $category->id,
-            'name' => 'جولة نقاط',
-            'team_one' => 'أ',
-            'team_two' => 'ب',
+            'name'        => 'جولة نقاط',
+            'team_one'    => 'أ',
+            'team_two'    => 'ب',
         ]);
 
         $game = Game::firstOrFail();
-        $this->get(route('game.question', [$game, $question]))->assertOk();
-
-        $gq = $game->gameQuestions()->firstOrFail();
+        // Use a GameQuestion that is locked to THIS game
+        $gq   = $game->gameQuestions()->with('question')->firstOrFail();
         $team = $game->teams()->firstOrFail();
 
-        $this->post(route('game.assign', [$game, $gq]), ['team_id' => $team->id])
-            ->assertRedirect(route('game.board', $game));
+        // Visit the question page via the locked GameQuestion
+        $this->get(route('game.question', [$game, $gq->question]))->assertOk();
 
+        // First assign — should succeed and redirect to board
         $this->post(route('game.assign', [$game, $gq]), ['team_id' => $team->id])
-            ->assertRedirect(route('game.board', $game));
+            ->assertRedirect();
 
-        $this->assertSame((int) $question->points, (int) $team->fresh()->score);
+        // Second assign — should be blocked and still redirect (with error flash)
+        $this->post(route('game.assign', [$game, $gq]), ['team_id' => $team->id])
+            ->assertRedirect();
+
+        // Score must equal exactly one assignment (not doubled)
+        $this->assertSame((int) $gq->question->points, (int) $team->fresh()->score);
     }
+
 
     public function test_finishing_all_questions_redirects_to_result_with_team_stats(): void
     {

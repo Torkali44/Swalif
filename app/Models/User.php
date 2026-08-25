@@ -85,23 +85,82 @@ class User extends Authenticatable
         return $this->avatarUrl();
     }
 
-    public function displayAvatarEmoji(): ?string
-    {
-        if ($this->character_id) {
-            $character = $this->relationLoaded('character')
-                ? $this->character
-                : $this->character()->first();
+    /**
+     * In-memory cache for hasActiveSubscription() — keyed by spl_object_id to avoid
+     * persisting a non-column property through Eloquent's attribute bag.
+     *
+     * @var array<int, bool>
+     */
+    private static array $subscriptionCache = [];
 
-            if ($character) {
-                return $character->icon ?: null;
-            }
+    /**
+     * Clear the subscription cache when any User model is refreshed from DB.
+     * This prevents stale cached values from leaking across requests and tests.
+     */
+    protected static function booted(): void
+    {
+        // Clear this instance's cache slot whenever it is re-fetched from DB.
+        static::retrieved(function (User $user) {
+            unset(self::$subscriptionCache[spl_object_id($user)]);
+        });
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Also resets the subscription cache so the next call re-queries the DB.
+     */
+    public function refresh(): static
+    {
+        $this->resetSubscriptionCache();
+
+        return parent::refresh();
+    }
+
+    /**
+     * Whether the user currently has an active subscription.
+     * Result is cached in-memory to avoid multiple DB round-trips per request.
+     */
+    public function hasActiveSubscription(): bool
+    {
+        $key = spl_object_id($this);
+
+        if (array_key_exists($key, self::$subscriptionCache)) {
+            return self::$subscriptionCache[$key];
         }
 
-        if ($this->avatarUrl()) {
+        return self::$subscriptionCache[$key] = $this->subscriptions()
+            ->where('status', 'active')
+            ->where('ends_at', '>', now())
+            ->where(function ($q) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->exists();
+    }
+
+    /**
+     * Reset the in-memory subscription cache (call after mutating subscriptions).
+     */
+    public function resetSubscriptionCache(): void
+    {
+        unset(self::$subscriptionCache[spl_object_id($this)]);
+    }
+
+    /**
+     * Return the user's avatar emoji from their selected character, or null if they
+     * have a custom avatar image or no character selected.
+     */
+    public function displayAvatarEmoji(): ?string
+    {
+        if (! $this->character_id) {
             return null;
         }
 
-        return null;
+        $character = $this->relationLoaded('character')
+            ? $this->character
+            : $this->character()->first();
+
+        return $character?->icon ?: null;
     }
 
     public function displayAvatarInitial(): string
@@ -153,16 +212,7 @@ class User extends Authenticatable
         return $this->hasMany(Subscription::class);
     }
 
-    public function hasActiveSubscription(): bool
-    {
-        return $this->subscriptions()
-            ->where('status', 'active')
-            ->where('ends_at', '>', now())
-            ->where(function ($q) {
-                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
-            })
-            ->exists();
-    }
+
 
     public function activeSubscription()
     {

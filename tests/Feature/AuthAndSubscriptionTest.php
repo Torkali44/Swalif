@@ -18,7 +18,7 @@ class AuthAndSubscriptionTest extends TestCase
 
         $this->post(route('login.store'), [
             'email' => 'omjori_Swalif_Admin_009@gmail.com',
-            'password' => 'Omjori@2026$Admin',
+            'password' => 'omjori#19888@Admin',
         ])->assertRedirect(route('admin.dashboard'));
 
         $this->assertAuthenticated();
@@ -42,21 +42,19 @@ class AuthAndSubscriptionTest extends TestCase
         $this->withoutVite();
         $this->seed();
 
+        // RegisterController uses a single 'identifier' field (email OR phone)
         $this->post(route('register.store'), [
-            'name' => 'لاعب جديد',
-            'email' => 'new.player@swalif.test',
-            'phone' => '0501888777',
+            'name'       => 'لاعب جديد',
+            'identifier' => 'new.player@swalif.test',
             'phone_code' => '+971',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-            'terms' => '1',
+            'password'   => 'Password123!',
+            'terms'      => '1',
         ])->assertRedirect(route('home'));
 
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', [
             'email' => 'new.player@swalif.test',
-            'phone' => '0501888777',
-            'name' => 'لاعب جديد',
+            'name'  => 'لاعب جديد',
         ]);
     }
 

@@ -81,19 +81,5 @@ class FreeTrialService
         return 'إذا طلعت الحين بتنتهي تجربتك المجانية، وحق تلعب فئة ثانية لازم تشترك. متأكد تبي تطلع؟';
     }
 
-    /** @deprecated kept for compatibility */
-    public function canOpenQuestion(User $user): bool
-    {
-        return $user->is_admin || $user->hasActiveSubscription() || ! $user->free_category_id;
-    }
 
-    /** @deprecated kept for compatibility */
-    public function remaining(User $user): int
-    {
-        if ($user->is_admin || $user->hasActiveSubscription()) {
-            return PHP_INT_MAX;
-        }
-
-        return $user->free_category_id ? 0 : 1;
-    }
 }

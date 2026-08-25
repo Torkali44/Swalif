@@ -24,10 +24,15 @@ class LoginController extends Controller
         ]);
 
         if (! Auth::attempt($data, $request->boolean('remember'))) {
+            // Mask email in logs to avoid storing PII in plaintext log files
+            $emailParts = explode('@', $data['email']);
+            $maskedEmail = mb_substr($emailParts[0], 0, 3).'***@'.($emailParts[1] ?? '?');
+
             \Illuminate\Support\Facades\Log::warning('[Auth] Failed login attempt', [
-                'email' => $data['email'],
+                'email' => $maskedEmail,
                 'ip'    => $request->ip(),
             ]);
+
 
             return back()
                 ->withErrors(['email' => 'بيانات الدخول غير صحيحة.'])

@@ -107,13 +107,14 @@ class AdminSubscriptionManagementTest extends TestCase
             'stripe_checkout_url' => 'https://buy.stripe.com/test_live_link',
         ]);
 
+        // Stripe adds ?client_reference_id=PAY-XXXXXXXX to the URL
         $this->actingAs($user)
             ->post(route('subscription.checkout', $plan))
-            ->assertRedirect('https://buy.stripe.com/test_live_link');
+            ->assertRedirectContains('https://buy.stripe.com/test_live_link');
 
         $this->assertDatabaseHas('payments', [
             'user_id' => $user->id,
-            'status' => 'pending',
+            'status'  => 'pending',
             'gateway' => 'stripe_link',
         ]);
         $this->assertFalse($user->fresh()->hasActiveSubscription());
@@ -156,17 +157,18 @@ class AdminSubscriptionManagementTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.questions.store'), [
-                'category_id' => $category->id,
-                'type' => 'image_guess',
+                'category_id'   => $category->id,
+                'type'          => 'image_guess',
                 'question_text' => 'ما هذه الصورة؟',
-                'answer_text' => 'الإجابة',
-                'image' => UploadedFile::fake()->image('question.jpg'),
-                'level' => 'easy',
-                'points' => 200,
-                'time_limit' => 60,
-                'is_active' => '1',
+                'answer_text'   => 'الإجابة',
+                'image'         => UploadedFile::fake()->image('question.jpg'),
+                'level'         => 'easy',
+                'points'        => 200,
+                'time_limit'    => 60,
+                'is_active'     => '1',
             ])
-            ->assertRedirect(route('admin.questions.index'));
+            // Redirects to questions index with category_id/open/focus query params
+            ->assertRedirectContains(route('admin.questions.index'));
 
         $this->assertDatabaseHas('questions', [
             'category_id' => $category->id,
@@ -300,17 +302,18 @@ class AdminSubscriptionManagementTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.questions.store'), [
-                'category_id' => $category->id,
-                'type' => 'video',
+                'category_id'   => $category->id,
+                'type'          => 'video',
                 'question_text' => 'ماذا يظهر في الفيديو؟',
-                'answer_text' => 'برج خليفة',
-                'image' => UploadedFile::fake()->create('clip.mp4', 1024, 'video/mp4'),
-                'level' => 'easy',
-                'points' => 200,
-                'time_limit' => 60,
-                'is_active' => '1',
+                'answer_text'   => 'برج خليفة',
+                'image'         => UploadedFile::fake()->create('clip.mp4', 1024, 'video/mp4'),
+                'level'         => 'easy',
+                'points'        => 200,
+                'time_limit'    => 60,
+                'is_active'     => '1',
             ])
-            ->assertRedirect(route('admin.questions.index'));
+            // Redirects to questions index with category_id/open/focus query params
+            ->assertRedirectContains(route('admin.questions.index'));
 
         $this->assertDatabaseHas('questions', [
             'category_id' => $category->id,
@@ -336,17 +339,18 @@ class AdminSubscriptionManagementTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.questions.store'), [
-                'category_id' => $category->id,
-                'type' => 'audio',
+                'category_id'   => $category->id,
+                'type'          => 'audio',
                 'question_text' => 'ما هذه الأغنية؟',
-                'answer_text' => 'النشيد الوطني',
-                'image' => UploadedFile::fake()->create('sound.mp3', 512, 'audio/mpeg'),
-                'level' => 'medium',
-                'points' => 400,
-                'time_limit' => 60,
-                'is_active' => '1',
+                'answer_text'   => 'النشيد الوطني',
+                'image'         => UploadedFile::fake()->create('sound.mp3', 512, 'audio/mpeg'),
+                'level'         => 'medium',
+                'points'        => 400,
+                'time_limit'    => 60,
+                'is_active'     => '1',
             ])
-            ->assertRedirect(route('admin.questions.index'));
+            // Redirects to questions index with category_id/open/focus query params
+            ->assertRedirectContains(route('admin.questions.index'));
 
         $this->assertDatabaseHas('questions', [
             'category_id' => $category->id,
