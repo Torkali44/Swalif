@@ -24,7 +24,8 @@ class ProfileController extends Controller
         $characters = Character::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
-            ->get();
+            ->orderBy('id')
+            ->get(['id', 'name_ar', 'name_en', 'slug', 'image', 'icon', 'accent_color', 'is_active', 'sort_order']);
 
         return view('user.profile', compact('user', 'characters'));
     }
@@ -46,6 +47,7 @@ class ProfileController extends Controller
                 Rule::exists('characters', 'id')->where(fn ($q) => $q->where('is_active', true)),
             ],
             'avatar' => ['nullable', 'image', 'max:2048'],
+            'clear_character' => ['nullable', 'boolean'],
         ]);
 
         $payload = [
@@ -54,14 +56,28 @@ class ProfileController extends Controller
             'phone' => $data['phone'] ?? null,
             'phone_code' => $data['phone_code'] ?? null,
             'birth_date' => $data['birth_date'] ?? null,
-            'character_id' => $data['character_id'] ?? null,
         ];
 
-        if ($request->hasFile('avatar')) {
+        $wantsPhoto = $request->hasFile('avatar');
+        $characterId = $data['character_id'] ?? null;
+        $clearCharacter = $request->boolean('clear_character');
+
+        if ($wantsPhoto) {
+            // Uploaded photo replaces character identity
             if ($user->avatar && Storage::disk(PublicMedia::DISK)->exists($user->avatar)) {
                 Storage::disk(PublicMedia::DISK)->delete($user->avatar);
             }
             $payload['avatar'] = MediaStore::store($request->file('avatar'), 'avatars', 400);
+            $payload['character_id'] = null;
+        } elseif ($clearCharacter) {
+            $payload['character_id'] = null;
+        } elseif ($characterId) {
+            // Selecting a character becomes the displayed identity (drop old photo)
+            if ($user->avatar && Storage::disk(PublicMedia::DISK)->exists($user->avatar)) {
+                Storage::disk(PublicMedia::DISK)->delete($user->avatar);
+            }
+            $payload['avatar'] = null;
+            $payload['character_id'] = (int) $characterId;
         }
 
         $user->update($payload);

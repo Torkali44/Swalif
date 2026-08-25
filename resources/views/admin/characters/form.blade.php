@@ -53,8 +53,8 @@
     </label>
 
     <label class="check">
-      <input type="checkbox" name="is_active" @checked(old('is_active', $character->is_active ?? true))>
-      مفعّل
+      <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $character->is_active ?? true))>
+      مفعّل (تظهر للاعبين في صفحة الحساب)
     </label>
 
     @if($errors->any())

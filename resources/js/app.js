@@ -716,6 +716,12 @@ if ('IntersectionObserver' in window) {
     preview.src = url;
     preview.hidden = false;
     if (placeholder) placeholder.hidden = true;
+    // Photo upload replaces character selection
+    if (characterInput) characterInput.value = '';
+    characterButtons.forEach((b) => {
+      b.classList.remove('is-selected');
+      b.setAttribute('aria-selected', 'false');
+    });
   });
 })();
 

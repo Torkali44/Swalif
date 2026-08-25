@@ -97,7 +97,7 @@
               <div class="account-characters">
                 <div class="account-characters__head">
                   <strong>اختر شخصيتك</strong>
-                  <span class="muted">تظهر في حسابك وأثناء اللعب</span>
+                  <span class="muted">تظهر في الهيدر وأثناء اللعب بدل صورة الملف الشخصي ({{ $characters->count() }} شخصية متاحة)</span>
                 </div>
                 <input type="hidden" name="character_id" id="characterIdInput" value="{{ old('character_id', $user->character_id) }}">
                 <div class="account-characters__grid" role="listbox" aria-label="اختيار الشخصية">
@@ -129,6 +129,8 @@
                   @endforeach
                 </div>
               </div>
+            @else
+              <p class="muted" style="grid-column:1/-1;margin:8px 0 0">لا توجد شخصيات مفعّلة حالياً. من لوحة الإدارة فعّل الشخصيات أو أضف جديدة.</p>
             @endif
 
             @if($errors->any() && ! $errors->has('current_password') && ! $errors->has('password'))

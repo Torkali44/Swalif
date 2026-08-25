@@ -70,7 +70,6 @@
 
   <section class="assign-panel">
     <h3>الإجابة الصحيحة</h3>
-    <p style="color:#C8CFE7;font-weight:700;margin-bottom:16px">نوع السؤال: {{ $question->typeLabel() }}</p>
 
     @if($question->hasChoices() && $gameQuestion->selected_option_id)
       @php $choseCorrect = $playerCorrect === true; @endphp
@@ -78,7 +77,7 @@
         @if($choseCorrect)
           ✔ إجابتك صحيحة
           @if($turnTeam)
-            <small>دور فريق {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
+            <small>دور  {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
           @endif
         @else
           ✕ إجابتك مش صحيحة
@@ -158,11 +157,7 @@
         <a class="btn btn--ghost" href="{{ route('game.question', [$game, $question]) }}">← الرجوع للسؤال</a>
       </div>
       <h3>من الفريق اللي أجاب صح؟</h3>
-      @if($suggestTurnTeam)
-        <p style="color:#7CFFB2;font-weight:700;margin-bottom:12px">
-          مقترح: {{ $turnTeam->name }} (دورهم + إجابة صحيحة)
-        </p>
-      @endif
+     <br>
       <form method="POST" action="{{ route('game.assign', [$game, $gameQuestion]) }}" id="assignForm">
         @csrf
         <input type="hidden" name="team_id" id="assignTeamId" value="{{ $suggestTurnTeam ? $turnTeam->id : '' }}">

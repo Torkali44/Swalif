@@ -44,6 +44,7 @@ class CharacterController extends Controller
     {
         $data = $request->safe()->except(['image', 'image_path', 'remove_image']);
         $data['slug'] = Str::slug($data['name_en'] ?: $data['name_ar']).'-'.Str::random(4);
+        $data['is_active'] = $request->boolean('is_active');
 
         if ($request->filled('image_path')) {
             $data['image'] = $request->input('image_path');
@@ -67,6 +68,7 @@ class CharacterController extends Controller
     public function update(StoreCharacterRequest $request, Character $character)
     {
         $data = $request->safe()->except(['image', 'image_path', 'remove_image']);
+        $data['is_active'] = $request->boolean('is_active');
 
         if ($request->boolean('remove_image') && $character->image) {
             $this->deleteImage($character->image);

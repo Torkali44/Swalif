@@ -71,20 +71,37 @@ class User extends Authenticatable
 
     public function displayAvatarUrl(): ?string
     {
-        if ($this->avatarUrl()) {
-            return $this->avatarUrl();
+        // Selected character always wins over an uploaded profile photo
+        if ($this->character_id) {
+            $character = $this->relationLoaded('character')
+                ? $this->character
+                : $this->character()->first();
+
+            if ($character) {
+                return $character->imageUrl();
+            }
         }
 
-        return $this->character?->imageUrl();
+        return $this->avatarUrl();
     }
 
     public function displayAvatarEmoji(): ?string
     {
+        if ($this->character_id) {
+            $character = $this->relationLoaded('character')
+                ? $this->character
+                : $this->character()->first();
+
+            if ($character) {
+                return $character->icon ?: null;
+            }
+        }
+
         if ($this->avatarUrl()) {
             return null;
         }
 
-        return $this->character?->icon;
+        return null;
     }
 
     public function displayAvatarInitial(): string
@@ -94,8 +111,17 @@ class User extends Authenticatable
 
     public function displayAvatarGradient(): string
     {
-        return $this->character?->accentGradient()
-            ?? 'linear-gradient(135deg,#1E3A5F,#0F2440)';
+        if ($this->character_id) {
+            $character = $this->relationLoaded('character')
+                ? $this->character
+                : $this->character()->first();
+
+            if ($character) {
+                return $character->accentGradient();
+            }
+        }
+
+        return 'linear-gradient(135deg,#1E3A5F,#0F2440)';
     }
 
     public function firstName(): string

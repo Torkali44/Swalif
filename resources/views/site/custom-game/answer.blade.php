@@ -80,7 +80,7 @@
         @if($choseCorrect)
           ✔ إجابتك صحيحة
           @if($turnTeam)
-            <small>دور فريق {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
+            <small>دور  {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
           @endif
         @else
           ✕ إجابتك مش صحيحة
@@ -98,7 +98,7 @@
       </div>
     @elseif($turnTeam)
       <div class="player-verdict is-neutral">
-        دور فريق <b>{{ $turnTeam->name }}</b> — اختار مين أجاب صح (أو ولا فريق لو غلطوا)
+        دور فريق <b>{{ $turnTeam->name }}</b> — 
       </div>
     @endif
 
@@ -162,7 +162,7 @@
       <h3>من الفريق اللي أجاب صح؟</h3>
       @if($suggestTurnTeam)
         <p style="color:#7CFFB2;font-weight:700;margin-bottom:12px">
-          مقترح: {{ $turnTeam->name }} (دورهم + إجابة صحيحة)
+         
         </p>
       @endif
       <form method="POST" action="{{ route('custom-game.assign', [$customGame, $customGameQuestion]) }}" id="assignForm">
