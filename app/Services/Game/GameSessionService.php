@@ -28,9 +28,13 @@ class GameSessionService
                 'started_at' => now(),
             ]);
 
-            foreach ([$data['team_one'], $data['team_two']] as $name) {
+            foreach ([
+                ['name' => $data['team_one'], 'character_id' => $data['team_one_character_id'] ?? null],
+                ['name' => $data['team_two'], 'character_id' => $data['team_two_character_id'] ?? null],
+            ] as $teamData) {
                 $game->teams()->create([
-                    'name' => $name,
+                    'name' => $teamData['name'],
+                    'character_id' => $teamData['character_id'],
                     'score' => 0,
                     'helpers_left' => config('game.default_helpers'),
                 ]);

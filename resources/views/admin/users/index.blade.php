@@ -53,7 +53,12 @@
             $expiring = $activeSub && $activeSub->ends_at->lte(now()->addDays(7));
           @endphp
           <tr class="{{ $user->is_active ? '' : 'is-muted-row' }}">
-            <td style="font-weight:700">{{ $user->name }}</td>
+            <td>
+              <div class="user-name-cell">
+                <x-user-avatar :user="$user" size="sm" class="user-name-cell__avatar" />
+                <span class="user-name-cell__name">{{ $user->name }}</span>
+              </div>
+            </td>
             <td>
               <div>{{ $user->email }}</div>
               <div class="muted" dir="ltr" style="font-size:12px">{{ $user->phone_code }} {{ $user->phone ?: '—' }}</div>
@@ -126,5 +131,37 @@
     </table>
   </div>
 
-  <div class="pagination">{{ $users->links() }}</div>
+  @if($users->hasPages())
+    <div class="pagination">{{ $users->links() }}</div>
+  @endif
+
+  <style>
+    .user-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      min-width: 0;
+    }
+    .user-name-cell__avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(255, 109, 0, 0.2);
+    }
+    .user-name-cell__avatar.user-avatar--fallback {
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .user-name-cell__name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
 </x-layouts.admin>

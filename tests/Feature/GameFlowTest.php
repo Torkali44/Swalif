@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Character;
 use App\Models\Game;
 use App\Models\Plan;
 use App\Models\User;
@@ -12,6 +13,16 @@ use Tests\TestCase;
 class GameFlowTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function characterPair(): array
+    {
+        $ids = Character::query()->orderBy('id')->pluck('id')->take(2)->all();
+
+        return [
+            'team_one_character_id' => $ids[0],
+            'team_two_character_id' => $ids[1],
+        ];
+    }
 
     public function test_player_can_create_and_play_a_game(): void
     {
@@ -26,6 +37,7 @@ class GameFlowTest extends TestCase
             'name'        => 'اختبار اللعبة',
             'team_one'    => 'الصقور',
             'team_two'    => 'النجوم',
+            ...$this->characterPair(),
         ]);
 
         $response->assertRedirect();
@@ -64,6 +76,7 @@ class GameFlowTest extends TestCase
             'name'        => 'جولة نقاط',
             'team_one'    => 'أ',
             'team_two'    => 'ب',
+            ...$this->characterPair(),
         ]);
 
         $game = Game::firstOrFail();
@@ -100,6 +113,7 @@ class GameFlowTest extends TestCase
             'name' => 'نهاية اللعبة',
             'team_one' => 'الأسود',
             'team_two' => 'النمور',
+            ...$this->characterPair(),
         ]);
 
         $game = Game::query()->latest('id')->firstOrFail();
@@ -145,6 +159,7 @@ class GameFlowTest extends TestCase
             'name' => 'جولة مساعدة',
             'team_one' => 'أ',
             'team_two' => 'ب',
+            ...$this->characterPair(),
         ]);
 
         $game = Game::firstOrFail();
@@ -180,6 +195,7 @@ class GameFlowTest extends TestCase
             'name' => 'جولة نقاط',
             'team_one' => 'أ',
             'team_two' => 'ب',
+            ...$this->characterPair(),
         ]);
 
         $game = Game::firstOrFail();

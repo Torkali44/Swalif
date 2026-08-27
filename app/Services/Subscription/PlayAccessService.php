@@ -7,6 +7,8 @@ use App\Models\User;
 
 class PlayAccessService
 {
+    private static array $syncedUsers = [];
+
     public function __construct(private FreeTrialService $freeTrial) {}
 
     public function syncExpiredSubscriptions(User $user): void
@@ -14,6 +16,12 @@ class PlayAccessService
         if ($user->is_admin) {
             return;
         }
+
+        $uid = spl_object_id($user);
+        if (isset(self::$syncedUsers[$uid])) {
+            return;
+        }
+        self::$syncedUsers[$uid] = true;
 
         $expiredIds = Subscription::query()
             ->where('user_id', $user->id)
@@ -49,7 +57,6 @@ class PlayAccessService
 
         $this->syncExpiredSubscriptions($user);
 
-        // اشتراك نشط يتجاوز قفل الأدمن/الانتهاء
         if ($user->hasActiveSubscription()) {
             return false;
         }

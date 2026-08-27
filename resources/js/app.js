@@ -98,9 +98,9 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
       node.volume = 0.85;
       const p = node.play();
       if (p && typeof p.catch === 'function') {
-        p.catch(() => {});
+        p.catch(() => { });
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const unlockAudio = () => {
@@ -108,7 +108,7 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
       if (typeof window.SwalifAudio?.getCtx === 'function') {
         window.SwalifAudio.getCtx();
       }
-    } catch (_) {}
+    } catch (_) { }
     [warnAudio, endAudio].forEach((el) => {
       if (!el) return;
       try {
@@ -119,12 +119,12 @@ document.querySelectorAll('[data-timer-ring]').forEach((timerEl) => {
             el.pause();
             el.currentTime = 0;
             el.muted = false;
-          } catch (_) {}
+          } catch (_) { }
         };
         if (p && typeof p.then === 'function') p.then(stop).catch(() => { el.muted = false; });
         else stop();
       } catch (_) {
-        try { el.muted = false; } catch (__) {}
+        try { el.muted = false; } catch (__) { }
       }
     });
   };
@@ -418,15 +418,24 @@ const assignForm = document.getElementById('assignForm');
 if (assignForm) {
   const teamInput = document.getElementById('assignTeamId');
   let submitting = false;
+  const isLastQuestion = assignForm.hasAttribute('data-last-question');
 
   assignForm.querySelectorAll('.assign-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (submitting) return;
       submitting = true;
       teamInput.value = btn.dataset.teamId ?? '';
       assignForm.querySelectorAll('.assign-btn').forEach((b) => {
         b.disabled = true;
       });
+
+      // أظهر تنبيه انتهاء اللعبة قبل الانتقال لصفحة النتيجة
+      if (isLastQuestion && typeof window.showPopup === 'function') {
+        try {
+          await window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success');
+        } catch (_) {}
+      }
+
       assignForm.submit();
     });
   });
@@ -488,7 +497,7 @@ if (assignForm) {
     if (reveal) {
       reveal.hidden = false;
       reveal.classList.add('is-visible');
-      try { reveal.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+      try { reveal.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { }
     }
     document.dispatchEvent(new CustomEvent('swalif:video-ready'));
   };
@@ -514,7 +523,7 @@ if (assignForm) {
 
   video.addEventListener('seeking', () => {
     if (finished) {
-      try { video.currentTime = video.duration || 0; } catch (e) {}
+      try { video.currentTime = video.duration || 0; } catch (e) { }
     }
   });
   video.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -528,12 +537,12 @@ if (assignForm) {
   const winSound = document.getElementById('winSound');
   const playWinSound = () => {
     if (typeof window.SwalifAudio?.play === 'function') {
-      try { window.SwalifAudio.play('correct'); } catch (_) {}
+      try { window.SwalifAudio.play('correct'); } catch (_) { }
     }
     if (!winSound) return;
     const tryPlay = () => {
       winSound.currentTime = 0;
-      winSound.play().catch(() => {});
+      winSound.play().catch(() => { });
     };
     tryPlay();
     const unlock = () => {
@@ -545,12 +554,9 @@ if (assignForm) {
     document.addEventListener('touchstart', unlock, { once: true });
   };
 
-  // Delay sound until after optional "game ended" popup
+  // Play win sound immediately on result page load
   window.__swalifPlayWinSound = playWinSound;
-  const resultPage = document.querySelector('[data-result-page]');
-  if (!resultPage || resultPage.dataset.gameJustEnded !== '1') {
-    playWinSound();
-  }
+  playWinSound();
 
   const ctx = canvas.getContext('2d');
   let W;
@@ -924,12 +930,463 @@ document.addEventListener('DOMContentLoaded', () => {
       result.classList.toggle('is-wrong', !allCorrect);
     });
   });
+
+  /* Interactive word-build (رتبها) questions */
+  const normalizeArabicWord = (word) => {
+    return String(word || '')
+      .replace(/[\u064B-\u065F\u0670\u0640\u200C\u200D\uFEFF]/g, '')
+      .replace(/\s+/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ئ/g, 'ي')
+      .replace(/ؤ/g, 'و');
+  };
+
+  document.querySelectorAll('[data-word-build-game]').forEach((game) => {
+    const form = game.closest('[data-word-build-form]') || game.closest('form');
+    const payload = form?.querySelector('[data-word-build-payload]');
+    const input = game.querySelector('[data-word-build-input]');
+    const submitBtn = game.querySelector('[data-word-build-submit]');
+    const foundWrap = game.querySelector('[data-word-build-found]');
+    const foundList = game.querySelector('[data-word-build-found-list]');
+    const result = game.querySelector('[data-word-build-result]');
+    const progress = game.querySelector('[data-word-build-progress]');
+    const totalWords = Number(game.dataset.totalWords) || 0;
+
+    let validWords = [];
+    try {
+      validWords = JSON.parse(game.dataset.validWords || '[]');
+    } catch (_) {
+      validWords = [];
+    }
+
+    const normalizedValid = new Map(
+      validWords.map((word) => [normalizeArabicWord(word), word])
+    );
+    const found = new Set();
+    const foundLabels = [];
+
+    const syncPayload = () => {
+      if (payload) {
+        payload.value = JSON.stringify(foundLabels);
+      }
+    };
+
+    const updateProgress = () => {
+      if (progress) {
+        progress.textContent = `${found.size} / ${totalWords} كلمة`;
+      }
+      syncPayload();
+    };
+
+    const showResult = (text, type) => {
+      if (!result) return;
+      result.textContent = text;
+      result.classList.remove('is-correct', 'is-wrong');
+      if (type) result.classList.add(type);
+    };
+
+    const submitWord = () => {
+      const raw = input?.value?.trim();
+      if (!raw) return;
+
+      const normalized = normalizeArabicWord(raw);
+
+      if (found.has(normalized)) {
+        showResult('سبق ووجدت هذه الكلمة', 'is-wrong');
+        input?.classList.add('is-shake');
+        setTimeout(() => input?.classList.remove('is-shake'), 400);
+        return;
+      }
+
+      const matchedWord = normalizedValid.get(normalized);
+      if (!matchedWord) {
+        showResult('ليست من الكلمات المطلوبة', 'is-wrong');
+        input?.classList.add('is-shake');
+        setTimeout(() => input?.classList.remove('is-shake'), 400);
+        return;
+      }
+
+      found.add(normalized);
+      foundLabels.push(matchedWord);
+      if (foundWrap) foundWrap.hidden = false;
+      if (foundList) {
+        const chip = document.createElement('span');
+        chip.className = 'word-build-found__chip';
+        chip.textContent = matchedWord;
+        foundList.appendChild(chip);
+      }
+
+      if (input) input.value = '';
+      updateProgress();
+
+      if (found.size >= totalWords && totalWords > 0) {
+        showResult('أحسنت! وجدت كل الكلمات 🎉', 'is-correct');
+        // Auto-continue to answer page so verdict shows "إجابتك صحيحة"
+        setTimeout(() => {
+          syncPayload();
+          form?.requestSubmit?.() || form?.submit();
+        }, 650);
+      } else {
+        showResult(`صح! باقي ${totalWords - found.size} ${totalWords - found.size === 1 ? 'كلمة' : 'كلمات'}`, 'is-correct');
+      }
+    };
+
+    submitBtn?.addEventListener('click', submitWord);
+    input?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submitWord();
+      }
+    });
+
+    form?.addEventListener('submit', () => {
+      syncPayload();
+    });
+
+    syncPayload();
+  });
+});
+
+/* ==========================================
+   Hex Letter Grid Game
+   ========================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  const root = document.querySelector('[data-hex-game]');
+  if (!root) return;
+
+  const gameId = root.dataset.gameId || '';
+  const resultUrl = root.dataset.resultUrl || '';
+  const csrf = root.dataset.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const timeLimitTotal = Number(root.dataset.timeLimit) || 30;
+
+  const questionText = root.querySelector('[data-hex-question-text]');
+  const activeLetter = root.querySelector('[data-hex-active-letter]');
+  const answerReveal = root.querySelector('[data-hex-answer-reveal]');
+  const answerText = root.querySelector('[data-hex-answer-text]');
+  const claimPanel = root.querySelector('[data-hex-claim-panel]');
+  const progressEl = root.querySelector('[data-hex-progress]');
+  const showAnswerBtn = root.querySelector('[data-hex-show-answer]');
+  const newQuestionBtn = root.querySelector('[data-hex-new-question]');
+  const timerWrap = root.querySelector('[data-hex-timer-wrap]');
+  const timerValue = root.querySelector('[data-hex-timer-value]');
+  const timerBar = root.querySelector('[data-hex-timer-bar]');
+  const drawer = document.getElementById('hexGameDrawer');
+
+  let activeCellId = null;
+  let answerVisible = false;
+  let timerInterval = null;
+  let timerRemaining = timeLimitTotal;
+  let claiming = false;
+  const timerCircum = 2 * Math.PI * 34;
+  const warnAudio = document.getElementById('timerWarnSound');
+  const endAudio = document.getElementById('timerEndSound');
+
+  const playTimerSound = (kind) => {
+    // Prefer Web Audio (works even when WAV files missing/blocked)
+    try {
+      if (typeof window.SwalifAudio?.play === 'function') {
+        window.SwalifAudio.play(kind === 'warn' ? 'timer-warn' : 'timer-end');
+      }
+    } catch (_) { }
+
+    const el = kind === 'warn' ? warnAudio : endAudio;
+    if (!el) return;
+    try {
+      const node = el.cloneNode(true);
+      node.volume = 0.85;
+      const p = node.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { });
+    } catch (_) { }
+  };
+
+  const unlockAudio = () => {
+    try {
+      if (typeof window.SwalifAudio?.getCtx === 'function') {
+        window.SwalifAudio.getCtx();
+      }
+    } catch (_) { }
+    [warnAudio, endAudio].forEach((el) => {
+      if (!el) return;
+      try {
+        el.muted = true;
+        const p = el.play();
+        const stop = () => {
+          try {
+            el.pause();
+            el.currentTime = 0;
+            el.muted = false;
+          } catch (_) { }
+        };
+        if (p && typeof p.then === 'function') p.then(stop).catch(() => { el.muted = false; });
+        else stop();
+      } catch (_) {
+        try { el.muted = false; } catch (__) { }
+      }
+    });
+  };
+
+  // Browsers block autoplay until a user gesture
+  ['pointerdown', 'touchstart', 'keydown'].forEach((evt) => {
+    document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+  });
+
+  const playSound = (type) => {
+    try { window.SwalifAudio?.play(type); } catch (_) { }
+  };
+
+  /* End game action */
+  root.querySelector('[data-hex-end-game]')?.addEventListener('click', (e) => {
+    playSound('click');
+  });
+
+  const stopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    if (timerWrap) timerWrap.hidden = true;
+    timerWrap?.classList.remove('is-warn');
+  };
+
+  const startTimer = () => {
+    stopTimer();
+    unlockAudio();
+    timerRemaining = timeLimitTotal;
+    if (timerWrap) timerWrap.hidden = false;
+    if (timerValue) timerValue.textContent = String(timerRemaining);
+    if (timerBar) {
+      timerBar.style.strokeDasharray = String(timerCircum);
+      timerBar.style.strokeDashoffset = '0';
+    }
+
+    timerInterval = setInterval(() => {
+      timerRemaining -= 1;
+      if (timerValue) timerValue.textContent = String(Math.max(timerRemaining, 0));
+      if (timerBar) {
+        timerBar.style.strokeDashoffset = String(timerCircum * (1 - Math.max(timerRemaining, 0) / timeLimitTotal));
+      }
+      // Countdown beeps every second for the last 5 seconds (same as question timer)
+      if (timerRemaining <= 5 && timerRemaining > 0) {
+        timerWrap?.classList.add('is-warn');
+        playTimerSound('warn');
+      }
+      if (timerRemaining <= 0) {
+        stopTimer();
+        playTimerSound('end');
+        answerVisible = true;
+        if (answerReveal) answerReveal.hidden = false;
+        if (claimPanel) {
+          claimPanel.hidden = false;
+          claimPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    }, 1000);
+  };
+
+  const resetQuestionUi = () => {
+    activeCellId = null;
+    answerVisible = false;
+    stopTimer();
+    if (answerReveal) answerReveal.hidden = true;
+    if (claimPanel) claimPanel.hidden = true;
+    if (questionText) questionText.textContent = 'اختر حرفاً من الشبكة لبدء السؤال';
+    if (activeLetter) activeLetter.textContent = '؟';
+    if (showAnswerBtn) showAnswerBtn.disabled = true;
+    if (newQuestionBtn) newQuestionBtn.disabled = false;
+  };
+
+  const setActiveCell = (btn) => {
+    if (!btn || btn.dataset.resolved === '1') return;
+
+    root.querySelectorAll('[data-hex-cell]').forEach((el) => el.classList.remove('is-active'));
+    btn.classList.add('is-active');
+
+    activeCellId = btn.dataset.cellId;
+    answerVisible = false;
+
+    if (activeLetter) activeLetter.textContent = btn.dataset.letter || '؟';
+    if (questionText) questionText.textContent = btn.dataset.question || '';
+    if (answerText) answerText.textContent = btn.dataset.answer || '';
+    if (answerReveal) answerReveal.hidden = true;
+    if (claimPanel) claimPanel.hidden = true;
+    if (showAnswerBtn) showAnswerBtn.disabled = false;
+    if (newQuestionBtn) newQuestionBtn.disabled = false;
+
+    if (window.innerWidth <= 960) {
+      const qCard = root.querySelector('[data-hex-question-card]');
+      if (qCard) {
+        qCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    startTimer();
+    playSound('select');
+  };
+
+  root.querySelectorAll('[data-hex-cell]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.resolved === '1') return;
+      setActiveCell(btn);
+    });
+  });
+
+  showAnswerBtn?.addEventListener('click', () => {
+    if (!activeCellId) return;
+    stopTimer();
+    answerVisible = true;
+    if (answerReveal) answerReveal.hidden = false;
+    if (claimPanel) {
+      claimPanel.hidden = false;
+      claimPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    playSound('click');
+  });
+
+  newQuestionBtn?.addEventListener('click', () => {
+    const available = [...root.querySelectorAll('[data-hex-cell]')].filter((b) => b.dataset.resolved !== '1');
+    if (!available.length) return;
+    const next = available[Math.floor(Math.random() * available.length)];
+    setActiveCell(next);
+  });
+
+  const claimUrlFor = (cellId) => `/letter-grid/${gameId}/cell/${cellId}/claim`;
+
+  const submitClaim = async (teamId, correct) => {
+    if (!activeCellId || claiming) return;
+    claiming = true;
+    stopTimer();
+
+    showAnswerBtn && (showAnswerBtn.disabled = true);
+    root.querySelectorAll('[data-hex-claim-team], [data-hex-claim-none]').forEach((b) => {
+      b.disabled = true;
+    });
+
+    try {
+      const res = await fetch(claimUrlFor(activeCellId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': csrf,
+        },
+        body: JSON.stringify({ team_id: teamId, correct }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'فشل احتساب الحرف');
+      }
+
+      playSound(correct ? 'correct' : 'wrong');
+
+      const cellBtn = root.querySelector(`[data-hex-cell][data-cell-id="${data.cell.id}"]`);
+      if (cellBtn) {
+        cellBtn.classList.add('is-claiming');
+        cellBtn.dataset.resolved = '1';
+        cellBtn.disabled = true;
+        cellBtn.classList.remove('is-active');
+        if (data.cell.missed) {
+          cellBtn.classList.add('is-missed');
+        } else if (data.cell.team_index !== null && data.cell.team_index !== undefined) {
+          cellBtn.classList.add('is-claimed', `is-team-${data.cell.team_index}`);
+        }
+        setTimeout(() => cellBtn.classList.remove('is-claiming'), 450);
+      }
+
+      data.teams?.forEach((team) => {
+        const scoreEl = root.querySelector(`[data-hex-team-score="${team.id}"]`);
+        if (scoreEl) scoreEl.textContent = String(team.score);
+      });
+
+      if (data.turn_index !== undefined) {
+        let activeTurnName = '';
+        root.querySelectorAll('[data-hex-team-bar]').forEach((bar) => {
+          const isTurn = Number(bar.dataset.teamIndex) === Number(data.turn_index);
+          bar.classList.toggle('is-turn', isTurn);
+          const turnPill = bar.querySelector('[data-hex-turn-pill]');
+          if (turnPill) turnPill.hidden = !isTurn;
+          const turnDesc = bar.querySelector('[data-hex-turn-desc]');
+          if (turnDesc) {
+            turnDesc.textContent = isTurn ? 'حان دوره لاختيار الحرف والإجابة' : 'ينتظر دوره';
+          }
+          if (isTurn) {
+            activeTurnName = bar.dataset.teamName || bar.querySelector('.hex-team-bar__name')?.textContent?.trim() || '';
+          }
+        });
+
+        if (activeTurnName) {
+          const panelTurn = root.querySelector('[data-hex-panel-turn-name]');
+          if (panelTurn) panelTurn.textContent = activeTurnName;
+          const mobileTurn = root.querySelector('[data-hex-mobile-turn-name]');
+          if (mobileTurn) mobileTurn.textContent = activeTurnName;
+          const statusTurn = root.querySelector('[data-hex-turn-indicator-text]');
+          if (statusTurn) statusTurn.textContent = activeTurnName;
+        }
+      }
+
+      if (data.resolved !== undefined) {
+        if (progressEl) progressEl.textContent = String(data.resolved);
+        const mobileResolved = root.querySelector('[data-hex-mobile-resolved]');
+        if (mobileResolved) mobileResolved.textContent = String(data.resolved);
+        const progressBar = root.querySelector('[data-hex-progress-bar]');
+        if (progressBar && data.total) {
+          const pct = Math.round((data.resolved / data.total) * 100);
+          progressBar.style.width = `${pct}%`;
+        }
+      }
+
+      resetQuestionUi();
+
+      if (data.finished && data.redirect) {
+        playSound('correct');
+        if (typeof window.showPopup === 'function') {
+          window.showPopup('انتهت شبكة الحروف! حان وقت تتويج الفائز 🏆', 'success');
+        }
+        setTimeout(() => { window.location.href = data.redirect; }, 1200);
+      }
+    } catch (err) {
+      playSound('wrong');
+      const isFinishedMsg = err.message && (err.message.includes('اللعبة منتهية') || err.message.includes('منتهية'));
+      if (typeof window.showPopup === 'function') {
+        if (isFinishedMsg && resultUrl) {
+          window.showPopup('اللعبة منتهية بالفعل! جاري نقلك لصفحة النتيجة 🏆', 'error');
+          setTimeout(() => { window.location.href = resultUrl; }, 1400);
+        } else {
+          window.showPopup(err.message || 'حدث خطأ. حاول مرة أخرى.', 'error');
+        }
+      } else {
+        console.error(err);
+      }
+      claiming = false;
+    } finally {
+      claiming = false;
+      root.querySelectorAll('[data-hex-claim-team], [data-hex-claim-none]').forEach((b) => {
+        b.disabled = false;
+      });
+    }
+  };
+
+  root.querySelectorAll('[data-hex-claim-team]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!answerVisible || !activeCellId) return;
+      submitClaim(Number(btn.dataset.teamId), true);
+    });
+  });
+
+  root.querySelector('[data-hex-claim-none]')?.addEventListener('click', () => {
+    if (!answerVisible || !activeCellId) return;
+    submitClaim(null, false);
+  });
+
+  const initialActive = root.querySelector('[data-hex-cell].is-active:not([disabled])');
+  if (initialActive) setActiveCell(initialActive);
 });
 
 /* ==========================================
    Theme Toggling & Custom Dialog Modals
    ========================================== */
-window.showPopup = function(message, type = 'success', options = {}) {
+window.showPopup = function (message, type = 'success', options = {}) {
   document.querySelectorAll('.custom-modal-overlay').forEach(el => el.remove());
 
   const overlay = document.createElement('div');
@@ -973,15 +1430,15 @@ window.showPopup = function(message, type = 'success', options = {}) {
   });
 };
 
-window.showConfirm = function(message) {
+window.showConfirm = function (message) {
   document.querySelectorAll('.custom-modal-overlay').forEach(el => el.remove());
 
   const overlay = document.createElement('div');
   overlay.className = 'custom-modal-overlay';
-  
+
   const modal = document.createElement('div');
   modal.className = 'custom-modal custom-modal--confirm';
-  
+
   modal.innerHTML = `
     <div class="custom-modal__icon custom-modal__icon--confirm">❓</div>
     <div class="custom-modal__message">${message}</div>
@@ -990,10 +1447,10 @@ window.showConfirm = function(message) {
       <button class="custom-modal__btn custom-modal__btn--no" id="modalNoBtn">إلغاء</button>
     </div>
   `;
-  
+
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  
+
   setTimeout(() => overlay.classList.add('is-active'), 10);
 
   return new Promise((resolve) => {
@@ -1004,7 +1461,7 @@ window.showConfirm = function(message) {
         resolve(true);
       }, 300);
     });
-    
+
     document.getElementById('modalNoBtn').addEventListener('click', () => {
       overlay.classList.remove('is-active');
       setTimeout(() => {
@@ -1015,7 +1472,7 @@ window.showConfirm = function(message) {
   });
 };
 
-window.swalifHandleCategoryPlay = async function(url, meta = {}) {
+window.swalifHandleCategoryPlay = async function (url, meta = {}) {
   if (!url) return false;
 
   const total = parseInt(meta.total, 10);
@@ -1076,19 +1533,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* Game-over popup on result page */
-(() => {
-  const resultPage = document.querySelector('[data-result-page][data-game-just-ended]');
-  if (!resultPage) return;
-
-  window.showPopup('انتهت اللعبة! خلصت كل الأسئلة — شوف النتيجة 🏆', 'success')
-    .then(() => {
-      if (typeof window.__swalifPlayWinSound === 'function') {
-        window.__swalifPlayWinSound();
-      }
-    });
-})();
-
+/* Game-over popup is shown on the last answer assign (before result), not on the result page itself. */
 /* Init Theme — sync across site + admin */
 (() => {
   const applyTheme = (dark) => {
@@ -1134,17 +1579,17 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           body: JSON.stringify({ amount })
         })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            scoreVal.textContent = data.score;
-          } else {
-            window.showPopup(data.message || 'فشل تحديث النتيجة.', 'error');
-          }
-        })
-        .catch(err => {
-          console.error('Error adjusting score:', err);
-        });
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              scoreVal.textContent = data.score;
+            } else {
+              window.showPopup(data.message || 'فشل تحديث النتيجة.', 'error');
+            }
+          })
+          .catch(err => {
+            console.error('Error adjusting score:', err);
+          });
       });
     });
   });

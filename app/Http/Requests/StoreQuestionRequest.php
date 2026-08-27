@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Question;
 use App\Support\AudioUpload;
 use App\Support\UploadedMediaPath;
+use App\Support\WordBuildHelper;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -29,7 +30,7 @@ class StoreQuestionRequest extends FormRequest
 
         return [
             'category_id' => ['required', 'exists:categories,id'],
-            'type' => ['required', Rule::in(['standard', 'image_guess', 'puzzle', 'match', 'complete', 'order', 'video', 'audio'])],
+            'type' => ['required', Rule::in(['standard', 'image_guess', 'puzzle', 'match', 'complete', 'order', 'word_build', 'video', 'audio'])],
             'question_text' => ['required', 'string', 'max:2000'],
             'answer_text' => ['nullable', 'string', 'max:2000'],
             'level' => ['required', 'in:easy,medium,hard'],
@@ -50,6 +51,10 @@ class StoreQuestionRequest extends FormRequest
             'match_pairs' => ['nullable', 'array', 'max:12'],
             'match_pairs.*.left' => ['nullable', 'string', 'max:255'],
             'match_pairs.*.right' => ['nullable', 'string', 'max:255'],
+            'word_build_letters' => ['nullable', 'array', 'max:20'],
+            'word_build_letters.*' => ['nullable', 'string', 'max:10'],
+            'word_build_words' => ['nullable', 'array', 'max:30'],
+            'word_build_words.*' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -78,6 +83,16 @@ class StoreQuestionRequest extends FormRequest
                         'right' => trim((string) data_get($pair, 'right', '')),
                     ];
                 })
+                ->values();
+
+            $wordBuildLetters = collect($this->input('word_build_letters', []))
+                ->map(fn ($v) => trim((string) $v))
+                ->filter()
+                ->values();
+
+            $wordBuildWords = collect($this->input('word_build_words', []))
+                ->map(fn ($v) => trim((string) $v))
+                ->filter()
                 ->values();
 
             $hasAnswerText = filled($this->input('answer_text'));
@@ -136,6 +151,36 @@ class StoreQuestionRequest extends FormRequest
                 if ($orderItems->count() < 2) {
                     $validator->errors()->add('order_items', 'أضف عنصرين على الأقل للترتيب.');
                 }
+            } elseif ($type === 'word_build') {
+                if ($wordBuildLetters->count() < 2) {
+                    $validator->errors()->add('word_build_letters', 'أضف حرفين على الأقل.');
+                }
+
+                if ($wordBuildWords->count() < 1) {
+                    $validator->errors()->add('word_build_words', 'أضف كلمة واحدة على الأقل يمكن تكوينها من الحروف.');
+                }
+
+                $letters = $wordBuildLetters->all();
+                $uniqueWords = WordBuildHelper::uniqueWords($wordBuildWords->all());
+
+                if ($wordBuildWords->count() > count($uniqueWords)) {
+                    $validator->errors()->add('word_build_words', 'لا يمكن تكرار نفس الكلمة أكثر من مرة.');
+                }
+
+                foreach ($uniqueWords as $index => $word) {
+                    if (! WordBuildHelper::canFormWord($letters, $word)) {
+                        $validator->errors()->add(
+                            'word_build_words',
+                            'الكلمة «'.$word.'» لا يمكن تكوينها من الحروف المدخلة (كلمة '.($index + 1).').'
+                        );
+                        break;
+                    }
+                }
+
+                $timeLimit = (int) $this->input('time_limit', 15);
+                if ($timeLimit < 10 || $timeLimit > 15) {
+                    $validator->errors()->add('time_limit', 'مؤقت رتبها يجب أن يكون بين 10 و 15 ثانية.');
+                }
             } elseif ($type === 'match') {
                 $validPairs = $matchPairs->filter(fn ($pair) => filled($pair['left']) && filled($pair['right']));
                 if ($validPairs->count() < 2) {
@@ -177,17 +222,24 @@ class StoreQuestionRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $level = (string) $this->input('level', 'easy');
+        $type = (string) $this->input('type', 'standard');
         $pointsMap = config('game.points_map', [
             'easy' => 200,
             'medium' => 400,
             'hard' => 600,
         ]);
 
+        $defaultTimeLimit = match ($type) {
+            'word_build' => 15,
+            'audio' => (int) config('game.audio_time_limit', 60),
+            default => (int) config('game.default_time_limit', 30),
+        };
+
         $this->merge([
             'is_active' => $this->boolean('is_active'),
             'remove_image' => $this->boolean('remove_image'),
             'remove_answer_image' => $this->boolean('remove_answer_image'),
-            'time_limit' => $this->input('time_limit', config('game.default_time_limit', 60)),
+            'time_limit' => $this->input('time_limit', $defaultTimeLimit),
             // النقاط تلقائية حسب المستوى دائمًا
             'points' => (int) ($pointsMap[$level] ?? 200),
         ]);

@@ -95,6 +95,9 @@
       <a href="{{ route('admin.questions.index') }}" class="nav-link {{ request()->routeIs('admin.questions.*') ? 'active' : '' }}">
         <span class="ico">❓</span> أنواع الأسئلة
       </a>
+      <a href="{{ route('admin.letter-grids.index') }}" class="nav-link {{ request()->routeIs('admin.letter-grids.*') ? 'active' : '' }}">
+        <span class="ico">⬡</span> شبكة الحروف
+      </a>
       <a href="{{ route('admin.plans.index') }}" class="nav-link {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}">
         <span class="ico">💎</span> الاشتراكات
       </a>
@@ -109,19 +112,6 @@
       </a>
     </nav>
 
-    <div class="admin-footer">
-      <div class="user-chip">
-        @if(auth()->user()->displayAvatarUrl())
-          <img class="avatar avatar-img" src="{{ auth()->user()->displayAvatarUrl() }}" alt="{{ auth()->user()->name }}">
-        @else
-          <div class="avatar" style="background:{{ auth()->user()->displayAvatarGradient() }}">{{ auth()->user()->displayAvatarEmoji() ?: auth()->user()->displayAvatarInitial() }}</div>
-        @endif
-        <div>
-          <div class="u-name">{{ auth()->user()->name }}</div>
-          <div class="u-role">مشرف عام</div>
-        </div>
-      </div>
-    </div>
   </aside>
 
   <main class="admin-main">
@@ -248,7 +238,7 @@
   }
 
   /* ── XHR upload ── */
-  function uploadFile(url, file, kind, onProgress) {
+  function uploadFile(url, file, kind, onProgress, folder) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', url);
@@ -273,6 +263,7 @@
       const body = new FormData();
       body.append('file', file);
       body.append('kind', kind);
+      if (folder) body.append('folder', folder);
       xhr.send(body);
     });
   }
@@ -403,7 +394,7 @@
 
           const result = await uploadFile(uploadUrl, ready, kind, (pct) => {
             setStatus(input, `جاري رفع الملف... ${pct}%`, 'progress', pct);
-          });
+          }, input.dataset.uploadFolder || '');
 
           if (pathInput) pathInput.value = result.path;
           input.value = ''; // don't re-send the file on final save

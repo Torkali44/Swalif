@@ -8,6 +8,6 @@ class TimerService
 {
     public function limitFor(Question $question): int
     {
-        return (int) ($question->time_limit ?: config('game.default_time_limit', 60));
+        return (int) ($question->time_limit ?: config('game.default_time_limit', 30));
     }
 }

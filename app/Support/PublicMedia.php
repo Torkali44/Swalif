@@ -15,6 +15,7 @@ class PublicMedia
         'questions/audio',
         'avatars',
         'characters',
+        'letter_grids',
     ];
 
     /**

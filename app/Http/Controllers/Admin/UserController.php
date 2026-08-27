@@ -14,7 +14,10 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query()
-            ->with(['subscriptions' => fn ($q) => $q->latest()->with('plan')])
+            ->with([
+                'character',
+                'subscriptions' => fn ($q) => $q->latest()->with('plan'),
+            ])
             ->latest();
 
         if ($request->filled('q')) {

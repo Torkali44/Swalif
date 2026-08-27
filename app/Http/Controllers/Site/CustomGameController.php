@@ -8,6 +8,7 @@ use App\Http\Requests\StoreCustomGameRequest;
 use App\Models\Category;
 use App\Models\CustomGame;
 use App\Models\CustomGameQuestion;
+use App\Models\LetterGridGame;
 use App\Models\Question;
 use App\Models\Team;
 use App\Services\Category\CategoryService;
@@ -57,10 +58,27 @@ class CustomGameController extends Controller
         $allCategories = Cache::remember('categories.active_ordered', 120, fn () => $this->categories->activeOrdered());
         $allCategories = $this->playPool->decorateCategories($allCategories, $user);
         $classifications = Cache::remember('classifications.active_ordered', 120, fn () => \App\Models\Classification::where('is_active', true)->orderBy('sort_order')->get());
+        $characters = \App\Models\Character::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+        $letterGrids = \App\Models\LetterGrid::query()
+            ->where('is_active', true)
+            ->withCount(['cells as playable_cells_count' => fn ($q) => $q->where('is_active', true)])
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get()
+            ->filter(fn ($grid) => $grid->playable_cells_count > 0);
+        $letterGridLocked = $user && ! $this->freeTrial->canCreateLetterGridGame($user);
 
         return view('site.custom-game.create', [
             'categories' => $allCategories,
             'classifications' => $classifications,
+            'characters' => $characters,
+            'letterGrids' => $letterGrids,
+            'letterGridLocked' => $letterGridLocked,
+            'letterGridSubscribeMessage' => $this->freeTrial->letterGridSubscribeRequiredMessage(),
         ]);
     }
 
@@ -93,7 +111,7 @@ class CustomGameController extends Controller
     {
         $this->sessions->ensureOwned($customGame, $request->user());
 
-        $customGame->load(['categories', 'teams', 'customGameQuestions.question']);
+        $customGame->load(['categories', 'letterGrids', 'teams', 'customGameQuestions.question']);
 
         // بناء بيانات Board لكل فئة
         $categoriesData = $customGame->categories->map(function (Category $category) use ($customGame) {
@@ -106,13 +124,65 @@ class CustomGameController extends Controller
             ];
         });
 
+        $letterGridIds = $customGame->letterGrids->pluck('id')->all();
+        $sessionsByGridId = collect();
+        if ($letterGridIds !== []) {
+            $sessionsByGridId = LetterGridGame::query()
+                ->where('custom_game_id', $customGame->id)
+                ->whereIn('letter_grid_id', $letterGridIds)
+                ->with('grid')
+                ->orderByDesc('id')
+                ->get()
+                ->unique('letter_grid_id')
+                ->keyBy('letter_grid_id');
+        }
+
+        $letterGridSessionService = app(\App\Services\Game\LetterGridSessionService::class);
+        $letterGridsData = $customGame->letterGrids->map(function ($grid) use ($sessionsByGridId, $letterGridSessionService) {
+            $session = $sessionsByGridId->get($grid->id);
+
+            $replayMessage = null;
+            if ($session?->isFinished()) {
+                $replayMessage = $letterGridSessionService->finishedReplayMessage($session);
+            }
+
+            return [
+                'grid' => $grid,
+                'session' => $session,
+                'finished' => $session?->isFinished() ?? false,
+                'replay_message' => $replayMessage,
+            ];
+        });
+
         $activeTeam = $this->sessions->activeTeam($customGame);
 
         return view('site.custom-game.board', [
             'game'           => $customGame,
             'categoriesData' => $categoriesData,
+            'letterGridsData'=> $letterGridsData,
             'activeTeam'     => $activeTeam,
         ]);
+    }
+
+    public function playLetterGrid(CustomGame $customGame, \App\Models\LetterGrid $letterGrid, Request $request)
+    {
+        $this->sessions->ensureOwned($customGame, $request->user());
+
+        try {
+            $letterGridGame = $this->sessions->startOrResumeLetterGrid(
+                $customGame,
+                $letterGrid,
+                $request->user()
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $msg = collect($e->errors())->flatten()->first() ?: 'تم لعب هذه الشبكة مسبقاً.';
+
+            return redirect()
+                ->route('custom-game.board', $customGame)
+                ->with('letter_grid_replay_popup', $msg);
+        }
+
+        return redirect()->route('letter-grid.play', $letterGridGame);
     }
 
     // ── صفحة السؤال ─────────────────────────────────────────────
@@ -386,6 +456,7 @@ class CustomGameController extends Controller
         }
 
         if ($helper === 'two_answers' && $cgq) {
+            $cgq->loadMissing('question.options');
             $question = $cgq->question;
             $options  = $question->options->filter(fn ($o) => filled($o->option_text))->values();
             if ($options->count() !== 4) {

@@ -46,8 +46,15 @@ class MediaUploadController extends Controller
         $folder = match ($data['kind']) {
             'video' => 'questions/videos',
             'audio' => 'questions/audio',
-            default => 'questions',
+            default => (string) ($request->input('folder') ?: 'questions'),
         };
+
+        $allowedFolders = ['questions', 'categories', 'classifications', 'characters', 'letter_grids', 'avatars'];
+        if ($data['kind'] === 'image' || $data['kind'] === 'answer_image') {
+            if (! in_array($folder, $allowedFolders, true)) {
+                $folder = 'questions';
+            }
+        }
 
         $maxWidth = match ($data['kind']) {
             'answer_image' => 1200,

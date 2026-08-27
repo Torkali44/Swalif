@@ -52,6 +52,27 @@ body.game-body.game-body--nav .nav {
   position: fixed !important;
 }
 
+@media (max-width: 900px) {
+  body.game-body.game-body--nav {
+    padding-top: 64px !important;
+  }
+  .nav,
+  .nav__inner {
+    height: 64px !important;
+  }
+  .nav__inner {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+  }
+  .nav__logo .logo-text {
+    font-size: 1.05rem;
+  }
+  .nav__logo .logo-img {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+
 /* Fixed site navbar */
 .nav {
   position: fixed !important;
@@ -67,14 +88,28 @@ body.game-body.game-body--nav .nav {
 .nav__inner {
   height: 88px;
 }
-.nav__logo,
-.logo-text,
 .nav__links a {
   color: var(--ink) !important;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 .nav__links a.is-active,
 .nav__links a:hover {
-  color: var(--uae-red, #FF3B4E) !important;
+  color: #FF6D00 !important;
+  background: rgba(255, 109, 0, 0.08) !important;
+}
+
+body.dark .nav__links a,
+html.dark .nav__links a {
+  color: #E8ECF8 !important;
+}
+
+body.dark .nav__links a.is-active,
+body.dark .nav__links a:hover,
+html.dark .nav__links a.is-active,
+html.dark .nav__links a:hover {
+  color: #FFB300 !important;
+  background: rgba(255, 109, 0, 0.16) !important;
 }
 .nav-avatar,
 .nav-user .user-avatar {

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CharacterController;
 use App\Http\Controllers\Admin\ClassificationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LetterGridController;
 use App\Http\Controllers\Admin\MediaUploadController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PlanController;
@@ -25,6 +26,10 @@ Route::patch('characters/{character}/toggle', [CharacterController::class, 'togg
 
 Route::resource('questions', QuestionController::class)->except(['show']);
 Route::patch('questions/{question}/toggle', [QuestionController::class, 'toggle'])->name('questions.toggle');
+
+Route::resource('letter-grids', LetterGridController::class)->except(['show']);
+Route::patch('letter-grids/{letter_grid}/toggle', [LetterGridController::class, 'toggle'])->name('letter-grids.toggle');
+
 Route::post('media', [MediaUploadController::class, 'store'])->name('media.store');
 
 Route::resource('plans', PlanController::class)->only(['index', 'create', 'store', 'edit', 'update']);

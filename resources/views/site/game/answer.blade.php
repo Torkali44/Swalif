@@ -9,6 +9,8 @@
     ? $teams->get($answeredQuestions % $teams->count())
     : null;
   $suggestTurnTeam = $playerCorrect === true && $turnTeam;
+  $remainingUnanswered = $game->gameQuestions->whereNull('answered_at')->count();
+  $isLastQuestionToAssign = ! $gameQuestion->answered_at && $remainingUnanswered <= 1;
 @endphp
 
 <x-layouts.game :show-nav="true">
@@ -37,7 +39,15 @@
   @if($teamA && $teamB)
     <section class="teams">
       <div class="team team--a {{ $activeTeam === 'a' ? 'active' : '' }}" data-team-card="a">
-        <div class="team__avatar" style="background:linear-gradient(135deg,#FF1744,#7C3AED)">{{ mb_substr($teamA->name, 0, 1) }}</div>
+        <div class="team__avatar" style="background:{{ $teamA->character?->accentGradient() ?: 'linear-gradient(135deg,#FF1744,#7C3AED)' }};overflow:hidden">
+          @if($teamA->character && $teamA->character->imageUrl())
+            <img src="{{ $teamA->character->imageUrl() }}" alt="{{ $teamA->character->name_ar }}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">
+          @elseif($teamA->character && $teamA->character->icon)
+            {{ $teamA->character->icon }}
+          @else
+            {{ mb_substr($teamA->name, 0, 1) }}
+          @endif
+        </div>
         <div>
           <b>{{ $teamA->name }}</b>
           <div class="team__score">{{ number_format($teamA->score) }} <em>نقطة</em></div>
@@ -53,7 +63,15 @@
       <div class="vs">VS</div>
 
       <div class="team team--b {{ $activeTeam === 'b' ? 'active' : '' }}" data-team-card="b">
-        <div class="team__avatar" style="background:linear-gradient(135deg,#00E5FF,#00843D)">{{ mb_substr($teamB->name, 0, 1) }}</div>
+        <div class="team__avatar" style="background:{{ $teamB->character?->accentGradient() ?: 'linear-gradient(135deg,#00E5FF,#00843D)' }};overflow:hidden">
+          @if($teamB->character && $teamB->character->imageUrl())
+            <img src="{{ $teamB->character->imageUrl() }}" alt="{{ $teamB->character->name_ar }}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">
+          @elseif($teamB->character && $teamB->character->icon)
+            {{ $teamB->character->icon }}
+          @else
+            {{ mb_substr($teamB->name, 0, 1) }}
+          @endif
+        </div>
         <div>
           <b>{{ $teamB->name }}</b>
           <div class="team__score">{{ number_format($teamB->score) }} <em>نقطة</em></div>
@@ -87,6 +105,21 @@
         @endif
         @if($gameQuestion->selectedOption)
           <small>اختيارك: {{ $gameQuestion->selectedOption->option_text }}</small>
+        @endif
+      </div>
+    @elseif($question->type === 'word_build')
+      @php $choseCorrect = $playerCorrect === true; @endphp
+      <div class="player-verdict {{ $choseCorrect ? 'is-correct' : 'is-wrong' }}">
+        @if($choseCorrect)
+          ✔ إجابتك صحيحة — وجدت كل الكلمات
+          @if($turnTeam)
+            <small>دور {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
+          @endif
+        @else
+          ✕ لم تكتمل كل الكلمات المطلوبة
+          @if($turnTeam)
+            <small>تتحسب خاطئة على {{ $turnTeam->name }} إلا لو فريق تاني جاوب صح</small>
+          @endif
         @endif
       </div>
     @elseif(filled($gameQuestion->player_answer))
@@ -123,6 +156,15 @@
           <li>{{ $item }}</li>
         @endforeach
       </ol>
+    @elseif($question->type === 'word_build' && $question->validWords())
+      <div class="correct-answer correct-answer--word-build">
+        <span class="correct-answer__label">الجواب:</span>
+        <div class="word-build-answers">
+          @foreach($question->validWords() as $word)
+            <span class="word-build-answer-chip">{{ $word }}</span>
+          @endforeach
+        </div>
+      </div>
     @elseif($question->type === 'match' && $question->matchPairs())
       <div class="correct-answer correct-answer--pairs">
         @foreach($question->matchPairs() as $pair)
@@ -158,7 +200,7 @@
       </div>
       <h3>من الفريق اللي أجاب صح؟</h3>
      <br>
-      <form method="POST" action="{{ route('game.assign', [$game, $gameQuestion]) }}" id="assignForm">
+      <form method="POST" action="{{ route('game.assign', [$game, $gameQuestion]) }}" id="assignForm" @if($isLastQuestionToAssign) data-last-question="1" @endif>
         @csrf
         <input type="hidden" name="team_id" id="assignTeamId" value="{{ $suggestTurnTeam ? $turnTeam->id : '' }}">
         <div class="assign-grid">

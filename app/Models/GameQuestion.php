@@ -56,6 +56,15 @@ class GameQuestion extends Model
             return (bool) $this->selectedOption?->is_correct;
         }
 
+        $this->loadMissing('question');
+
+        if ($this->question?->isWordBuild()) {
+            return \App\Support\WordBuildHelper::foundAllWords(
+                $this->question->validWords(),
+                $this->player_answer
+            );
+        }
+
         return null;
     }
 }

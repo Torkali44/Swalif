@@ -20,5 +20,6 @@ return [
         'phone_friend' => 1,
         'two_answers' => 1,
     ],
-    'default_time_limit' => 60,
+    'default_time_limit' => 30,
+    'audio_time_limit' => 60,
 ];

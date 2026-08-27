@@ -29,6 +29,8 @@
     ->map(fn ($pair, $index) => ['key' => (string) $index, 'text' => $pair['right']])
     ->shuffle()
     ->values();
+  $wordBuildLetters = collect($question->wordBuildLetters())->shuffle()->values();
+  $wordBuildWords = collect($question->validWords());
 
   // فئة هذا السؤال
   $questionCategory = $cgq->category;
@@ -186,7 +188,37 @@
         </div>
       @endif
 
-      @if($questionType === 'order' && $orderItems->isNotEmpty())
+      @if($questionType === 'word_build' && $wordBuildLetters->isNotEmpty())
+        <form method="POST" action="{{ route('custom-game.answer.store', [$customGame, $cgq]) }}" data-word-build-form>
+          @csrf
+          <input type="hidden" name="player_answer" value="" data-word-build-payload>
+          <section class="interactive-answer interactive-answer--word-build" data-word-build-game
+            data-valid-words='@json($wordBuildWords->values())'
+            data-total-words="{{ $wordBuildWords->count() }}">
+            <div class="interactive-answer__head">
+              <b>أوجد كل الكلمات الممكنة من هذه الحروف</b>
+              <span data-word-build-progress>0 / {{ $wordBuildWords->count() }} كلمة</span>
+            </div>
+            <div class="word-build-letters" data-word-build-letters>
+              @foreach($wordBuildLetters as $letter)
+                <div class="word-build-tile">{{ $letter }}</div>
+              @endforeach
+            </div>
+            <div class="word-build-input-row">
+              <input type="text" class="word-build-input" data-word-build-input placeholder="اكتب كلمة واضغط Enter…" autocomplete="off" spellcheck="false" dir="rtl">
+              <button class="btn btn--fire" type="button" data-word-build-submit>إضافة</button>
+            </div>
+            <div class="word-build-found" data-word-build-found hidden>
+              <span class="word-build-found__label">كلمات وجدتها:</span>
+              <div class="word-build-found__list" data-word-build-found-list></div>
+            </div>
+            <span class="interactive-answer__result" data-word-build-result></span>
+          </section>
+          <div class="action-bar">
+            <button class="btn btn--fire btn--lg" type="submit">✔ عرض الإجابة</button>
+          </div>
+        </form>
+      @elseif($questionType === 'order' && $orderItems->isNotEmpty())
         <section class="interactive-answer interactive-answer--order" data-order-game>
           <div class="interactive-answer__head">
             <b>رتّب الجمل بالترتيب الصحيح</b>

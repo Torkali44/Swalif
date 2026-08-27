@@ -141,22 +141,27 @@ class CategoryPlayPoolService
         }
 
         $now = now();
+        $rows = $questions->unique('id')->map(fn ($question) => [
+            'user_id' => $user->id,
+            'question_id' => $question->id,
+            'category_id' => $category->id,
+            'source' => $source,
+            'game_id' => $gameId,
+            'custom_game_id' => $customGameId,
+            'played_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->values()->all();
 
-        foreach ($questions->unique('id') as $question) {
-            UserCategoryQuestionPlay::query()->firstOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'question_id' => $question->id,
-                ],
-                [
-                    'category_id' => $category->id,
-                    'source' => $source,
-                    'game_id' => $gameId,
-                    'custom_game_id' => $customGameId,
-                    'played_at' => $now,
-                ]
-            );
+        if ($rows === []) {
+            return;
         }
+
+        UserCategoryQuestionPlay::query()->upsert(
+            $rows,
+            ['user_id', 'question_id'],
+            ['updated_at']
+        );
     }
 
     /**

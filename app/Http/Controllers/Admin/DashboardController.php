@@ -37,7 +37,8 @@ class DashboardController extends Controller
             ->count();
 
         // Batch all simple counts into a single SELECT to reduce round-trips
-        $counts = \Illuminate\Support\Facades\DB::selectOne("
+        $now = now()->toDateTimeString();
+        $counts = DB::selectOne('
             SELECT
                 (SELECT COUNT(*) FROM categories)                                                              AS categories,
                 (SELECT COUNT(*) FROM classifications)                                                        AS classifications,
@@ -46,10 +47,10 @@ class DashboardController extends Controller
                 (SELECT COUNT(*) FROM users WHERE is_admin = 1)                                               AS admins,
                 (SELECT COUNT(*) FROM plans)                                                                   AS plans,
                 (SELECT COUNT(*) FROM plans WHERE is_recommended = 1)                                         AS recommended_plans,
-                (SELECT COUNT(*) FROM subscriptions WHERE status = 'active' AND ends_at > datetime('now'))   AS subscribers,
-                (SELECT COUNT(*) FROM payments WHERE status = 'waiting_review')                               AS waiting_payments,
-                (SELECT COUNT(*) FROM payments WHERE status = 'pending')                                      AS pending_payments
-        ");
+                (SELECT COUNT(*) FROM subscriptions WHERE status = ? AND ends_at > ?)                        AS subscribers,
+                (SELECT COUNT(*) FROM payments WHERE status = ?)                                              AS waiting_payments,
+                (SELECT COUNT(*) FROM payments WHERE status = ?)                                              AS pending_payments
+        ', ['active', $now, 'waiting_review', 'pending']);
 
         return view('admin.dashboard', [
             'stats' => [

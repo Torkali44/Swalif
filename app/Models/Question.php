@@ -124,6 +124,29 @@ class Question extends Model
             ->all();
     }
 
+    public function wordBuildLetters(): array
+    {
+        return collect(data_get($this->meta, 'letters', []))
+            ->map(fn ($letter) => trim((string) $letter))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    public function validWords(): array
+    {
+        return collect(data_get($this->meta, 'valid_words', []))
+            ->map(fn ($word) => trim((string) $word))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    public function isWordBuild(): bool
+    {
+        return ($this->type ?? '') === QuestionType::WordBuild->value;
+    }
+
     public function correctAnswerText(): ?string
     {
         return match ($this->type ?? QuestionType::Standard->value) {
@@ -139,6 +162,9 @@ class Question extends Model
                 ? collect($this->matchPairs())
                     ->map(fn ($pair) => $pair['left'].' ↔ '.$pair['right'])
                     ->implode(' | ')
+                : null,
+            QuestionType::WordBuild->value => filled($this->validWords())
+                ? implode('، ', $this->validWords())
                 : null,
             default => optional($this->options->firstWhere('is_correct', true))->option_text
                 ?: (filled($this->answer_text) ? $this->answer_text : null),

@@ -6,6 +6,7 @@ use App\Enums\GameStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGameRequest;
 use App\Models\Category;
+use App\Models\Character;
 use App\Models\Game;
 use App\Models\GameQuestion;
 use App\Models\Question;
@@ -46,8 +47,15 @@ class GameController extends Controller
         $category->loadCount(['questions' => fn ($q) => $q->where('is_active', true)]);
         $category = $this->playPool->decorateCategories(collect([$category]), $user)->first();
 
+        $characters = Character::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
         return view('site.game.setup', [
             'category'         => $category,
+            'characters'       => $characters,
             'categoryPlayMeta' => [
                 'total'     => (int) ($category->questions_count ?? 0),
                 'remaining' => (int) ($category->remaining_questions ?? $category->questions_count ?? 0),
@@ -87,7 +95,7 @@ class GameController extends Controller
     public function board(Game $game, Request $request)
     {
         $this->sessions->ensureOwned($game, $request->user());
-        $game->load(['category', 'teams', 'gameQuestions.question']);
+        $game->load(['category', 'teams.character', 'gameQuestions.question']);
         $user = $request->user();
         $freeLeaveWarn = $user && $this->freeTrial->shouldWarnOnLeave($user);
         $leaveWarningMessage = $this->freeTrial->leaveWarningMessage();
@@ -196,7 +204,7 @@ class GameController extends Controller
         }
 
         $question->load('options');
-        $game->load(['category', 'teams', 'gameQuestions']);
+        $game->load(['category', 'teams.character', 'gameQuestions']);
         $timeLimit = $this->timer->limitFor($question);
 
         $totalQuestions = max(1, $game->gameQuestions->count());
@@ -245,7 +253,7 @@ class GameController extends Controller
             $gameQuestion->refresh()->load(['question.options', 'selectedOption']);
         }
 
-        $game->load(['category', 'teams', 'gameQuestions']);
+        $game->load(['category', 'teams.character', 'gameQuestions']);
         $answeredQuestions = $game->gameQuestions->whereNotNull('answered_at')->count();
         $playerCorrect = $gameQuestion->playerChoseCorrectly();
         $user = $request->user();
@@ -309,7 +317,7 @@ class GameController extends Controller
     public function result(Game $game, Request $request)
     {
         $this->sessions->ensureOwned($game, $request->user());
-        $game->load(['teams', 'gameQuestions', 'category']);
+        $game->load(['teams.character', 'gameQuestions', 'category']);
         $winner = $this->winners->determine($game);
 
         // حدّث الفائز دائمًا حسب أعلى نقاط (حتى لو اللعبة خلصت بدري)
@@ -442,6 +450,7 @@ class GameController extends Controller
         }
 
         if ($helper === 'two_answers' && $gq) {
+            $gq->loadMissing('question.options');
             $question = $gq->question;
             $options = $question->options->filter(fn ($o) => filled($o->option_text))->values();
             if ($options->count() !== 4) {

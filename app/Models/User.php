@@ -207,6 +207,11 @@ class User extends Authenticatable
         return $this->hasMany(CustomGame::class);
     }
 
+    public function letterGridGames()
+    {
+        return $this->hasMany(LetterGridGame::class);
+    }
+
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);

@@ -79,15 +79,19 @@
           <!-- <a href="{{ route('custom-game.create') }}" class="btn btn--lg" style="background:linear-gradient(135deg,#FF6D00,#FF1744);color:#fff;font-weight:800">🚀 أنشئ لعبتك الخاصة</a> -->
         </div>
 
-        <div class="hp-hero__players">
-          <div class="hp-avatars">
-            <span style="background:linear-gradient(135deg,#FF6B2C,#EC4899)">A</span>
-            <span style="background:linear-gradient(135deg,#7C3AED,#00B4D8)">S</span>
-            <span style="background:linear-gradient(135deg,#0E9F6E,#F5C542)">M</span>
-            <span style="background:linear-gradient(135deg,#EC4899,#7C3AED)">N</span>
+        @if(isset($heroCharacters) && $heroCharacters->isNotEmpty())
+          <div class="hp-hero__players">
+            <div class="hp-avatars">
+              @foreach($heroCharacters as $character)
+                @if($character->imageUrl())
+                  <img src="{{ $character->imageUrl() }}" alt="{{ $character->name_ar }}" loading="lazy" decoding="async">
+                @else
+                  <span style="background:{{ $character->accentGradient() }}">{{ $character->icon ?: mb_substr($character->name_ar, 0, 1) }}</span>
+                @endif
+              @endforeach
+            </div>
           </div>
-          <div class="hp-hero__live"><i></i> +25,430 لاعب نشط الآن</div>
-        </div>
+        @endif
       </div>
 
       <div class="hp-hero__art">

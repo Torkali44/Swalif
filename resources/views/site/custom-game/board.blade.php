@@ -128,6 +128,54 @@
           </div>
         </div>
       @endforeach
+
+      @foreach(($letterGridsData ?? collect()) as $lgData)
+        @php
+          $grid = $lgData['grid'];
+          $finished = $lgData['finished'] ?? false;
+          $session = $lgData['session'] ?? null;
+          $replayMsg = $lgData['replay_message'] ?? null;
+        @endphp
+        <div class="cg-cat-card cg-letter-grid-card">
+          <div class="cg-col-tiles">
+            <div class="cg-tile is-empty"></div>
+            <div class="cg-tile is-empty"></div>
+            <div class="cg-tile is-empty"></div>
+          </div>
+          <div class="cg-col-center">
+            @if($finished)
+              <button type="button"
+                class="cg-cat-img-box cg-letter-grid-link cg-letter-grid-done"
+                data-replay-popup="{{ e($replayMsg ?: 'تم لعب هذه الشبكة مسبقاً.') }}">
+                @if($grid->imageUrl())
+                  <img src="{{ $grid->imageUrl() }}" alt="{{ $grid->name_ar }}" class="cg-cat-img">
+                @else
+                  <div class="cg-cat-fallback" style="background:linear-gradient(145deg,#FFB300,#FF6D00)">
+                    <span class="cg-cat-emoji">🏆</span>
+                  </div>
+                @endif
+                <div class="cg-cat-title-banner">{{ $grid->name_ar }} — انتهت</div>
+              </button>
+            @else
+              <a href="{{ route('custom-game.letter-grid', [$game, $grid]) }}" class="cg-cat-img-box cg-letter-grid-link">
+                @if($grid->imageUrl())
+                  <img src="{{ $grid->imageUrl() }}" alt="{{ $grid->name_ar }}" class="cg-cat-img">
+                @else
+                  <div class="cg-cat-fallback" style="background:linear-gradient(145deg,#FFB300,#FF6D00)">
+                    <span class="cg-cat-emoji">⬡</span>
+                  </div>
+                @endif
+                <div class="cg-cat-title-banner">{{ $grid->name_ar }}</div>
+              </a>
+            @endif
+          </div>
+          <div class="cg-col-tiles">
+            <div class="cg-tile is-empty"></div>
+            <div class="cg-tile is-empty"></div>
+            <div class="cg-tile is-empty"></div>
+          </div>
+        </div>
+      @endforeach
     </div>
 
     <!-- Bottom Section: Teams Score & Helper Tools -->
@@ -417,6 +465,26 @@ html.dark .cg-tile.is-used {
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+a.cg-letter-grid-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+button.cg-letter-grid-link {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+  text-align: inherit;
+}
+a.cg-letter-grid-link:hover,
+button.cg-letter-grid-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(255, 109, 0, 0.25);
 }
 
 body.dark .cg-cat-img-box,
@@ -866,6 +934,23 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   });
+
+  document.querySelectorAll('[data-replay-popup]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var msg = btn.getAttribute('data-replay-popup') || 'تم لعب هذه الشبكة مسبقاً.';
+      if (typeof window.showPopup === 'function') {
+        window.showPopup(msg, 'error');
+      } else {
+        alert(msg);
+      }
+    });
+  });
+
+  @if(session('letter_grid_replay_popup'))
+    if (typeof window.showPopup === 'function') {
+      window.showPopup(@json(session('letter_grid_replay_popup')), 'error');
+    }
+  @endif
 });
 </script>
 

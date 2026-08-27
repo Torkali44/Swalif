@@ -38,13 +38,26 @@
       min-width: 0;
       overflow-x: auto;
       scrollbar-width: none;
+      gap: 4px;
     }
     .nav__links::-webkit-scrollbar { display: none; }
+    .nav__links > a {
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+    }
     .nav__inner {
       overflow: visible !important;
+      gap: 8px;
     }
 
     @media (max-width: 900px) {
+      .nav__inner {
+        flex-wrap: nowrap !important;
+        height: 64px;
+        padding-inline: 10px;
+      }
       .nav__links {
         display: none;
         flex-direction: column;
@@ -57,6 +70,7 @@
         padding: 16px;
         box-shadow: 0 12px 24px rgba(0,0,0,.08);
         overflow: visible;
+        z-index: 120;
       }
       .nav__links.is-open { display: flex; }
       body.dark .nav__links { background: var(--bg); border-color: rgba(255,255,255,.06); }
@@ -71,20 +85,25 @@
       body.dark .nav-mobile-extra { border-color: rgba(255,255,255,.06); }
       .nav__actions-desktop,
       .nav-auth-btns { display: none !important; }
+      .nav__actions {
+        margin-inline-start: auto;
+        gap: 6px !important;
+      }
       .nav__toggle {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-        width: 42px;
-        height: 42px;
+        width: 40px;
+        height: 40px;
         border-radius: 12px;
         border: 1px solid var(--line, #ECE6DE);
         background: #fff;
-        font-size: 22px;
+        font-size: 20px;
         line-height: 1;
         padding: 0;
         flex-shrink: 0;
       }
+      body.dark .nav__toggle { background: #151B32; border-color: rgba(255,255,255,.12); color: #fff; }
       .nav-icon-btn { width: 40px; height: 40px; flex-shrink: 0; }
     }
     @media (min-width: 901px) {
@@ -107,7 +126,8 @@
     <nav class="nav__links" id="navLinks">
       <a href="{{ route('home') }}" @class(['is-active' => $onHome])>الرئيسية</a>
       <a href="{{ route('categories.index') }}" @class(['is-active' => request()->routeIs('categories.*')])>الألعاب</a>
-      <a href="{{ route('custom-game.create') }}" @class(['is-active' => request()->routeIs('custom-game.*')])>أنشئ لعبتك الخاصة 🎮</a>
+      <a href="{{ route('custom-game.create') }}" @class(['is-active' => request()->routeIs('custom-game.*')])>إنشاء لعبة</a>
+      <a href="{{ route('letter-grid.create') }}" @class(['is-active' => request()->routeIs('letter-grid.*')])>شبكة الحروف</a>
       <a href="{{ route('home') }}#plans">الاشتراكات</a>
       <a href="{{ route('home') }}#faq">المزيد</a>
 

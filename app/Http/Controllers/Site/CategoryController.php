@@ -31,6 +31,9 @@ class CategoryController extends Controller
         $categories = Cache::remember('categories.active_ordered', 120, fn () => $this->categories->activeOrdered());
         $categories = $this->playPool->decorateCategories($categories, $user);
 
+        $letterGridLocked = $user && ! $playBlocked && $this->freeTrial->hasConsumedFreeLetterGridGame($user);
+        $customGameLocked = $user && ! $playBlocked && $this->freeTrial->hasConsumedFreeCustomGame($user);
+
         return view('site.categories.index', [
             'categories' => $categories,
             'classifications' => Cache::remember('categories.active_classifications', 120, fn () => Classification::query()
@@ -41,6 +44,10 @@ class CategoryController extends Controller
             'playBlocked' => $playBlocked,
             'freeLocked' => $freeLocked || $playBlocked,
             'allowedCategoryId' => $allowedCategoryId,
+            'letterGridLocked' => $letterGridLocked || $playBlocked,
+            'customGameLocked' => $customGameLocked || $playBlocked,
+            'letterGridSubscribeMessage' => $this->freeTrial->letterGridSubscribeRequiredMessage(),
+            'customGameSubscribeMessage' => $this->freeTrial->customGameSubscribeRequiredMessage(),
             'subscribeMessage' => $playBlocked
                 ? $this->playAccess->blockMessage($user)
                 : $this->freeTrial->subscribeRequiredMessage(),

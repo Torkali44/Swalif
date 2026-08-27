@@ -20,7 +20,6 @@
 <div
   class="result-stage"
   data-result-page
-  @if($justEnded) data-game-just-ended="1" @endif
   @if(!empty($needsSubscribe))
     data-subscribe-guard="1"
     data-subscribe-message="{{ $subscribeMessage }}"
@@ -79,8 +78,15 @@
       @endphp
       <article class="team-card {{ $isWinner ? 'team-card--winner' : '' }}">
         <div class="team-card__main">
-          <div class="team-card__avatar" style="background:{{ $avatars[($row['rank'] - 1) % 2] }}">
-            {{ $row['rank'] }}
+          <div class="team-card__avatar"
+            style="background:{{ $team->character?->accentGradient() ?: $avatars[($row['rank'] - 1) % 2] }};overflow:hidden;border-radius:50%">
+            @if($team->character && $team->character->imageUrl())
+              <img src="{{ $team->character->imageUrl() }}" alt="{{ $team->character->name_ar }}" style="width:100%;height:100%;object-fit:cover;display:block">
+            @elseif($team->character && $team->character->icon)
+              {{ $team->character->icon }}
+            @else
+              {{ $row['rank'] }}
+            @endif
           </div>
           <div class="team-card__info">
             <b>{{ $team->name }}</b>

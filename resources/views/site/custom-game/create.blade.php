@@ -852,8 +852,8 @@
 
       <!-- Selection Heading & Counter -->
       <div class="selection-heading-wrap">
-        <h2>اختر الفئات</h2>
-        <p>اختر من 4 إلى 6 فئات لإنشاء لعبتك المخصصة</p>
+        <h2>اختر الألعاب</h2>
+        <p>اختر من 4 إلى 6 ألعاب (فئات أو شبكات حروف) لإنشاء لعبتك المخصصة</p>
 
         <div class="selection-counter-badge" id="selectionBadge">
           🎯 اختياراتك: <span id="selCount">0</span> / 6
@@ -876,6 +876,9 @@
                 {{ $classification->icon ? $classification->icon.' ' : '' }}{{ $classification->name_ar }}
               </button>
             @endforeach
+            @if(($letterGrids ?? collect())->isNotEmpty())
+              <button type="button" class="pill-btn" data-filter="letter-grids">⬡ شبكات الحروف</button>
+            @endif
           </div>
         </div>
       </div>
@@ -920,12 +923,15 @@
                   @endphp
                   <div
                     class="card-item-box {{ $isSelected ? 'is-selected' : '' }}"
+                    data-select-key="c-{{ $category->id }}"
                     data-id="{{ $category->id }}"
+                    data-type="category"
                     data-category-id="{{ $category->id }}"
                     data-filter="{{ $filterKey }}"
                     data-group="{{ $filterKey }}"
                     data-name="{{ $category->name_ar }}"
-                     data-questions="{{ $category->remaining_questions ?? $category->questions_count }}"
+                     data-questions="{{ (int) ($category->questions_count ?? 0) }}"
+                    data-remaining="{{ (int) ($category->remaining_questions ?? $category->questions_count ?? 0) }}"
                   >
                     <!-- Green Checkmark Badge ✔ for Selected Category Cards -->
                     <div class="selected-check-badge">✔</div>
@@ -989,12 +995,15 @@
                   @endphp
                   <div
                     class="card-item-box {{ $isSelected ? 'is-selected' : '' }}"
+                    data-select-key="c-{{ $category->id }}"
                     data-id="{{ $category->id }}"
+                    data-type="category"
                     data-category-id="{{ $category->id }}"
                     data-filter="general"
                     data-group="general"
                     data-name="{{ $category->name_ar }}"
-                     data-questions="{{ $category->remaining_questions ?? $category->questions_count }}"
+                     data-questions="{{ (int) ($category->questions_count ?? 0) }}"
+                    data-remaining="{{ (int) ($category->remaining_questions ?? $category->questions_count ?? 0) }}"
                   >
                     <div class="selected-check-badge">✔</div>
 
@@ -1032,6 +1041,58 @@
           </div>
         @endif
 
+        {{-- شبكات الحروف كتصنيف قابل للاختيار ضمن الـ 4–6 --}}
+        @if(($letterGrids ?? collect())->isNotEmpty())
+          <div class="accordion-section" data-classification-id="letter-grids" data-classification-name="شبكات الحروف">
+            <button
+              type="button"
+              class="accordion-header is-open"
+              data-target="acc-cg-letter-grids"
+              aria-expanded="true"
+            >
+              <div class="accordion-header-title-wrap">
+                <span class="accordion-icon">⬡</span>
+                <span class="accordion-title">شبكات الحروف</span>
+                <span class="accordion-count">({{ $letterGrids->count() }})</span>
+              </div>
+              <span class="accordion-toggle-circle" aria-hidden="true">−</span>
+            </button>
+
+            <div class="accordion-body is-open" id="acc-cg-letter-grids">
+              <div class="custom-cards-grid">
+                @foreach($letterGrids as $grid)
+                  @php
+                    $isSelected = in_array((int) $grid->id, array_map('intval', old('letter_grid_ids', [])), true);
+                  @endphp
+                  <div
+                    class="card-item-box {{ $isSelected ? 'is-selected' : '' }}"
+                    data-select-key="lg-{{ $grid->id }}"
+                    data-id="{{ $grid->id }}"
+                    data-type="letter-grid"
+                    data-filter="letter-grids"
+                    data-group="letter-grids"
+                    data-name="{{ $grid->name_ar }}"
+                    data-questions="{{ $grid->playable_cells_count }}"
+                  >
+                    <div class="selected-check-badge">✔</div>
+                    <div class="card-item-image-wrap">
+                      <span class="card-item-badge card-item-badge--remaining">{{ $grid->playable_cells_count }} حرف</span>
+                      @if($grid->imageUrl())
+                        <img src="{{ $grid->imageUrl() }}" alt="{{ $grid->name_ar }}" loading="lazy" decoding="async">
+                      @else
+                        <div class="card-item-fallback-icon" style="font-size:2.4rem">⬡</div>
+                      @endif
+                    </div>
+                    <div class="card-item-footer-bar">
+                      <span class="card-item-name">{{ $grid->name_ar }}</span>
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          </div>
+        @endif
+
       </div>
 
       <!-- Teams Section ("حدد معلومات الفرق") -->
@@ -1039,13 +1100,17 @@
         <h3 class="teams-info-title">حدد معلومات الفرق</h3>
 
         <div class="game-title-field">
+          <label style="display:block;font-weight:800;margin-bottom:8px">اسم اللعبة <span style="color:#FF1744">*</span></label>
           <input
             type="text"
             name="title"
             class="pill-input"
-            placeholder="تحدي سوالف الخاص"
+            placeholder="اكتب اسم اللعبة…"
             value="{{ old('title') }}"
+            required
+            maxlength="100"
           >
+          @error('name')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
         </div>
 
         <div class="teams-two-col">
@@ -1056,9 +1121,32 @@
               type="text"
               name="team_names[0]"
               class="pill-input"
-              placeholder="الفريق الأول"
+              placeholder="اكتب اسم الفريق الأول…"
               value="{{ old('team_names.0') }}"
+              required
+              maxlength="50"
             >
+            @error('team_one')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
+
+            <div style="margin-top:14px">
+              <div class="helpers-sub-title">اختر شخصية الفريق 1 <span style="color:#FF1744">*</span></div>
+              <input type="hidden" name="team_one_character_id" id="cgTeamOneCharId" value="{{ old('team_one_character_id') }}" required>
+              <div class="cg-char-grid" data-char-team="one" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px">
+                @foreach(($characters ?? collect()) as $char)
+                  <button type="button" class="cg-char-btn {{ (string) old('team_one_character_id') === (string) $char->id ? 'is-active' : '' }}"
+                    data-char-id="{{ $char->id }}" data-char-for="one"
+                    style="border:2px solid {{ (string) old('team_one_character_id') === (string) $char->id ? '#FF6D00' : 'rgba(11,18,32,.1)' }};border-radius:14px;padding:8px 4px;background:#fff;cursor:pointer;font-weight:800;font-size:.75rem">
+                    @if($char->imageUrl())
+                      <img src="{{ $char->imageUrl() }}" alt="{{ $char->name_ar }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 4px">
+                    @else
+                      <span style="display:block;font-size:1.4rem;margin-bottom:2px">{{ $char->icon ?: '🧑' }}</span>
+                    @endif
+                    {{ $char->name_ar }}
+                  </button>
+                @endforeach
+              </div>
+              @error('team_one_character_id')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
+            </div>
           </div>
 
           <!-- Team 2 -->
@@ -1068,13 +1156,36 @@
               type="text"
               name="team_names[1]"
               class="pill-input"
-              placeholder="الفريق الثاني"
+              placeholder="اكتب اسم الفريق الثاني…"
               value="{{ old('team_names.1') }}"
+              required
+              maxlength="50"
             >
+            @error('team_two')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
+
+            <div style="margin-top:14px">
+              <div class="helpers-sub-title">اختر شخصية الفريق 2 <span style="color:#FF1744">*</span></div>
+              <input type="hidden" name="team_two_character_id" id="cgTeamTwoCharId" value="{{ old('team_two_character_id') }}" required>
+              <div class="cg-char-grid" data-char-team="two" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px">
+                @foreach(($characters ?? collect()) as $char)
+                  <button type="button" class="cg-char-btn {{ (string) old('team_two_character_id') === (string) $char->id ? 'is-active' : '' }}"
+                    data-char-id="{{ $char->id }}" data-char-for="two"
+                    style="border:2px solid {{ (string) old('team_two_character_id') === (string) $char->id ? '#FF6D00' : 'rgba(11,18,32,.1)' }};border-radius:14px;padding:8px 4px;background:#fff;cursor:pointer;font-weight:800;font-size:.75rem">
+                    @if($char->imageUrl())
+                      <img src="{{ $char->imageUrl() }}" alt="{{ $char->name_ar }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 4px">
+                    @else
+                      <span style="display:block;font-size:1.4rem;margin-bottom:2px">{{ $char->icon ?: '🧑' }}</span>
+                    @endif
+                    {{ $char->name_ar }}
+                  </button>
+                @endforeach
+              </div>
+              @error('team_two_character_id')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
+            </div>
           </div>
         </div>
 
-        <div style="margin-bottom:28px">
+        <div style="margin-bottom:28px;margin-top:18px">
           <div class="helpers-sub-title">وسائل المساعدة المتاحة لكل فريق:</div>
           <div class="helpers-pills-row">
             <span class="helper-mini-badge">🔄 تبديل السؤال (مرة واحدة)</span>
@@ -1150,10 +1261,21 @@ document.addEventListener('DOMContentLoaded', function () {
   var hiddenInputs = document.getElementById('hiddenInputs');
   var stickyBar    = document.getElementById('mobileStickyBar');
 
-  /* ── Audio Helper (Intact & Preserved) ─────────────────── */
+  /* ── Audio Helper (single shared AudioContext) ─────────── */
+  var _audioCtx = null;
+  function _getAudioCtx() {
+    if (!_audioCtx) {
+      try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    if (_audioCtx && _audioCtx.state === 'suspended') {
+      try { _audioCtx.resume(); } catch(e) {}
+    }
+    return _audioCtx;
+  }
   function playSound(type) {
     try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var ctx = _getAudioCtx();
+      if (!ctx) return;
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
       osc.connect(gain);
@@ -1398,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Restore old selections
   document.querySelectorAll('.card-item-box.is-selected').forEach(function (card) {
-    selected.add(parseInt(card.dataset.id));
+    selected.add(card.dataset.selectKey || ('c-' + card.dataset.id));
   });
 
   function updateUI() {
@@ -1409,14 +1531,14 @@ document.addEventListener('DOMContentLoaded', function () {
     badge.classList.toggle('is-ready', count >= MIN && count <= MAX);
 
     document.querySelectorAll('.card-item-box').forEach(function (card) {
-      var id = parseInt(card.dataset.id);
-      if (selected.has(id)) {
+      var key = card.dataset.selectKey || ('c-' + card.dataset.id);
+      if (selected.has(key)) {
         card.classList.add('is-selected');
       } else {
         card.classList.remove('is-selected');
       }
 
-      if (count >= MAX && !selected.has(id)) {
+      if (count >= MAX && !selected.has(key)) {
         card.classList.add('is-disabled');
       } else {
         card.classList.remove('is-disabled');
@@ -1431,35 +1553,55 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (count < MIN) {
-      submitHint.textContent = 'اختر ' + (MIN - count) + ' فئة إضافية على الأقل لتفعيل الزر';
+      submitHint.textContent = 'اختر ' + (MIN - count) + ' ألعاب إضافية على الأقل لتفعيل الزر';
       submitHint.className = 'validation-hint';
     } else {
-      submitHint.textContent = '✓ جاهز لبدء اللعب!';
+      submitHint.textContent = '✓ جاهز لبدء اللعب بعد تعبئة الأسماء والشخصيات!';
       submitHint.className = 'validation-hint is-ready';
     }
 
     hiddenInputs.innerHTML = '';
-    selected.forEach(function (id) {
+    selected.forEach(function (key) {
       var inp = document.createElement('input');
       inp.type = 'hidden';
-      inp.name = 'category_ids[]';
-      inp.value = id;
+      if (String(key).indexOf('lg-') === 0) {
+        inp.name = 'letter_grid_ids[]';
+        inp.value = String(key).replace('lg-', '');
+      } else {
+        inp.name = 'category_ids[]';
+        inp.value = String(key).replace(/^c-/, '');
+      }
       hiddenInputs.appendChild(inp);
     });
   }
 
   function toggleCard(card) {
-    var id = parseInt(card.dataset.id);
-    if (selected.has(id)) {
-      selected.delete(id);
+    var key = card.dataset.selectKey || ('c-' + card.dataset.id);
+    if (selected.has(key)) {
+      selected.delete(key);
       card.classList.remove('is-selected');
       playSound('deselect');
     } else {
       if (selected.size >= MAX) {
-        showToast('اللعبة الخاصة لازم تكون من 4 إلى 6 فئات فقط 🎯', 'error');
+        showToast('اللعبة الخاصة لازم تكون من 4 إلى 6 ألعاب فقط 🎯', 'error');
         return;
       }
-      selected.add(id);
+
+      // فئة بدون أسئلة أصلاً (مش اللي اتلعبت قبل كده وخلصت أسئلتها المتبقية)
+      if ((card.dataset.type || 'category') === 'category') {
+        var qCount = parseInt(card.dataset.questions || '0', 10);
+        if (!Number.isFinite(qCount) || qCount <= 0) {
+          var emptyMsg = 'هالفئة هيتضاف لها أسئلة قريب 🎯<br>اختَر فئة تانية دلوقتي.';
+          if (typeof window.showPopup === 'function') {
+            window.showPopup(emptyMsg, 'error');
+          } else {
+            showToast('هالفئة هيتضاف لها أسئلة قريب — اختار غيرها', 'error');
+          }
+          return;
+        }
+      }
+
+      selected.add(key);
       card.classList.add('is-selected');
       playSound('select');
     }
@@ -1500,8 +1642,60 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('customGameForm').addEventListener('submit', function (e) {
     if (selected.size < MIN) {
       e.preventDefault();
-      showToast('اختار 4 فئات على الأقل عشان تقدر تنشئ لعبتك 🎮', 'error');
+      showToast('اختار 4 ألعاب على الأقل عشان تقدر تنشئ لعبتك 🎮', 'error');
+      return;
     }
+
+    var title = (document.querySelector('input[name="title"]')?.value || '').trim();
+    var t1 = (document.querySelector('input[name="team_names[0]"]')?.value || '').trim();
+    var t2 = (document.querySelector('input[name="team_names[1]"]')?.value || '').trim();
+    var c1 = document.getElementById('cgTeamOneCharId')?.value;
+    var c2 = document.getElementById('cgTeamTwoCharId')?.value;
+
+    if (!title) {
+      e.preventDefault();
+      showToast('اكتب اسم اللعبة أولاً ✍️', 'error');
+      return;
+    }
+    if (!t1 || !t2) {
+      e.preventDefault();
+      showToast('اكتب اسم الفريق الأول والثاني 👥', 'error');
+      return;
+    }
+    if (t1 === t2) {
+      e.preventDefault();
+      showToast('اسم الفريقين لازم يكون مختلف', 'error');
+      return;
+    }
+    if (!c1 || !c2) {
+      e.preventDefault();
+      showToast('اختر شخصية لكل فريق 🎭', 'error');
+      return;
+    }
+    if (c1 === c2) {
+      e.preventDefault();
+      showToast('كل فريق لازم يختار شخصية مختلفة', 'error');
+    }
+  });
+
+  /* Character pickers */
+  document.querySelectorAll('.cg-char-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var forTeam = btn.dataset.charFor;
+      var id = btn.dataset.charId;
+      var input = forTeam === 'one'
+        ? document.getElementById('cgTeamOneCharId')
+        : document.getElementById('cgTeamTwoCharId');
+      if (input) input.value = id;
+
+      document.querySelectorAll('.cg-char-btn[data-char-for="' + forTeam + '"]').forEach(function (b) {
+        b.classList.remove('is-active');
+        b.style.borderColor = 'rgba(11,18,32,.1)';
+      });
+      btn.classList.add('is-active');
+      btn.style.borderColor = '#FF6D00';
+      playSound('select');
+    });
   });
 
   /* ── Random Picker Modal (فكر وابدأ — تختار 6 فئات) ──────────────── */
@@ -1529,9 +1723,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // 🎲 اختار 6 فئات عشوائية فوراً
   if (pickSixBtn) {
     pickSixBtn.addEventListener('click', function () {
-      var allCards = Array.from(document.querySelectorAll('.card-item-box'));
+      var allCards = Array.from(document.querySelectorAll('.card-item-box')).filter(function (card) {
+        if ((card.dataset.type || 'category') !== 'category') return true;
+        return parseInt(card.dataset.questions || '0', 10) > 0;
+      });
       if (allCards.length < 6) {
-        showToast('لا تتوفر 6 فئات متكاملة في الموقع!', 'error');
+        showToast('لا تتوفر 6 ألعاب جاهزة بأسئلة حالياً!', 'error');
         randomModal.hidden = true;
         return;
       }
@@ -1542,14 +1739,13 @@ document.addEventListener('DOMContentLoaded', function () {
       var pickedSix = shuffled.slice(0, 6);
 
       pickedSix.forEach(function(card) {
-        var id = parseInt(card.dataset.id);
-        selected.add(id);
+        selected.add(card.dataset.selectKey || ('c-' + card.dataset.id));
       });
 
       updateUI();
       playSound('fanfare');
       randomModal.hidden = true;
-      showToast('تم اختيار 6 فئات عشوائية بنجاح! جاهز لبدء اللعب 🚀', 'success');
+      showToast('تم اختيار 6 ألعاب عشوائية بنجاح! جاهز لبدء اللعب 🚀', 'success');
     });
   }
 
@@ -1557,24 +1753,27 @@ document.addEventListener('DOMContentLoaded', function () {
   if (pickOneBtn) {
     pickOneBtn.addEventListener('click', function () {
       var unselectedCards = Array.from(document.querySelectorAll('.card-item-box')).filter(function(card) {
-        var id = parseInt(card.dataset.id);
-        return !selected.has(id);
+        var key = card.dataset.selectKey || ('c-' + card.dataset.id);
+        if (selected.has(key)) return false;
+        if ((card.dataset.type || 'category') === 'category' && parseInt(card.dataset.questions || '0', 10) <= 0) {
+          return false;
+        }
+        return true;
       });
 
       if (unselectedCards.length === 0 || selected.size >= MAX) {
-        showToast('وصلت للحد الأقصى من الفئات (6 فئات)!', 'info');
+        showToast('وصلت للحد الأقصى (6 ألعاب)!', 'info');
         randomModal.hidden = true;
         return;
       }
 
       var pickedOne = unselectedCards[Math.floor(Math.random() * unselectedCards.length)];
-      var id = parseInt(pickedOne.dataset.id);
-      selected.add(id);
+      selected.add(pickedOne.dataset.selectKey || ('c-' + pickedOne.dataset.id));
       updateUI();
       playSound('select');
       pickedOne.scrollIntoView({ behavior: 'smooth', block: 'center' });
       randomModal.hidden = true;
-      showToast('تمت إضافة فئة "' + pickedOne.dataset.name + '" بنجاح! 🎯', 'success');
+      showToast('تمت إضافة "' + pickedOne.dataset.name + '" بنجاح! 🎯', 'success');
     });
   }
 

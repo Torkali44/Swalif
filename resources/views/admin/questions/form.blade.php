@@ -25,8 +25,10 @@
     } else {
       $matchPairs = $matchPairs->pad(4, ['left' => '', 'right' => ''])->values();
     }
-    $maxQuestions = $maxQuestionsPerCategory ?? 18;
-    $maxPerLevel = $maxPerLevel ?? 6;
+    $storedWordBuildLetters = old('word_build_letters', $question->wordBuildLetters());
+    $wordBuildLetters = collect($storedWordBuildLetters)->whenEmpty(fn() => collect(['', '', '', '', '', '']))->pad(6, '')->values();
+    $storedWordBuildWords = old('word_build_words', $question->validWords());
+    $wordBuildWords = collect($storedWordBuildWords)->whenEmpty(fn() => collect(['', '', '']))->pad(3, '')->values();
     $pointsMap = ['easy' => 200, 'medium' => 400, 'hard' => 600];
   @endphp
 
@@ -67,7 +69,6 @@
             data-medium="{{ $medium }}" data-hard="{{ $hard }}"
             @selected((string) old('category_id', $question->category_id ?: request('category_id')) === (string) $category->id)>
             {{ $category->classificationName() }} — {{ $category->name_ar }}
-            ({{ $count }} سؤال · سهل {{ $easy }} · متوسط {{ $medium }} · صعب {{ $hard }})
           </option>
         @endforeach
       </select>
@@ -96,16 +97,15 @@
     </label>
     @error('level')<small class="error">{{ $message }}</small>@enderror
 
-    <label>
-      النقاط (تلقائي حسب المستوى)
-      <input type="text" id="pointsPreview" value="{{ old('points', $question->points ?: 200) }}" readonly>
-      <input type="hidden" name="points" id="pointsHidden" value="{{ old('points', $question->points ?: 200) }}">
-    </label>
+    <input type="hidden" name="points" id="pointsHidden" value="{{ old('points', $question->points ?: 200) }}">
 
     <label>
       المؤقت (ثانية)
-      <input type="number" name="time_limit" value="{{ old('time_limit', $question->time_limit ?? 60) }}" min="10"
+      <input type="number" name="time_limit" id="questionTimeLimit"
+        value="{{ old('time_limit', $question->time_limit ?? ($selectedType === 'word_build' ? 15 : ($selectedType === 'audio' ? 60 : 30))) }}" min="10"
         max="300">
+      <small class="muted" id="wordBuildTimerHint" hidden>لنوع «رتبها»: المؤقت بين 10 و 15 ثانية فقط.</small>
+      <small class="muted" id="defaultTimerHint">الافتراضي 30 ثانية — وللأسئلة الصوتية (مكالمة) 60 ثانية.</small>
     </label>
 
     <label class="wide">
@@ -224,6 +224,37 @@
       </fieldset>
     </div>
 
+    <div class="wide question-section" data-question-section data-types="word_build" hidden>
+      <fieldset class="wide">
+        <legend>حروف رتبها</legend>
+        <div class="repeat-stack word-build-letters-grid" id="wordBuildLetters">
+          @foreach($wordBuildLetters as $index => $letter)
+            <label class="option option--letter">
+              <span class="option__badge">{{ $index + 1 }}</span>
+              <input name="word_build_letters[]" value="{{ $letter }}" placeholder="حرف" maxlength="3"
+                dir="rtl" class="letter-input">
+            </label>
+          @endforeach
+        </div>
+        <button class="btn btn-outline btn-sm" type="button" id="addWordBuildLetter">+ إضافة حرف</button>
+        <small class="muted">أدخل الحروف التي تظهر للاعب. يمكنك إضافة أي عدد (مثال: ع، م، ل، ا، ق، ة).</small>
+      </fieldset>
+
+      <fieldset class="wide" style="margin-top:16px">
+        <legend>الكلمات الصحيحة</legend>
+        <div class="repeat-stack" id="wordBuildWords">
+          @foreach($wordBuildWords as $index => $word)
+            <label class="option">
+              <span class="option__badge">{{ $index + 1 }}</span>
+              <input name="word_build_words[]" value="{{ $word }}" placeholder="كلمة {{ $index + 1 }}" dir="rtl">
+            </label>
+          @endforeach
+        </div>
+        <button class="btn btn-outline btn-sm" type="button" id="addWordBuildWord">+ إضافة كلمة</button>
+        <small class="muted">كل كلمة يجب أن تُكوَّن من الحروف أعلاه. اللاعب يحاول إيجاد كل الكلمات خلال المؤقت.</small>
+      </fieldset>
+    </div>
+
     <div class="wide question-section" data-question-section data-types="standard" hidden>
       <fieldset class="wide">
         <legend>الاختيارات</legend>
@@ -248,8 +279,14 @@
         const sections = Array.from(document.querySelectorAll('[data-question-section]'));
         const orderContainer = document.getElementById('orderItems');
         const matchContainer = document.getElementById('matchPairs');
+        const wordBuildLettersContainer = document.getElementById('wordBuildLetters');
+        const wordBuildWordsContainer = document.getElementById('wordBuildWords');
         const addOrderBtn = document.getElementById('addOrderItem');
         const addMatchBtn = document.getElementById('addMatchPair');
+        const addWordBuildLetterBtn = document.getElementById('addWordBuildLetter');
+        const addWordBuildWordBtn = document.getElementById('addWordBuildWord');
+        const timeLimitInput = document.getElementById('questionTimeLimit');
+        const wordBuildTimerHint = document.getElementById('wordBuildTimerHint');
 
         const escapeHtml = (value) => String(value ?? '')
           .replaceAll('&', '&amp;')
@@ -291,11 +328,31 @@
             const show = allowed.includes(type);
             section.hidden = !show;
             section.querySelectorAll('input, textarea, select').forEach((el) => {
-              if (el.type === 'file' || el.name === 'image' || el.name === 'answer_image' || el.name === 'answer_text' || el.name?.startsWith('options') || el.name?.startsWith('order_items') || el.name?.startsWith('match_pairs') || el.name === 'correct_option' || el.name === 'remove_image' || el.name === 'remove_answer_image') {
+              if (el.type === 'file' || el.name === 'image' || el.name === 'answer_image' || el.name === 'answer_text' || el.name?.startsWith('options') || el.name?.startsWith('order_items') || el.name?.startsWith('match_pairs') || el.name?.startsWith('word_build_letters') || el.name?.startsWith('word_build_words') || el.name === 'correct_option' || el.name === 'remove_image' || el.name === 'remove_answer_image') {
                 el.disabled = !show;
               }
             });
           });
+
+          const isWordBuild = type === 'word_build';
+          const isAudio = type === 'audio';
+          if (wordBuildTimerHint) wordBuildTimerHint.hidden = !isWordBuild;
+          const defaultTimerHint = document.getElementById('defaultTimerHint');
+          if (defaultTimerHint) defaultTimerHint.hidden = isWordBuild;
+          if (timeLimitInput) {
+            timeLimitInput.min = isWordBuild ? '10' : '10';
+            timeLimitInput.max = isWordBuild ? '15' : '300';
+            // عند تغيير النوع في إنشاء سؤال جديد: طبّق الافتراضي المناسب
+            const isNewQuestion = !document.querySelector('input[name="_method"][value="PUT"]');
+            if (isWordBuild) {
+              const current = Number(timeLimitInput.value || 15);
+              if (current < 10 || current > 15 || isNewQuestion) {
+                timeLimitInput.value = '15';
+              }
+            } else if (isNewQuestion) {
+              timeLimitInput.value = isAudio ? '60' : '30';
+            }
+          }
         };
 
         const addOrderRow = (value = '') => {
@@ -325,9 +382,35 @@
           matchContainer.appendChild(row);
         };
 
+        const addWordBuildLetterRow = (value = '') => {
+          if (!wordBuildLettersContainer) return;
+          const index = wordBuildLettersContainer.querySelectorAll('input[name="word_build_letters[]"]').length + 1;
+          const row = document.createElement('label');
+          row.className = 'option option--letter';
+          row.innerHTML = `
+            <span class="option__badge">${index}</span>
+            <input name="word_build_letters[]" value="${escapeHtml(value)}" placeholder="حرف" maxlength="3" dir="rtl" class="letter-input">
+          `;
+          wordBuildLettersContainer.appendChild(row);
+        };
+
+        const addWordBuildWordRow = (value = '') => {
+          if (!wordBuildWordsContainer) return;
+          const index = wordBuildWordsContainer.querySelectorAll('input[name="word_build_words[]"]').length + 1;
+          const row = document.createElement('label');
+          row.className = 'option';
+          row.innerHTML = `
+            <span class="option__badge">${index}</span>
+            <input name="word_build_words[]" value="${escapeHtml(value)}" placeholder="كلمة ${index}" dir="rtl">
+          `;
+          wordBuildWordsContainer.appendChild(row);
+        };
+
         typeSelect?.addEventListener('change', updateSections);
         addOrderBtn?.addEventListener('click', () => addOrderRow());
         addMatchBtn?.addEventListener('click', () => addMatchRow());
+        addWordBuildLetterBtn?.addEventListener('click', () => addWordBuildLetterRow());
+        addWordBuildWordBtn?.addEventListener('click', () => addWordBuildWordRow());
 
         updateSections();
       })();
@@ -335,26 +418,25 @@
       (() => {
         const categorySelect = document.getElementById('questionCategorySelect');
         const levelSelect = document.getElementById('questionLevelSelect');
-        const pointsPreview = document.getElementById('pointsPreview');
         const pointsHidden = document.getElementById('pointsHidden');
         const hint = document.getElementById('levelCapacityHint');
-        const maxPerLevel = {{ (int) ($maxPerLevel ?? 2) }};
         const pointsMap = { easy: 200, medium: 400, hard: 600 };
         const labels = { easy: 'السهل', medium: 'المتوسط', hard: 'الصعب' };
 
         const sync = () => {
           const level = levelSelect?.value || 'easy';
           const points = pointsMap[level] || 200;
-          if (pointsPreview) pointsPreview.value = points;
           if (pointsHidden) pointsHidden.value = points;
 
           const opt = categorySelect?.selectedOptions?.[0];
           if (!opt || !hint) return;
 
           const count = Number(opt.dataset[level] || 0);
-          const total = Number(opt.dataset.count || 0);
+          const easy = Number(opt.dataset.easy || 0);
+          const medium = Number(opt.dataset.medium || 0);
+          const hard = Number(opt.dataset.hard || 0);
           hint.style.color = '';
-          hint.textContent = `رصيد الفئة: ${total} سؤال — ${labels[level] || level}: ${count} — كل جولة تأخذ 2 من كل مستوى`;
+          hint.textContent = `أسئلة المستوى الحالي (${labels[level] || level}): ${count} — الإجمالي: سهل ${easy} · متوسط ${medium} · صعب ${hard}`;
         };
 
         categorySelect?.addEventListener('change', sync);

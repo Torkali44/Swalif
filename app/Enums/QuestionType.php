@@ -10,6 +10,7 @@ enum QuestionType: string
     case Match = 'match';
     case Complete = 'complete';
     case Order = 'order';
+    case WordBuild = 'word_build';
     case Video = 'video';
     case Audio = 'audio';
 
@@ -22,6 +23,7 @@ enum QuestionType: string
             self::Match => 'توصيل',
             self::Complete => 'أكمل الناقص',
             self::Order => 'ترتيب',
+            self::WordBuild => 'رتبها',
             self::Video => 'فيديو',
             self::Audio => 'صوتي',
         };

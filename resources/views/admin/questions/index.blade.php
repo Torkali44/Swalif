@@ -98,6 +98,7 @@
                                     'match' => 'توصيل',
                                     'complete' => 'أكمل الناقص',
                                     'order' => 'ترتيب',
+                                    'word_build' => 'رتبها',
                                     'video' => 'فيديو',
                                     'audio' => 'صوتي',
                                     'standard' => 'اختياري',
@@ -111,6 +112,7 @@
                                     'match' => '🔗',
                                     'complete' => '✏️',
                                     'order' => '🔢',
+                                    'word_build' => '🔤',
                                     default => '📝',
                                   };
                                   $typeColor = match ($question->type ?? 'standard') {
@@ -119,6 +121,7 @@
                                     'image_guess' => 'background:rgba(14,159,110,.1);color:#0E9F6E;border-color:rgba(14,159,110,.3)',
                                     'match' => 'background:rgba(236,72,153,.1);color:#BE185D;border-color:rgba(236,72,153,.3)',
                                     'order' => 'background:rgba(255,140,0,.1);color:#B45309;border-color:rgba(255,140,0,.3)',
+                                    'word_build' => 'background:rgba(168,85,247,.12);color:#7E22CE;border-color:rgba(168,85,247,.3)',
                                     'puzzle' => 'background:rgba(239,68,68,.1);color:#B91C1C;border-color:rgba(239,68,68,.3)',
                                     'complete' => 'background:rgba(59,130,246,.1);color:#1D4ED8;border-color:rgba(59,130,246,.3)',
                                     default => '',
@@ -154,6 +157,8 @@
                                     'options'    => $question->options->map(fn($o) => ['text' => $o->option_text, 'correct' => (bool)$o->is_correct])->values()->all(),
                                     'orderItems' => array_values($question->orderItems()),
                                     'matchPairs' => array_values($question->matchPairs()),
+                                    'wordBuildLetters' => array_values($question->wordBuildLetters()),
+                                    'validWords' => array_values($question->validWords()),
                                   ], JSON_UNESCAPED_UNICODE) }}"
                                   onclick="previewQuestionFromBtn(this)">عرض</button>
                                 <a class="btn btn-sm btn-outline" href="{{ route('admin.questions.edit', $question) }}?return_category={{ $category->id }}">تعديل</a>
@@ -299,6 +304,14 @@
           <div id="qp-match-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
 
+        {{-- word build --}}
+        <div id="qp-word-build" style="display:none;margin-bottom:20px;">
+          <p style="font-size:.85rem;color:var(--muted,#888);margin:0 0 8px">حروف رتبها:</p>
+          <div id="qp-word-build-letters" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;"></div>
+          <p style="font-size:.85rem;color:var(--muted,#888);margin:0 0 8px">الكلمات الصحيحة:</p>
+          <div id="qp-word-build-words" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+
         {{-- answer --}}
         <div id="qp-answer-wrap"
           style="background:rgba(14,159,110,.12);border:1px solid rgba(14,159,110,.3);border-radius:12px;padding:14px 16px;">
@@ -373,6 +386,9 @@
 
       // reset sections
       ['qp-options', 'qp-order', 'qp-match'].forEach(id => { document.getElementById(id).innerHTML = ''; document.getElementById(id).style.display = 'none'; });
+      ['qp-word-build-letters', 'qp-word-build-words'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+      const wbWrap = document.getElementById('qp-word-build');
+      if (wbWrap) wbWrap.style.display = 'none';
 
       // ✅ Types with multiple-choice options
       const mcqTypes = ['standard', 'image_guess', 'puzzle', 'complete'];
@@ -413,6 +429,29 @@
             row.style.cssText = 'display:grid;grid-template-columns:1fr 36px 1fr;gap:8px;align-items:center;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--fg,#fff);';
             row.innerHTML = '<span style="text-align:right">' + pair.left + '</span><span style="text-align:center;color:#7C3AED;font-weight:900;font-size:1rem">↔</span><span style="text-align:left">' + pair.right + '</span>';
             list.appendChild(row);
+          });
+        }
+
+        // ✅ Word build type
+      } else if (q.type === 'word_build') {
+        const letters = Array.isArray(q.wordBuildLetters) ? q.wordBuildLetters : [];
+        const words = Array.isArray(q.validWords) ? q.validWords : [];
+        if (letters.length || words.length) {
+          const wrap = document.getElementById('qp-word-build');
+          const lettersWrap = document.getElementById('qp-word-build-letters');
+          const wordsWrap = document.getElementById('qp-word-build-words');
+          wrap.style.display = 'block';
+          letters.forEach(letter => {
+            const tile = document.createElement('span');
+            tile.style.cssText = 'min-width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(168,85,247,.15);color:#fff;font-weight:900;font-size:1.2rem;border:1px solid rgba(168,85,247,.3);';
+            tile.textContent = letter;
+            lettersWrap.appendChild(tile);
+          });
+          words.forEach(word => {
+            const chip = document.createElement('span');
+            chip.style.cssText = 'padding:8px 14px;border-radius:12px;background:rgba(236,72,153,.15);color:#fff;font-weight:800;border:1px solid rgba(236,72,153,.3);';
+            chip.textContent = word;
+            wordsWrap.appendChild(chip);
           });
         }
       }

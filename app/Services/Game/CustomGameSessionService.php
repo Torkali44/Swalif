@@ -5,6 +5,8 @@ namespace App\Services\Game;
 use App\Enums\GameStatus;
 use App\Models\Category;
 use App\Models\CustomGame;
+use App\Models\LetterGrid;
+use App\Models\LetterGridGame;
 use App\Models\User;
 use App\Services\Category\CategoryPlayPoolService;
 use App\Services\Category\QuestionPickerService;
@@ -19,9 +21,9 @@ class CustomGameSessionService
     ) {}
 
     /**
-     * إنشاء لعبة خاصة جديدة مع فرق وقفل أسئلة كل فئة.
+     * إنشاء لعبة خاصة جديدة مع فرق وقفل أسئلة كل فئة + شبكات الحروف.
      *
-     * @param  array  $data  [name, team_one, team_two, category_ids[]]
+     * @param  array  $data  [name, team_one, team_two, category_ids[], letter_grid_ids[]]
      */
     public function start(User $user, array $data): CustomGame
     {
@@ -33,31 +35,38 @@ class CustomGameSessionService
                 'started_at' => now(),
             ]);
 
-            foreach ([$data['team_one'], $data['team_two']] as $teamName) {
+            foreach ([
+                ['name' => $data['team_one'], 'character_id' => $data['team_one_character_id'] ?? null],
+                ['name' => $data['team_two'], 'character_id' => $data['team_two_character_id'] ?? null],
+            ] as $teamData) {
                 $game->teams()->create([
                     'custom_game_id' => $game->id,
                     'game_id' => null,
-                    'name' => $teamName,
+                    'name' => $teamData['name'],
+                    'character_id' => $teamData['character_id'],
                     'score' => 0,
                     'helpers_left' => config('game.default_helpers'),
                 ]);
             }
 
-            $categoryIds = (array) $data['category_ids'];
+            $categoryIds = array_values(array_map('intval', (array) ($data['category_ids'] ?? [])));
+            $letterGridIds = array_values(array_map('intval', (array) ($data['letter_grid_ids'] ?? [])));
+
             $categories = Category::whereIn('id', $categoryIds)
                 ->where('is_active', true)
                 ->get()
                 ->keyBy('id');
 
             $lockedAny = false;
+            $sortOrder = 0;
 
-            foreach ($categoryIds as $order => $catId) {
+            foreach ($categoryIds as $catId) {
                 $category = $categories->get($catId);
                 if (! $category) {
                     continue;
                 }
 
-                $game->categories()->attach($catId, ['sort_order' => $order]);
+                $game->categories()->attach($catId, ['sort_order' => $sortOrder++]);
 
                 $questions = $this->picker->forBoard($category, null, $user);
 
@@ -82,9 +91,26 @@ class CustomGameSessionService
                 }
             }
 
-            if (! $lockedAny) {
+            $grids = LetterGrid::query()
+                ->whereIn('id', $letterGridIds)
+                ->where('is_active', true)
+                ->withCount(['cells as playable_cells_count' => fn ($q) => $q->where('is_active', true)])
+                ->get()
+                ->keyBy('id');
+
+            $attachedGrids = 0;
+            foreach ($letterGridIds as $gridId) {
+                $grid = $grids->get($gridId);
+                if (! $grid || (int) $grid->playable_cells_count <= 0) {
+                    continue;
+                }
+                $game->letterGrids()->attach($gridId, ['sort_order' => $sortOrder++]);
+                $attachedGrids++;
+            }
+
+            if (! $lockedAny && $attachedGrids === 0) {
                 throw ValidationException::withMessages([
-                    'category_ids' => 'لا توجد أسئلة كافية في الفئات المختارة للعب الآن.',
+                    'category_ids' => 'لا توجد أسئلة أو شبكات حروف كافية للعب الآن.',
                 ]);
             }
 
@@ -95,6 +121,48 @@ class CustomGameSessionService
     public function ensureOwned(CustomGame $game, User $user): void
     {
         abort_unless($game->user_id === $user->id || $user->is_admin, 403);
+    }
+
+    /**
+     * بدء أو استئناف جلسة شبكة حروف من داخل لعبة خاصة.
+     */
+    public function startOrResumeLetterGrid(CustomGame $customGame, LetterGrid $grid, User $user): LetterGridGame
+    {
+        $this->ensureOwned($customGame, $user);
+
+        abort_unless(
+            $customGame->letterGrids()->where('letter_grids.id', $grid->id)->exists(),
+            404
+        );
+
+        $existing = LetterGridGame::query()
+            ->where('custom_game_id', $customGame->id)
+            ->where('letter_grid_id', $grid->id)
+            ->latest('id')
+            ->first();
+
+        if ($existing && $existing->isFinished()) {
+            throw ValidationException::withMessages([
+                'letter_grid' => app(LetterGridSessionService::class)->finishedReplayMessage($existing->loadMissing('grid')),
+            ]);
+        }
+
+        if ($existing && $existing->isPlaying()) {
+            return $existing;
+        }
+
+        $teams = $customGame->teams()->with('character')->orderBy('id')->get();
+        abort_unless($teams->count() >= 2, 422, 'يجب وجود فريقين للعب.');
+
+        return app(LetterGridSessionService::class)->start($user, [
+            'letter_grid_id' => $grid->id,
+            'name' => $customGame->name.' — '.$grid->name_ar,
+            'team_one' => $teams->get(0)->name,
+            'team_two' => $teams->get(1)->name,
+            'team_one_character_id' => $teams->get(0)->character_id,
+            'team_two_character_id' => $teams->get(1)->character_id,
+            'custom_game_id' => $customGame->id,
+        ]);
     }
 
     /**

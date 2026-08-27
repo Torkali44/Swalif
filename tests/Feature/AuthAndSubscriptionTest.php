@@ -119,12 +119,17 @@ class AuthAndSubscriptionTest extends TestCase
         $first = $categories[0];
         $second = $categories[1];
 
+        $characters = \App\Models\Character::query()->orderBy('id')->take(2)->get();
+        $this->assertCount(2, $characters);
+
         $this->actingAs($player)
             ->post(route('game.start'), [
                 'category_id' => $first->id,
                 'name' => 'لعبة مجانية',
                 'team_one' => 'أ',
                 'team_two' => 'ب',
+                'team_one_character_id' => $characters[0]->id,
+                'team_two_character_id' => $characters[1]->id,
             ])
             ->assertRedirect();
 

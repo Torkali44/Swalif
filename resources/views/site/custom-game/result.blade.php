@@ -20,7 +20,6 @@
 <div
   class="result-stage"
   data-result-page
-  @if($justEnded) data-game-just-ended="1" @endif
 >
   <header class="result-top">
     <a href="{{ route('home') }}" class="result-top__brand" title="سوالف">

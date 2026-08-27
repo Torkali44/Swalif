@@ -76,10 +76,27 @@ class FreeTrialService
         return 'انتهت تجربتك المجانية للعبة الخاصة (لعبة واحدة فقط). اشترك الحين عشان تقدر تنشئ ألعاب خاصة إضافية! 🎮';
     }
 
+    public function canCreateLetterGridGame(User $user): bool
+    {
+        if ($user->is_admin || $user->hasActiveSubscription()) {
+            return true;
+        }
+
+        return $user->letterGridGames()->count() < 1;
+    }
+
+    public function hasConsumedFreeLetterGridGame(User $user): bool
+    {
+        return $this->isLimitedFreeUser($user) && $user->letterGridGames()->exists();
+    }
+
+    public function letterGridSubscribeRequiredMessage(): string
+    {
+        return 'انتهت تجربتك المجانية لشبكة الحروف (لعبة واحدة فقط). اشترك الحين عشان تكمل اللعب! ⬡';
+    }
+
     public function leaveWarningMessage(): string
     {
         return 'إذا طلعت الحين بتنتهي تجربتك المجانية، وحق تلعب فئة ثانية لازم تشترك. متأكد تبي تطلع؟';
     }
-
-
 }

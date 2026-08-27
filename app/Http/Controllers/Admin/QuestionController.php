@@ -211,7 +211,7 @@ class QuestionController extends Controller
                 'meta' => $this->buildMeta($data),
                 'level' => $data['level'],
                 'points' => $data['points'],
-                'time_limit' => $data['time_limit'] ?? 60,
+                'time_limit' => $data['time_limit'] ?? config('game.default_time_limit', 30),
                 'is_active' => $data['is_active'] ?? true,
             ];
 
@@ -306,6 +306,18 @@ class QuestionController extends Controller
                         ];
                     })
                     ->filter(fn ($pair) => filled($pair['left']) && filled($pair['right']))
+                    ->values()
+                    ->all(),
+            ],
+            'word_build' => [
+                'letters' => collect($data['word_build_letters'] ?? [])
+                    ->map(fn ($letter) => trim((string) $letter))
+                    ->filter()
+                    ->values()
+                    ->all(),
+                'valid_words' => collect($data['word_build_words'] ?? [])
+                    ->map(fn ($word) => trim((string) $word))
+                    ->filter()
                     ->values()
                     ->all(),
             ],

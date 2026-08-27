@@ -10,6 +10,8 @@
     : null;
   $suggestTurnTeam = $playerCorrect === true && $turnTeam;
   $questionCategory = $customGameQuestion->category;
+  $remainingUnanswered = $customGame->customGameQuestions->whereNull('answered_at')->count();
+  $isLastQuestionToAssign = ! $customGameQuestion->answered_at && $remainingUnanswered <= 1;
 @endphp
 
 <x-layouts.game :show-nav="true">
@@ -92,6 +94,21 @@
           <small>اختيارك: {{ $customGameQuestion->selectedOption->option_text }}</small>
         @endif
       </div>
+    @elseif($question->type === 'word_build')
+      @php $choseCorrect = $playerCorrect === true; @endphp
+      <div class="player-verdict {{ $choseCorrect ? 'is-correct' : 'is-wrong' }}">
+        @if($choseCorrect)
+          ✔ إجابتك صحيحة — وجدت كل الكلمات
+          @if($turnTeam)
+            <small>دور {{ $turnTeam->name }} — اختَرهم عشان تتحسب لهم صح</small>
+          @endif
+        @else
+          ✕ لم تكتمل كل الكلمات المطلوبة
+          @if($turnTeam)
+            <small>تتحسب خاطئة على {{ $turnTeam->name }} إلا لو فريق تاني جاوب صح</small>
+          @endif
+        @endif
+      </div>
     @elseif(filled($customGameQuestion->player_answer))
       <div class="player-verdict is-neutral">
         إجابتك: <b>{{ $customGameQuestion->player_answer }}</b>
@@ -126,6 +143,15 @@
           <li>{{ $item }}</li>
         @endforeach
       </ol>
+    @elseif($question->type === 'word_build' && $question->validWords())
+      <div class="correct-answer correct-answer--word-build">
+        <span class="correct-answer__label">الجواب:</span>
+        <div class="word-build-answers">
+          @foreach($question->validWords() as $word)
+            <span class="word-build-answer-chip">{{ $word }}</span>
+          @endforeach
+        </div>
+      </div>
     @elseif($question->type === 'match' && $question->matchPairs())
       <div class="correct-answer correct-answer--pairs">
         @foreach($question->matchPairs() as $pair)
@@ -165,7 +191,7 @@
          
         </p>
       @endif
-      <form method="POST" action="{{ route('custom-game.assign', [$customGame, $customGameQuestion]) }}" id="assignForm">
+      <form method="POST" action="{{ route('custom-game.assign', [$customGame, $customGameQuestion]) }}" id="assignForm" @if($isLastQuestionToAssign) data-last-question="1" @endif>
         @csrf
         <input type="hidden" name="team_id" id="assignTeamId" value="{{ $suggestTurnTeam ? $turnTeam->id : '' }}">
         <div class="assign-grid">

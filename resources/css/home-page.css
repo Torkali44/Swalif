@@ -96,7 +96,8 @@
 
 .hp-hero__players { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .hp-avatars { display: flex; direction: ltr; }
-.hp-avatars span {
+.hp-avatars span,
+.hp-avatars img {
   width: 38px; height: 38px; border-radius: 50%;
   border: 2.5px solid #fff; color: #fff;
   font-size: 13px; font-weight: 900;
@@ -104,17 +105,8 @@
   font-family: "Cairo", sans-serif;
   margin-left: -10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-.hp-hero__live { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: #5B6475; }
-.hp-hero__live i {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: #22C55E; box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
-  animation: livePulse 2s ease-in-out infinite;
-  font-style: normal; display: inline-block;
-}
-@keyframes livePulse {
-  0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
-  50%      { box-shadow: 0 0 0 8px rgba(34,197,94,0.06); }
+  object-fit: cover;
+  background: #1E3A5F;
 }
 .hp-hero__art { display: flex; justify-content: center; align-items: center; }
 .hp-hero__art img, .hero-main-img {

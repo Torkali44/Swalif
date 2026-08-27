@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [Site\CustomGameController::class, 'create'])->name('create');
         Route::post('/', [Site\CustomGameController::class, 'store'])->name('store');
         Route::get('/{customGame}/board', [Site\CustomGameController::class, 'board'])->name('board');
+        Route::get('/{customGame}/letter-grid/{letterGrid}', [Site\CustomGameController::class, 'playLetterGrid'])->name('letter-grid');
         Route::get('/{customGame}/question/{question}', [Site\CustomGameController::class, 'question'])->name('question');
         Route::get('/{customGame}/answer/{customGameQuestion}', [Site\CustomGameController::class, 'answer'])->name('answer');
         Route::post('/{customGame}/answer/{customGameQuestion}', [Site\CustomGameController::class, 'answer'])->name('answer.store');
@@ -47,6 +48,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/{customGame}/result', [Site\CustomGameController::class, 'result'])->name('result');
         Route::post('/{customGame}/team/{team}/use-helper/{helper}', [Site\CustomGameController::class, 'useHelper'])->name('useHelper');
         Route::post('/{customGame}/team/{team}/adjust-score', [Site\CustomGameController::class, 'adjustScore'])->name('adjustScore');
+    });
+
+    // ── Letter Grid (Honeycomb) Game ─────────────────────────────────────────
+    Route::prefix('letter-grid')->name('letter-grid.')->middleware('play.access')->group(function () {
+        Route::get('/create', [Site\LetterGridGameController::class, 'create'])->name('create');
+        Route::post('/start', [Site\LetterGridGameController::class, 'store'])->name('store');
+        Route::get('/{letterGridGame}/play', [Site\LetterGridGameController::class, 'play'])->name('play');
+        Route::post('/{letterGridGame}/cell/{cell}/claim', [Site\LetterGridGameController::class, 'claim'])->name('claim');
+        Route::get('/{letterGridGame}/result', [Site\LetterGridGameController::class, 'result'])->name('result');
     });
 
     // ── Subscription / Payment Routes ────────────────────────────────────────

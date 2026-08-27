@@ -120,7 +120,16 @@
         @continue(!$team)
         <section class="board-team board-team--{{ $side }} {{ $activeTeam?->id === $team->id ? 'is-turn' : '' }}">
           <div class="board-team__meta">
-            <div class="board-team__avatar">{{ mb_substr($team->name, 0, 1) }}</div>
+            <div class="board-team__avatar"
+              style="background: {{ $team->character?->accentGradient() ?: ($side === 'a' ? 'linear-gradient(135deg,#FF1744,#C8102E)' : 'linear-gradient(135deg,#00C853,#00843D)') }}">
+              @if($team->character && $team->character->imageUrl())
+                <img src="{{ $team->character->imageUrl() }}" alt="{{ $team->character->name_ar }}" width="48" height="48">
+              @elseif($team->character && $team->character->icon)
+                <span>{{ $team->character->icon }}</span>
+              @else
+                <span>{{ mb_substr($team->name, 0, 1) }}</span>
+              @endif
+            </div>
             <div>
               <h3 class="board-team__name">{{ $team->name }}</h3>
               @if($activeTeam?->id === $team->id)

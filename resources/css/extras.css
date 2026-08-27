@@ -952,7 +952,7 @@ body.game-body:not(.dark) .board-cell.used {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 600px;
+  max-width: 760px;
   padding: 20px;
 }
 .setup-modal-card {
@@ -1069,6 +1069,16 @@ body.game-body:not(.dark) .board-cell.used {
 .setup-modal-submit:hover {
   transform: translateY(-2px);
   box-shadow: 0 20px 40px -8px rgba(255, 23, 68, 0.55);
+}
+.setup-modal-card .cg-char-btn img {
+  width: 40px !important;
+  height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 50% !important;
+  margin: 0 auto 4px !important;
 }
 @media (max-width: 600px) {
   .setup-modal-cols {

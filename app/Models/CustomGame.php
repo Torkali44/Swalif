@@ -32,7 +32,7 @@ class CustomGame extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** الفئات المختارة لهذه اللعبة (4-6 فئات) */
+    /** الفئات المختارة لهذه اللعبة */
     public function categories()
     {
         return $this->belongsToMany(
@@ -41,6 +41,22 @@ class CustomGame extends Model
             'custom_game_id',
             'category_id'
         )->withPivot('sort_order')->orderByPivot('sort_order');
+    }
+
+    /** شبكات الحروف المختارة ضمن اللعبة الخاصة */
+    public function letterGrids()
+    {
+        return $this->belongsToMany(
+            LetterGrid::class,
+            'custom_game_letter_grids',
+            'custom_game_id',
+            'letter_grid_id'
+        )->withPivot('sort_order')->orderByPivot('sort_order');
+    }
+
+    public function letterGridGames()
+    {
+        return $this->hasMany(LetterGridGame::class);
     }
 
     /** الفرق — تستخدم custom_game_id في جدول teams */
