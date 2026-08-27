@@ -18,20 +18,31 @@ class StoreCustomGameRequest extends FormRequest
             ? $this->input('title')
             : $this->input('name');
 
+        $charOneId = $this->input('team_one_character_id') ?: $this->input('character_ids.0');
+        $charTwoId = $this->input('team_two_character_id') ?: $this->input('character_ids.1');
+
         $teamOne = $this->filled('team_names.0')
             ? $this->input('team_names.0')
             : $this->input('team_one');
+
+        if (empty($teamOne) && $charOneId) {
+            $teamOne = \App\Models\Character::query()->whereKey($charOneId)->value('name_ar');
+        }
 
         $teamTwo = $this->filled('team_names.1')
             ? $this->input('team_names.1')
             : $this->input('team_two');
 
+        if (empty($teamTwo) && $charTwoId) {
+            $teamTwo = \App\Models\Character::query()->whereKey($charTwoId)->value('name_ar');
+        }
+
         $this->merge([
             'name' => is_string($name) ? trim($name) : $name,
             'team_one' => is_string($teamOne) ? trim($teamOne) : $teamOne,
             'team_two' => is_string($teamTwo) ? trim($teamTwo) : $teamTwo,
-            'team_one_character_id' => $this->input('team_one_character_id') ?: $this->input('character_ids.0'),
-            'team_two_character_id' => $this->input('team_two_character_id') ?: $this->input('character_ids.1'),
+            'team_one_character_id' => $charOneId ? (int) $charOneId : null,
+            'team_two_character_id' => $charTwoId ? (int) $charTwoId : null,
             'category_ids' => array_values(array_filter(array_map('intval', (array) $this->input('category_ids', [])))),
             'letter_grid_ids' => array_values(array_filter(array_map('intval', (array) $this->input('letter_grid_ids', [])))),
         ]);

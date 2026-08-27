@@ -405,8 +405,8 @@
   .custom-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
-    gap: 20px !important;
-    padding: 4px 0 12px !important;
+    gap: 18px !important;
+    padding: 6px 0 16px !important;
   }
 
   .card-item-box {
@@ -421,6 +421,7 @@
     flex-direction: column;
     cursor: pointer;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body.dark .card-item-box, html.dark .card-item-box {
@@ -430,43 +431,39 @@
   }
 
   .card-item-box:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
     box-shadow: 0 12px 32px rgba(255,109,0,.3);
     border-color: #FF6D00;
   }
 
   .card-item-box.is-selected {
     border-color: #00C853 !important;
-    box-shadow: 0 0 0 4px rgba(0,200,83,.4), 0 12px 32px rgba(0,200,83,.3) !important;
-    transform: scale(1.03);
+    box-shadow: 0 0 0 3px rgba(0,200,83,.4), 0 8px 24px rgba(0,200,83,.25) !important;
+    transform: scale(1.02);
   }
 
   /* Green Checkmark Badge ✔ for Selected Category Cards */
   .selected-check-badge {
     display: none;
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 34px;
-    height: 34px;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, #00C853, #00E676);
     color: #ffffff;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     align-items: center;
     justify-content: center;
     z-index: 30;
-    box-shadow: 0 4px 14px rgba(0,200,83,.5);
-    animation: checkBadgePop .28s ease;
+    box-shadow: 0 4px 12px rgba(0,200,83,.45);
+    animation: checkBadgePop .25s ease;
   }
 
   .card-item-box.is-selected .selected-check-badge {
     display: flex !important;
-  }
-
-  .card-item-box.is-selected .card-item-badge {
-    right: 8px !important;
   }
 
   @keyframes checkBadgePop {
@@ -484,8 +481,8 @@
   /* Favorite Direct Heart Button */
   .card-item-fav-direct {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 8px;
+    left: 8px;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -495,47 +492,125 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
     z-index: 25;
-    box-shadow: 0 3px 10px rgba(0,0,0,.2);
+    box-shadow: 0 3px 10px rgba(0,0,0,.18);
     transition: transform .2s, background .2s;
     outline: none;
   }
 
-  .card-item-fav-direct:hover { transform: scale(1.18); background: #ffffff; }
+  .card-item-fav-direct:hover { transform: scale(1.15); background: #ffffff; }
   .card-item-fav-direct.is-fav { background: #FF1744; color: #ffffff; box-shadow: 0 4px 14px rgba(255,23,68,.4); }
+
+  /* Info Button (if uncategorized has info) */
+  .card-item-info {
+    position: absolute;
+    top: 8px;
+    left: 44px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #0288D1;
+    color: #ffffff;
+    font-family: serif;
+    font-weight: bold;
+    font-style: italic;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    box-shadow: 0 3px 8px rgba(0,0,0,.25);
+    border: none;
+    cursor: pointer;
+    outline: none;
+    transition: transform .18s, background .18s;
+  }
+
+  /* Category Remaining / Status Badge (Top-Right Corner) */
+  .card-item-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    left: auto;
+    bottom: auto !important;
+    transform: none;
+    background: linear-gradient(135deg, #FF1744, #D50000);
+    color: #ffffff;
+    font-size: .74rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    z-index: 20;
+    box-shadow: 0 2px 8px rgba(213,0,0,.35);
+    pointer-events: none;
+    white-space: nowrap;
+    line-height: 1.2;
+    max-width: calc(100% - 46px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .card-item-badge--remaining {
+    letter-spacing: 0;
+  }
+
+  .card-item-box.is-selected .card-item-badge {
+    right: 44px !important;
+  }
 
   .card-item-image-wrap {
     width: 100%;
-    height: 180px;
-    background: linear-gradient(180deg, #F0F4F8 0%, #E2E8F0 100%);
+    aspect-ratio: 1 / 1;
+    min-height: 140px;
+    max-height: 180px;
+    background: radial-gradient(circle at center, #FFF9F0 0%, #F5EDE0 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     position: relative;
+    padding: 8px;
+    box-sizing: border-box;
   }
 
   body.dark .card-item-image-wrap, html.dark .card-item-image-wrap {
-    background: rgba(255,255,255,.03);
+    background: radial-gradient(circle at center, #1E2842 0%, #121828 100%);
   }
 
-  .card-item-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+  .card-item-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+    transition: transform .3s ease;
+    display: block;
+  }
+
+  .card-item-box[data-type="letter-grid"] .card-item-image-wrap img {
+    object-fit: cover;
+    border-radius: 14px;
+  }
+
   .card-item-box:hover .card-item-image-wrap img { transform: scale(1.06); }
-  .card-item-fallback-icon { font-size: 3.8rem; line-height: 1; }
+  .card-item-fallback-icon { font-size: 3.6rem; line-height: 1; }
 
   .card-item-footer-bar {
     background: linear-gradient(135deg, #FF6D00 0%, #FF5722 100%);
     color: #ffffff;
-    padding: 12px 10px;
+    padding: 8px 6px;
     text-align: center;
-    font-weight: 900;
-    font-size: 1.05rem;
+    font-weight: 800;
+    font-size: 0.86rem;
     line-height: 1.25;
     border-bottom-left-radius: 17px;
     border-bottom-right-radius: 17px;
-    min-height: 48px;
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -543,55 +618,16 @@
 
   .card-item-name {
     color: #ffffff !important;
-    font-weight: 900;
-    font-size: 1.05rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  .card-item-info {
-    position: absolute;
-    top: 8px;
-    left: 44px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #0288D1;
-    color: #ffffff;
-    font-family: serif;
-    font-weight: bold;
-    font-style: italic;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    box-shadow: 0 3px 8px rgba(0,0,0,.3);
-    border: none;
-    cursor: pointer;
-    outline: none;
-    transition: transform .18s, background .18s;
-  }
-
-  .card-item-badge {
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    right: auto;
-    bottom: auto !important;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #FF1744, #D50000);
-    color: #ffffff;
-    font-size: .78rem;
     font-weight: 800;
-    padding: 4px 12px;
-    border-radius: 10px;
-    z-index: 15;
-    box-shadow: 0 3px 10px rgba(213,0,0,.4);
-    pointer-events: none;
-    white-space: nowrap;
+    font-size: 0.86rem;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    max-width: 100%;
   }
 
   .card-info-popover {
@@ -814,15 +850,126 @@
     box-shadow: 0 12px 32px rgba(255, 23, 68, 0.6) !important;
   }
 
-  @media (max-width: 600px) {
-    .custom-cards-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }
-    .card-item-image-wrap { height: 145px !important; }
-    .card-item-footer-bar { padding: 10px 6px !important; font-size: .92rem !important; min-height: 44px !important; }
-    .card-item-name { font-size: .92rem !important; }
-    .card-item-fav-direct { width: 28px !important; height: 28px !important; font-size: 14px !important; top: 6px !important; left: 6px !important; }
-    .card-item-info { width: 28px !important; height: 28px !important; font-size: 14px !important; top: 6px !important; left: 38px !important; }
-    .selected-check-badge { width: 28px !important; height: 28px !important; font-size: 15px !important; top: 6px !important; right: 6px !important; }
-    .card-item-badge { bottom: 6px !important; right: 6px !important; font-size: .7rem !important; padding: 2px 8px !important; }
+  @media (max-width: 680px) {
+    .swalif-custom-create-page {
+      padding-bottom: 90px !important;
+    }
+    .container {
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .accordion-categories {
+      gap: 16px !important;
+      margin-bottom: 24px !important;
+    }
+    .accordion-section {
+      gap: 6px !important;
+    }
+    .accordion-body {
+      border: none !important;
+      background: transparent !important;
+      padding: 0 !important;
+      margin-top: 6px !important;
+      box-shadow: none !important;
+    }
+    .custom-cards-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      padding: 4px 0 !important;
+    }
+    .card-item-box {
+      border-radius: 16px !important;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .07) !important;
+      border-width: 1.5px !important;
+    }
+    .card-item-box:active {
+      transform: scale(0.98) !important;
+    }
+    .card-item-image-wrap {
+      aspect-ratio: 1 / 1 !important;
+      height: auto !important;
+      min-height: 120px !important;
+      max-height: 150px !important;
+      padding: 6px !important;
+    }
+    .card-item-image-wrap img {
+      border-radius: 50% !important;
+    }
+    .card-item-box[data-type="letter-grid"] .card-item-image-wrap img {
+      border-radius: 12px !important;
+    }
+    .card-item-fav-direct {
+      width: 28px !important;
+      height: 28px !important;
+      font-size: 13px !important;
+      top: 6px !important;
+      left: 6px !important;
+    }
+    .card-item-info {
+      width: 26px !important;
+      height: 26px !important;
+      font-size: 13px !important;
+      top: 6px !important;
+      left: 36px !important;
+    }
+    .selected-check-badge {
+      width: 28px !important;
+      height: 28px !important;
+      font-size: 14px !important;
+      top: 6px !important;
+      right: 6px !important;
+    }
+    .card-item-badge,
+    .card-item-badge--remaining {
+      top: 6px !important;
+      right: 6px !important;
+      left: auto !important;
+      bottom: auto !important;
+      transform: none !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-width: calc(100% - 40px) !important;
+      font-size: 0.68rem !important;
+      font-weight: 800 !important;
+      padding: 3px 8px !important;
+      border-radius: 999px !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+      display: inline-flex !important;
+    }
+    .card-item-box.is-selected .card-item-badge {
+      right: 36px !important;
+    }
+    .card-item-footer-bar {
+      min-height: 40px !important;
+      padding: 8px 6px !important;
+      font-size: 0.84rem !important;
+      font-weight: 800 !important;
+    }
+    .card-item-name {
+      font-size: 0.84rem !important;
+      font-weight: 800 !important;
+    }
+    .selection-heading-wrap h2 {
+      font-size: 1.35rem !important;
+    }
+    .controls-bar {
+      gap: 10px !important;
+      margin-bottom: 18px !important;
+    }
+    .teams-info-card {
+      padding: 24px 14px !important;
+      border-radius: 20px !important;
+      margin-bottom: 24px !important;
+    }
+    .teams-info-title {
+      font-size: 1.35rem !important;
+      margin-bottom: 16px !important;
+    }
   }
   </style>
 
@@ -920,6 +1067,21 @@
                   @php
                     $isSelected = in_array((int) $category->id, array_map('intval', old('category_ids', [])), true);
                     $filterKey  = 'c'.$classification->id;
+                    $remQ = isset($category->remaining_questions) ? (int) $category->remaining_questions : null;
+                    $totQ = (int) ($category->questions_count ?? 0);
+                    if ($remQ !== null) {
+                      if ($remQ > 0) {
+                        $cardBadge = $remQ . ' سؤال';
+                      } elseif ($totQ > 0) {
+                        $cardBadge = '✨ مكتملة';
+                      } else {
+                        $cardBadge = 'قريبًا';
+                      }
+                    } elseif ($totQ > 0) {
+                      $cardBadge = $totQ . ' سؤال';
+                    } else {
+                      $cardBadge = 'قريبًا';
+                    }
                   @endphp
                   <div
                     class="card-item-box {{ $isSelected ? 'is-selected' : '' }}"
@@ -930,7 +1092,7 @@
                     data-filter="{{ $filterKey }}"
                     data-group="{{ $filterKey }}"
                     data-name="{{ $category->name_ar }}"
-                     data-questions="{{ (int) ($category->questions_count ?? 0) }}"
+                    data-questions="{{ (int) ($category->questions_count ?? 0) }}"
                     data-remaining="{{ (int) ($category->remaining_questions ?? $category->questions_count ?? 0) }}"
                   >
                     <!-- Green Checkmark Badge ✔ for Selected Category Cards -->
@@ -944,7 +1106,7 @@
                     <!-- Image Section -->
                     <div class="card-item-image-wrap">
                       <span class="card-item-badge card-item-badge--remaining">
-                        {{ $category->remaining_badge ?? ($category->questions_count ? $category->questions_count.' سؤال' : 'قريبًا') }}
+                        {{ $cardBadge }}
                       </span>
                       @if($category->imageUrl())
                         <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async">
@@ -992,6 +1154,21 @@
                 @foreach($uncategorized as $category)
                   @php
                     $isSelected = in_array((int) $category->id, array_map('intval', old('category_ids', [])), true);
+                    $remQ = isset($category->remaining_questions) ? (int) $category->remaining_questions : null;
+                    $totQ = (int) ($category->questions_count ?? 0);
+                    if ($remQ !== null) {
+                      if ($remQ > 0) {
+                        $cardBadge = $remQ . ' سؤال';
+                      } elseif ($totQ > 0) {
+                        $cardBadge = '✨ مكتملة';
+                      } else {
+                        $cardBadge = 'قريبًا';
+                      }
+                    } elseif ($totQ > 0) {
+                      $cardBadge = $totQ . ' سؤال';
+                    } else {
+                      $cardBadge = 'قريبًا';
+                    }
                   @endphp
                   <div
                     class="card-item-box {{ $isSelected ? 'is-selected' : '' }}"
@@ -1002,7 +1179,7 @@
                     data-filter="general"
                     data-group="general"
                     data-name="{{ $category->name_ar }}"
-                     data-questions="{{ (int) ($category->questions_count ?? 0) }}"
+                    data-questions="{{ (int) ($category->questions_count ?? 0) }}"
                     data-remaining="{{ (int) ($category->remaining_questions ?? $category->questions_count ?? 0) }}"
                   >
                     <div class="selected-check-badge">✔</div>
@@ -1022,7 +1199,7 @@
 
                     <div class="card-item-image-wrap">
                       <span class="card-item-badge card-item-badge--remaining">
-                        {{ $category->remaining_badge ?? ($category->questions_count ? $category->questions_count.' سؤال' : 'قريبًا') }}
+                        {{ $cardBadge }}
                       </span>
                       @if($category->imageUrl())
                         <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async">
@@ -1117,24 +1294,20 @@
           <!-- Team 1 -->
           <div>
             <div class="team-block-title">الفريق 1</div>
-            <input
-              type="text"
-              name="team_names[0]"
-              class="pill-input"
-              placeholder="اكتب اسم الفريق الأول…"
-              value="{{ old('team_names.0') }}"
-              required
-              maxlength="50"
-            >
+            <input type="hidden" name="team_names[0]" id="cgTeamOneName" value="{{ old('team_names.0') }}">
+            <input type="hidden" name="team_one_character_id" id="cgTeamOneCharId" value="{{ old('team_one_character_id') }}" required>
+
+            <div class="team-chosen-preview" id="cgTeamOnePreview" style="margin-bottom:12px;padding:10px 14px;border-radius:14px;background:rgba(255,109,0,.08);border:1.5px dashed #FF6D00;text-align:center;font-weight:900;color:#FF6D00">
+              <span id="cgTeamOneSelectedName">{{ old('team_names.0') ?: 'اختر شخصية الفريق 1' }}</span>
+            </div>
             @error('team_one')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
 
             <div style="margin-top:14px">
               <div class="helpers-sub-title">اختر شخصية الفريق 1 <span style="color:#FF1744">*</span></div>
-              <input type="hidden" name="team_one_character_id" id="cgTeamOneCharId" value="{{ old('team_one_character_id') }}" required>
               <div class="cg-char-grid" data-char-team="one" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px">
                 @foreach(($characters ?? collect()) as $char)
                   <button type="button" class="cg-char-btn {{ (string) old('team_one_character_id') === (string) $char->id ? 'is-active' : '' }}"
-                    data-char-id="{{ $char->id }}" data-char-for="one"
+                    data-char-id="{{ $char->id }}" data-char-for="one" data-char-name="{{ $char->name_ar }}"
                     style="border:2px solid {{ (string) old('team_one_character_id') === (string) $char->id ? '#FF6D00' : 'rgba(11,18,32,.1)' }};border-radius:14px;padding:8px 4px;background:#fff;cursor:pointer;font-weight:800;font-size:.75rem">
                     @if($char->imageUrl())
                       <img src="{{ $char->imageUrl() }}" alt="{{ $char->name_ar }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 4px">
@@ -1152,24 +1325,20 @@
           <!-- Team 2 -->
           <div>
             <div class="team-block-title">الفريق 2</div>
-            <input
-              type="text"
-              name="team_names[1]"
-              class="pill-input"
-              placeholder="اكتب اسم الفريق الثاني…"
-              value="{{ old('team_names.1') }}"
-              required
-              maxlength="50"
-            >
+            <input type="hidden" name="team_names[1]" id="cgTeamTwoName" value="{{ old('team_names.1') }}">
+            <input type="hidden" name="team_two_character_id" id="cgTeamTwoCharId" value="{{ old('team_two_character_id') }}" required>
+
+            <div class="team-chosen-preview" id="cgTeamTwoPreview" style="margin-bottom:12px;padding:10px 14px;border-radius:14px;background:rgba(255,179,0,.12);border:1.5px dashed #FFB300;text-align:center;font-weight:900;color:#E65100">
+              <span id="cgTeamTwoSelectedName">{{ old('team_names.1') ?: 'اختر شخصية الفريق 2' }}</span>
+            </div>
             @error('team_two')<small class="error" style="display:block;margin-top:6px;color:#FF1744;font-weight:700">{{ $message }}</small>@enderror
 
             <div style="margin-top:14px">
               <div class="helpers-sub-title">اختر شخصية الفريق 2 <span style="color:#FF1744">*</span></div>
-              <input type="hidden" name="team_two_character_id" id="cgTeamTwoCharId" value="{{ old('team_two_character_id') }}" required>
               <div class="cg-char-grid" data-char-team="two" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px">
                 @foreach(($characters ?? collect()) as $char)
                   <button type="button" class="cg-char-btn {{ (string) old('team_two_character_id') === (string) $char->id ? 'is-active' : '' }}"
-                    data-char-id="{{ $char->id }}" data-char-for="two"
+                    data-char-id="{{ $char->id }}" data-char-for="two" data-char-name="{{ $char->name_ar }}"
                     style="border:2px solid {{ (string) old('team_two_character_id') === (string) $char->id ? '#FF6D00' : 'rgba(11,18,32,.1)' }};border-radius:14px;padding:8px 4px;background:#fff;cursor:pointer;font-weight:800;font-size:.75rem">
                     @if($char->imageUrl())
                       <img src="{{ $char->imageUrl() }}" alt="{{ $char->name_ar }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 4px">
@@ -1476,6 +1645,10 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('[data-top-filter]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var filterVal = btn.dataset.topFilter;
+      if (filterVal === 'صممت لك') {
+        pickSixRandomDirect();
+        return;
+      }
       if (filterVal === 'فكر') {
         openRandomPickerModal();
         return;
@@ -1517,6 +1690,42 @@ document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('[data-info-popover]').forEach(function (p) { p.hidden = true; });
     }
   });
+
+  function pickSixRandomDirect() {
+    var allCards = Array.from(document.querySelectorAll('.card-item-box')).filter(function (card) {
+      if ((card.dataset.type || 'category') !== 'category') return true;
+      var q = parseInt(card.dataset.questions || '0', 10);
+      var rem = parseInt(card.dataset.remaining || '0', 10);
+      return q > 0 || rem > 0;
+    });
+
+    if (allCards.length < 6) {
+      allCards = Array.from(document.querySelectorAll('.card-item-box'));
+    }
+
+    if (allCards.length < 6) {
+      showToast('لا تتوفر 6 ألعاب حالياً!', 'error');
+      return;
+    }
+
+    // Clear and pick 6
+    selected.clear();
+    var shuffled = allCards.slice().sort(function () { return 0.5 - Math.random(); });
+    var pickedSix = shuffled.slice(0, 6);
+
+    pickedSix.forEach(function (card) {
+      selected.add(card.dataset.selectKey || ('c-' + card.dataset.id));
+    });
+
+    updateUI();
+    playSound('fanfare');
+    showToast('✨ صممت لك: تم اختيار 6 ألعاب عشوائية بنجاح! جهّز الفرق وابدأ اللعب 🚀', 'success');
+
+    var teamsSec = document.querySelector('.teams-info-card');
+    if (teamsSec) {
+      teamsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   // Restore old selections
   document.querySelectorAll('.card-item-box.is-selected').forEach(function (card) {
@@ -1647,24 +1856,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var title = (document.querySelector('input[name="title"]')?.value || '').trim();
-    var t1 = (document.querySelector('input[name="team_names[0]"]')?.value || '').trim();
-    var t2 = (document.querySelector('input[name="team_names[1]"]')?.value || '').trim();
     var c1 = document.getElementById('cgTeamOneCharId')?.value;
     var c2 = document.getElementById('cgTeamTwoCharId')?.value;
 
     if (!title) {
       e.preventDefault();
       showToast('اكتب اسم اللعبة أولاً ✍️', 'error');
-      return;
-    }
-    if (!t1 || !t2) {
-      e.preventDefault();
-      showToast('اكتب اسم الفريق الأول والثاني 👥', 'error');
-      return;
-    }
-    if (t1 === t2) {
-      e.preventDefault();
-      showToast('اسم الفريقين لازم يكون مختلف', 'error');
       return;
     }
     if (!c1 || !c2) {
@@ -1675,6 +1872,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (c1 === c2) {
       e.preventDefault();
       showToast('كل فريق لازم يختار شخصية مختلفة', 'error');
+      return;
     }
   });
 
@@ -1683,10 +1881,20 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', function () {
       var forTeam = btn.dataset.charFor;
       var id = btn.dataset.charId;
+      var name = btn.dataset.charName;
       var input = forTeam === 'one'
         ? document.getElementById('cgTeamOneCharId')
         : document.getElementById('cgTeamTwoCharId');
+      var nameInput = forTeam === 'one'
+        ? document.getElementById('cgTeamOneName')
+        : document.getElementById('cgTeamTwoName');
+      var previewEl = forTeam === 'one'
+        ? document.getElementById('cgTeamOneSelectedName')
+        : document.getElementById('cgTeamTwoSelectedName');
+
       if (input) input.value = id;
+      if (nameInput) nameInput.value = name;
+      if (previewEl) previewEl.textContent = name;
 
       document.querySelectorAll('.cg-char-btn[data-char-for="' + forTeam + '"]').forEach(function (b) {
         b.classList.remove('is-active');
@@ -1723,29 +1931,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // 🎲 اختار 6 فئات عشوائية فوراً
   if (pickSixBtn) {
     pickSixBtn.addEventListener('click', function () {
-      var allCards = Array.from(document.querySelectorAll('.card-item-box')).filter(function (card) {
-        if ((card.dataset.type || 'category') !== 'category') return true;
-        return parseInt(card.dataset.questions || '0', 10) > 0;
-      });
-      if (allCards.length < 6) {
-        showToast('لا تتوفر 6 ألعاب جاهزة بأسئلة حالياً!', 'error');
-        randomModal.hidden = true;
-        return;
-      }
-
-      // Shuffle and pick 6
-      selected.clear();
-      var shuffled = allCards.sort(function() { return 0.5 - Math.random(); });
-      var pickedSix = shuffled.slice(0, 6);
-
-      pickedSix.forEach(function(card) {
-        selected.add(card.dataset.selectKey || ('c-' + card.dataset.id));
-      });
-
-      updateUI();
-      playSound('fanfare');
       randomModal.hidden = true;
-      showToast('تم اختيار 6 ألعاب عشوائية بنجاح! جاهز لبدء اللعب 🚀', 'success');
+      pickSixRandomDirect();
     });
   }
 

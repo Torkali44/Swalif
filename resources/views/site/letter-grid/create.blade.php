@@ -90,33 +90,19 @@
                 <span class="hex-team-box__tag hex-team-box__tag--red">🔥 الفريق الأول</span>
               </div>
 
-              <div class="hex-team-input-group">
-                <label for="team_one_name" class="hex-input-label">اسم الفريق الأول</label>
-                <input
-                  type="text"
-                  id="team_one_name"
-                  name="team_one"
-                  class="hex-text-input"
-                  value="{{ old('team_one') }}"
-                  maxlength="50"
-                  required
-                  placeholder="اكتب اسم الفريق الأول…"
-                >
-                @error('team_one')
-                  <small class="hex-field-error">{{ $message }}</small>
-                @enderror
+              <input type="hidden" name="team_one" id="team_one_name" value="{{ old('team_one') }}">
+              <input type="hidden" name="team_one_character_id" id="team_one_character_id" value="{{ old('team_one_character_id') }}" required>
+
+              <div class="hex-team-preview" id="teamOnePreview" style="padding:10px 14px;border-radius:14px;background:rgba(255,23,68,.08);border:1.5px dashed #FF1744;text-align:center;font-weight:900;color:#FF1744">
+                <span id="teamOneSelectedName">{{ old('team_one') ?: 'اختر شخصية الفريق الأول' }}</span>
               </div>
+              @error('team_one')
+                <small class="hex-field-error">{{ $message }}</small>
+              @enderror
 
               {{-- Character Selector Team 1 --}}
               <div class="hex-char-picker">
                 <label class="hex-input-label">اختر شخصية الفريق الأول <span style="color:#FF1744">*</span></label>
-                <input
-                  type="hidden"
-                  name="team_one_character_id"
-                  id="team_one_character_id"
-                  value="{{ old('team_one_character_id') }}"
-                  required
-                >
 
                 <div class="hex-char-grid" role="radiogroup" aria-label="شخصية الفريق الأول">
                   @foreach($characters as $cIndex => $char)
@@ -128,6 +114,7 @@
                       class="hex-char-item {{ $cSelected ? 'is-active' : '' }}"
                       data-char-btn="one"
                       data-char-id="{{ $char->id }}"
+                      data-char-name="{{ $char->name_ar }}"
                       title="{{ $char->name_ar }}"
                       aria-label="{{ $char->name_ar }}"
                     >
@@ -154,33 +141,19 @@
                 <span class="hex-team-box__tag hex-team-box__tag--gold">⭐ الفريق الثاني</span>
               </div>
 
-              <div class="hex-team-input-group">
-                <label for="team_two_name" class="hex-input-label">اسم الفريق الثاني</label>
-                <input
-                  type="text"
-                  id="team_two_name"
-                  name="team_two"
-                  class="hex-text-input"
-                  value="{{ old('team_two') }}"
-                  maxlength="50"
-                  required
-                  placeholder="اكتب اسم الفريق الثاني…"
-                >
-                @error('team_two')
-                  <small class="hex-field-error">{{ $message }}</small>
-                @enderror
+              <input type="hidden" name="team_two" id="team_two_name" value="{{ old('team_two') }}">
+              <input type="hidden" name="team_two_character_id" id="team_two_character_id" value="{{ old('team_two_character_id') }}" required>
+
+              <div class="hex-team-preview" id="teamTwoPreview" style="padding:10px 14px;border-radius:14px;background:rgba(255,179,0,.12);border:1.5px dashed #FFB300;text-align:center;font-weight:900;color:#E65100">
+                <span id="teamTwoSelectedName">{{ old('team_two') ?: 'اختر شخصية الفريق الثاني' }}</span>
               </div>
+              @error('team_two')
+                <small class="hex-field-error">{{ $message }}</small>
+              @enderror
 
               {{-- Character Selector Team 2 --}}
               <div class="hex-char-picker">
                 <label class="hex-input-label">اختر شخصية الفريق الثاني <span style="color:#FF1744">*</span></label>
-                <input
-                  type="hidden"
-                  name="team_two_character_id"
-                  id="team_two_character_id"
-                  value="{{ old('team_two_character_id') }}"
-                  required
-                >
 
                 <div class="hex-char-grid" role="radiogroup" aria-label="شخصية الفريق الثاني">
                   @foreach($characters as $cIndex => $char)
@@ -192,6 +165,7 @@
                       class="hex-char-item {{ $cSelected ? 'is-active' : '' }}"
                       data-char-btn="two"
                       data-char-id="{{ $char->id }}"
+                      data-char-name="{{ $char->name_ar }}"
                       title="{{ $char->name_ar }}"
                       aria-label="{{ $char->name_ar }}"
                     >
@@ -834,13 +808,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Character Picker for Team 1
   const teamOneInput = document.getElementById('team_one_character_id');
+  const teamOneNameInput = document.getElementById('team_one_name');
+  const teamOnePreview = document.getElementById('teamOneSelectedName');
   const teamOneBtns = document.querySelectorAll('[data-char-btn="one"]');
 
   teamOneBtns.forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const charId = btn.dataset.charId;
+      const charName = btn.dataset.charName;
       if (teamOneInput) teamOneInput.value = charId;
+      if (teamOneNameInput) teamOneNameInput.value = charName;
+      if (teamOnePreview) teamOnePreview.textContent = charName;
       teamOneBtns.forEach((b) => b.classList.remove('is-active'));
       btn.classList.add('is-active');
     });
@@ -848,21 +827,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Character Picker for Team 2
   const teamTwoInput = document.getElementById('team_two_character_id');
+  const teamTwoNameInput = document.getElementById('team_two_name');
+  const teamTwoPreview = document.getElementById('teamTwoSelectedName');
   const teamTwoBtns = document.querySelectorAll('[data-char-btn="two"]');
 
   teamTwoBtns.forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const charId = btn.dataset.charId;
+      const charName = btn.dataset.charName;
       if (teamTwoInput) teamTwoInput.value = charId;
+      if (teamTwoNameInput) teamTwoNameInput.value = charName;
+      if (teamTwoPreview) teamTwoPreview.textContent = charName;
       teamTwoBtns.forEach((b) => b.classList.remove('is-active'));
       btn.classList.add('is-active');
     });
   });
 
   document.getElementById('letterGridSetupForm')?.addEventListener('submit', async (e) => {
-    const t1 = (document.getElementById('team_one_name')?.value || '').trim();
-    const t2 = (document.getElementById('team_two_name')?.value || '').trim();
     const c1 = teamOneInput?.value || '';
     const c2 = teamTwoInput?.value || '';
 
@@ -871,19 +853,15 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(msg);
     };
 
-    if (!t1 || !t2) {
-      e.preventDefault();
-      await popup('أكمل أسماء الفريقين.');
-      return;
-    }
     if (!c1 || !c2) {
       e.preventDefault();
-      await popup('اختر شخصية لكل فريق.');
+      await popup('اختر شخصية لكل فريق قبل البدء 🎭');
       return;
     }
     if (c1 === c2) {
       e.preventDefault();
       await popup('كل فريق لازم يختار شخصية مختلفة.');
+      return;
     }
   });
 });

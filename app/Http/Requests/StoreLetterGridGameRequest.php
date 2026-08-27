@@ -19,10 +19,23 @@ class StoreLetterGridGameRequest extends FormRequest
             $gridName = \App\Models\LetterGrid::query()->whereKey($gridId)->value('name_ar');
         }
 
+        $charOneId = $this->input('team_one_character_id');
+        $charTwoId = $this->input('team_two_character_id');
+
+        $teamOne = $this->input('team_one');
+        if (empty($teamOne) && $charOneId) {
+            $teamOne = \App\Models\Character::query()->whereKey($charOneId)->value('name_ar');
+        }
+
+        $teamTwo = $this->input('team_two');
+        if (empty($teamTwo) && $charTwoId) {
+            $teamTwo = \App\Models\Character::query()->whereKey($charTwoId)->value('name_ar');
+        }
+
         $this->merge([
             'name' => $gridName ?: (is_string($this->input('name')) ? trim($this->input('name')) : 'شبكة الحروف'),
-            'team_one' => is_string($this->input('team_one')) ? trim($this->input('team_one')) : $this->input('team_one'),
-            'team_two' => is_string($this->input('team_two')) ? trim($this->input('team_two')) : $this->input('team_two'),
+            'team_one' => is_string($teamOne) ? trim($teamOne) : $teamOne,
+            'team_two' => is_string($teamTwo) ? trim($teamTwo) : $teamTwo,
         ]);
     }
 

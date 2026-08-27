@@ -41,6 +41,7 @@
           </a>
           <a href="{{ route('custom-game.create') }}" class="nav-pill-btn nav-pill-btn--red">🚀 إنشاء لعبة</a>
           <button type="button" class="nav-pill-btn nav-pill-btn--green" data-top-filter="فكر">🎲 فكروابدأ</button>
+          <button type="button" class="nav-pill-btn nav-pill-btn--orange" data-top-filter="صممت لك">✨ صممت لك</button>
           <button type="button" class="nav-pill-btn nav-pill-btn--purple" data-top-filter="إمارات">🇦🇪 إمارات</button>
         </div>
       </div>
@@ -197,6 +198,23 @@
                     $filterKey = $category->classification_id ? 'c' . $category->classification_id : 'general';
                     $isLocked = !empty($playBlocked) || (!empty($freeLocked) && (int) $allowedCategoryId !== (int) $category->id);
                     $playUrl = $isLocked ? route('subscription.index') : route('categories.show', $category);
+                    $remQ = isset($category->remaining_questions) ? (int) $category->remaining_questions : null;
+                    $totQ = (int) ($category->questions_count ?? 0);
+                    if ($isLocked) {
+                      $cardBadge = '🔒 مقفول';
+                    } elseif ($remQ !== null) {
+                      if ($remQ > 0) {
+                        $cardBadge = $remQ . ' سؤال';
+                      } elseif ($totQ > 0) {
+                        $cardBadge = '✨ مكتملة';
+                      } else {
+                        $cardBadge = 'قريبًا';
+                      }
+                    } elseif ($totQ > 0) {
+                      $cardBadge = $totQ . ' سؤال';
+                    } else {
+                      $cardBadge = 'قريبًا';
+                    }
                   @endphp
                   <div class="card-item-box {{ $isLocked ? 'is-locked' : '' }}" data-card-url="{{ $playUrl }}" role="link"
                     tabindex="0"
@@ -217,7 +235,7 @@
                     <!-- Image Section -->
                     <div class="card-item-image-wrap">
                       <span class="card-item-badge card-item-badge--remaining">
-                        {{ $isLocked ? '🔒 مقفول' : ($category->remaining_badge ?? ($category->questions_count ? $category->questions_count . ' سؤال' : 'قريبًا')) }}
+                        {{ $cardBadge }}
                       </span>
                       @if($category->imageUrl())
                         <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async"
@@ -256,6 +274,23 @@
                   @php
                     $isLocked = !empty($playBlocked) || (!empty($freeLocked) && (int) $allowedCategoryId !== (int) $category->id);
                     $playUrl = $isLocked ? route('subscription.index') : route('categories.show', $category);
+                    $remQ = isset($category->remaining_questions) ? (int) $category->remaining_questions : null;
+                    $totQ = (int) ($category->questions_count ?? 0);
+                    if ($isLocked) {
+                      $cardBadge = '🔒 مقفول';
+                    } elseif ($remQ !== null) {
+                      if ($remQ > 0) {
+                        $cardBadge = $remQ . ' سؤال';
+                      } elseif ($totQ > 0) {
+                        $cardBadge = '✨ مكتملة';
+                      } else {
+                        $cardBadge = 'قريبًا';
+                      }
+                    } elseif ($totQ > 0) {
+                      $cardBadge = $totQ . ' سؤال';
+                    } else {
+                      $cardBadge = 'قريبًا';
+                    }
                   @endphp
                   <div class="card-item-box {{ $isLocked ? 'is-locked' : '' }}" data-card-url="{{ $playUrl }}" role="link"
                     tabindex="0"
@@ -288,7 +323,7 @@
 
                     <div class="card-item-image-wrap">
                       <span class="card-item-badge card-item-badge--remaining">
-                        {{ $isLocked ? '🔒 مقفول' : ($category->remaining_badge ?? ($category->questions_count ? $category->questions_count . ' سؤال' : 'قريبًا')) }}
+                        {{ $cardBadge }}
                       </span>
                       @if($category->imageUrl())
                         <img src="{{ $category->imageUrl() }}" alt="{{ $category->name_ar }}" loading="lazy" decoding="async"
@@ -339,8 +374,8 @@
 
   <style>
     /* ══════════════════════════════════════════════════════════
-   Categories Page Main Layout & Dark Mode Styles
-══════════════════════════════════════════════════════════ */
+       Categories Page Main Layout & Design
+    ══════════════════════════════════════════════════════════ */
     .swalif-categories-page {
       direction: rtl;
       min-height: 100vh;
@@ -355,6 +390,7 @@
       color: #F8FAFC !important;
     }
 
+    /* Hero Curved Header Banner */
     .hero-curved-strip {
       background: linear-gradient(135deg, #FF1744 0%, #FF6D00 60%, #E64A19 100%);
       padding: 38px 16px 54px;
@@ -400,21 +436,6 @@
       margin: 0 auto;
     }
 
-    @media (max-width: 768px) {
-      .top-nav-pills-row {
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        justify-content: flex-start !important;
-        padding: 6px 12px 14px !important;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-
-      .top-nav-pills-row::-webkit-scrollbar {
-        display: none;
-      }
-    }
-
     .nav-pill-btn {
       padding: 10px 22px;
       border-radius: 50px;
@@ -441,29 +462,12 @@
       border-color: #fff;
     }
 
-    .nav-pill-btn--blue {
-      background: #00BCD4;
-    }
-
-    .nav-pill-btn--grey {
-      background: #546E7A;
-    }
-
-    .nav-pill-btn--green {
-      background: #00C853;
-    }
-
-    .nav-pill-btn--red {
-      background: #FF1744;
-    }
-
-    .nav-pill-btn--orange {
-      background: #FF6D00;
-    }
-
-    .nav-pill-btn--purple {
-      background: #7C3AED;
-    }
+    .nav-pill-btn--blue { background: #00BCD4; }
+    .nav-pill-btn--grey { background: #546E7A; }
+    .nav-pill-btn--green { background: #00C853; }
+    .nav-pill-btn--red { background: #FF1744; }
+    .nav-pill-btn--orange { background: #FF6D00; }
+    .nav-pill-btn--purple { background: #7C3AED; }
 
     .is-active-pill {
       border-color: #fff !important;
@@ -693,7 +697,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 10px 12px 10px 18px;
+      padding: 10px 14px 10px 20px;
       background: linear-gradient(135deg, #FF6D00 0%, #FF8F00 100%);
       color: #fff;
       border: none;
@@ -753,11 +757,11 @@
     .accordion-body {
       display: none;
       width: 100%;
-      border: 2px solid rgba(255, 109, 0, .22);
-      border-radius: 20px;
+      border: 2px solid rgba(255, 109, 0, .18);
+      border-radius: 24px;
       background: rgba(255, 255, 255, .78);
-      padding: 14px 14px 6px;
-      box-shadow: 0 4px 18px rgba(15, 23, 42, .06);
+      padding: 16px 16px 8px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, .05);
     }
 
     body.dark .accordion-body,
@@ -777,7 +781,6 @@
         opacity: 0;
         transform: translateY(-8px);
       }
-
       to {
         opacity: 1;
         transform: translateY(0);
@@ -788,17 +791,18 @@
     .accordion-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
-      gap: 20px !important;
+      gap: 18px !important;
       padding: 4px 0 12px !important;
     }
 
+    /* Individual Card */
     .card-item-box {
       position: relative;
       border-radius: 20px;
       overflow: hidden;
       background: #FFFFFF;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, .08);
-      border: 3px solid transparent;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .07);
+      border: 2px solid transparent;
       transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
       display: flex;
       flex-direction: column;
@@ -808,40 +812,51 @@
 
     body.dark .card-item-box,
     html.dark .card-item-box {
-      background: rgba(255, 255, 255, .05);
-      box-shadow: 0 6px 24px rgba(0, 0, 0, .4);
+      background: #141B2D;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .35);
       border-color: rgba(255, 255, 255, .08);
     }
 
     .card-item-box:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 32px rgba(255, 109, 0, .3);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(255, 109, 0, .25);
       border-color: #FF6D00;
     }
 
+    .card-item-box:active {
+      transform: scale(0.98);
+    }
+
+    /* Favorite Direct Button (Top-Left Corner) */
     .card-item-fav-direct {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 8px;
+      left: 8px;
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 255, 255, .94);
+      backdrop-filter: blur(4px);
       color: #FF1744;
       border: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       z-index: 25;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, .2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
       transition: transform .2s, background .2s;
       outline: none;
     }
 
+    body.dark .card-item-fav-direct {
+      background: rgba(20, 27, 45, .9);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+    }
+
     .card-item-fav-direct:hover {
-      transform: scale(1.18);
+      transform: scale(1.15);
       background: #ffffff;
     }
 
@@ -851,109 +866,25 @@
       box-shadow: 0 4px 14px rgba(255, 23, 68, .4);
     }
 
-    .card-item-image-wrap {
-      width: 100%;
-      height: 180px;
-      background: linear-gradient(180deg, #F0F4F8 0%, #E2E8F0 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    body.dark .card-item-image-wrap,
-    html.dark .card-item-image-wrap {
-      background: rgba(255, 255, 255, .03);
-    }
-
-    .card-item-image-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform .3s ease;
-    }
-
-    .card-item-box:hover .card-item-image-wrap img {
-      transform: scale(1.06);
-    }
-
-    .card-item-fallback-icon {
-      font-size: 3.8rem;
-      line-height: 1;
-    }
-
-    .card-item-footer-bar {
-      background: linear-gradient(135deg, #FF6D00 0%, #FF5722 100%);
-      color: #ffffff;
-      padding: 12px 10px;
-      text-align: center;
-      font-weight: 900;
-      font-size: 1.05rem;
-      line-height: 1.25;
-      border-bottom-left-radius: 17px;
-      border-bottom-right-radius: 17px;
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .card-item-name {
-      color: #ffffff !important;
-      font-weight: 900;
-      font-size: 1.05rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-
-    .card-item-info {
-      position: absolute;
-      top: 8px;
-      left: 44px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #0288D1;
-      color: #ffffff;
-      font-family: serif;
-      font-weight: bold;
-      font-style: italic;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
-      border: none;
-      cursor: pointer;
-      outline: none;
-      transition: transform .18s, background .18s;
-    }
-
+    /* Category Remaining / Status Badge (Top-Right Corner) */
     .card-item-badge {
       position: absolute;
       top: 8px;
-      left: 50%;
-      right: auto;
-      bottom: auto;
-      transform: translateX(-50%);
+      right: 8px;
+      left: auto;
+      transform: none;
       background: linear-gradient(135deg, #FF1744, #D50000);
       color: #ffffff;
-      font-size: .78rem;
+      font-size: .74rem;
       font-weight: 800;
-      padding: 4px 12px;
+      padding: 4px 10px;
       border-radius: 999px;
-      z-index: 15;
-      box-shadow: 0 3px 10px rgba(213, 0, 0, .4);
+      z-index: 20;
+      box-shadow: 0 2px 8px rgba(213, 0, 0, .35);
       pointer-events: none;
       white-space: nowrap;
       line-height: 1.2;
-      width: auto;
-      height: auto;
-      max-width: calc(100% - 80px);
+      max-width: calc(100% - 46px);
       overflow: hidden;
       text-overflow: ellipsis;
       display: inline-flex;
@@ -963,6 +894,99 @@
 
     .card-item-badge--remaining {
       letter-spacing: 0;
+    }
+
+    /* Card Image Area */
+    .card-item-image-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      min-height: 150px;
+      max-height: 190px;
+      background: radial-gradient(circle at center, #FFF9F0 0%, #F5EDE0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    body.dark .card-item-image-wrap,
+    html.dark .card-item-image-wrap {
+      background: radial-gradient(circle at center, #1E2842 0%, #121828 100%);
+    }
+
+    .card-item-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+      transition: transform .3s ease;
+    }
+
+    .card-item-box:hover .card-item-image-wrap img {
+      transform: scale(1.05);
+    }
+
+    .card-item-fallback-icon {
+      font-size: 3.8rem;
+      line-height: 1;
+    }
+
+    /* Bottom Category Name Bar */
+    .card-item-footer-bar {
+      background: linear-gradient(135deg, #FF6D00 0%, #FF5722 100%);
+      color: #ffffff;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 1rem;
+      line-height: 1.25;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: auto;
+      border-bottom-left-radius: 17px;
+      border-bottom-right-radius: 17px;
+    }
+
+    .card-item-name {
+      color: #ffffff !important;
+      font-weight: 900;
+      font-size: 0.96rem;
+      line-height: 1.25;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+
+    .card-item-info {
+      position: absolute;
+      top: 8px;
+      left: 44px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #0288D1;
+      color: #ffffff;
+      font-family: serif;
+      font-weight: bold;
+      font-style: italic;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+      border: none;
+      cursor: pointer;
+      outline: none;
+      transition: transform .18s, background .18s;
     }
 
     .card-info-popover {
@@ -1109,7 +1133,6 @@
         opacity: 0;
         transform: scale(.9);
       }
-
       to {
         opacity: 1;
         transform: scale(1);
@@ -1137,17 +1160,9 @@
     }
 
     @keyframes diceSpin {
-      0% {
-        transform: rotate(0deg) scale(1);
-      }
-
-      50% {
-        transform: rotate(180deg) scale(1.15);
-      }
-
-      100% {
-        transform: rotate(360deg) scale(1);
-      }
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.15); }
+      100% { transform: rotate(360deg) scale(1); }
     }
 
     .spinner-title {
@@ -1169,17 +1184,9 @@
     }
 
     @keyframes bounceIn {
-      0% {
-        transform: scale(0);
-      }
-
-      60% {
-        transform: scale(1.2);
-      }
-
-      100% {
-        transform: scale(1);
-      }
+      0% { transform: scale(0); }
+      60% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
 
     .result-title {
@@ -1199,74 +1206,293 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      margin-top: 8px;
     }
 
-    /* Responsive Grid */
-    @media (max-width: 600px) {
-      .accordion-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
+    #randomPlayLink {
+      background: linear-gradient(135deg, #FF6D00 0%, #FF1744 100%) !important;
+      color: #FFFFFF !important;
+      border: none !important;
+      border-radius: 50px !important;
+      padding: 15px 24px !important;
+      font-weight: 900 !important;
+      font-size: 1.05rem !important;
+      font-family: inherit !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      box-shadow: 0 8px 24px rgba(255, 109, 0, 0.45) !important;
+      text-decoration: none !important;
+      cursor: pointer !important;
+      transition: all 0.25s ease !important;
+    }
+
+    #randomPlayLink:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(255, 109, 0, 0.65) !important;
+      color: #FFFFFF !important;
+    }
+
+    #spinAgainBtn {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #FFFFFF !important;
+      border: 2px solid rgba(255, 255, 255, 0.25) !important;
+      border-radius: 50px !important;
+      padding: 14px 22px !important;
+      font-weight: 800 !important;
+      font-size: 1rem !important;
+      font-family: inherit !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      cursor: pointer !important;
+      transition: all 0.25s ease !important;
+    }
+
+    #spinAgainBtn:hover {
+      background: rgba(255, 255, 255, 0.18) !important;
+      border-color: #FFFFFF !important;
+      color: #FFFFFF !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       Mobile Specific Optimizations (< 680px)
+    ══════════════════════════════════════════════════════════ */
+    @media (max-width: 680px) {
+      .swalif-categories-page {
+        padding-bottom: 40px !important;
+      }
+
+      .container,
+      .page-content-wrap {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+      }
+
+      /* Hero strip */
+      .hero-curved-strip {
+        padding: 24px 14px 34px !important;
+        border-bottom-left-radius: 36px 18px !important;
+        border-bottom-right-radius: 36px 18px !important;
+        margin-bottom: 18px !important;
+      }
+
+      .hero-curved-strip__title {
+        font-size: 1.8rem !important;
+        margin-bottom: 6px !important;
+      }
+
+      .hero-curved-strip__sub {
+        font-size: 0.86rem !important;
+        margin-bottom: 14px !important;
+        line-height: 1.4 !important;
+      }
+
+      .top-nav-pills-row {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        padding: 4px 6px 10px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px !important;
+      }
+
+      .top-nav-pills-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .nav-pill-btn {
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+        border-radius: 999px !important;
+      }
+
+      /* Section heading */
+      .section-heading-bar {
+        margin-bottom: 16px !important;
+      }
+
+      .section-heading-bar h2 {
+        font-size: 1.4rem !important;
+        margin-bottom: 4px !important;
+      }
+
+      .section-heading-bar p {
+        font-size: 0.84rem !important;
+      }
+
+      /* Controls & Search */
+      .controls-bar {
         gap: 12px !important;
+        margin-bottom: 20px !important;
+      }
+
+      .search-box input {
+        padding: 12px 42px 12px 14px !important;
+        font-size: 0.88rem !important;
+        border-radius: 999px !important;
+      }
+
+      .filters-pills-group {
+        gap: 6px !important;
+      }
+
+      .pill-btn {
+        padding: 6px 14px !important;
+        font-size: 0.82rem !important;
+      }
+
+      /* Featured modes banners */
+      .featured-modes-cta-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        margin-bottom: 18px !important;
+      }
+
+      .custom-game-cta-banner {
+        padding: 14px 16px !important;
+        border-radius: 18px !important;
+        margin-bottom: 0 !important;
+      }
+
+      .cta-banner-text strong {
+        font-size: 0.95rem !important;
+      }
+
+      .cta-banner-text p {
+        font-size: 0.8rem !important;
+      }
+
+      .cta-banner-icon {
+        font-size: 1.8rem !important;
+      }
+
+      .cta-banner-btn {
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+        border-radius: 12px !important;
+      }
+
+      /* Accordion Section */
+      .accordion-categories {
+        gap: 20px !important;
+        margin-bottom: 28px !important;
+      }
+
+      .accordion-header {
+        padding: 8px 14px !important;
+        font-size: 0.92rem !important;
+      }
+
+      .accordion-header-title-wrap {
+        font-size: 0.92rem !important;
+        gap: 6px !important;
+      }
+
+      .accordion-count {
+        font-size: 0.82rem !important;
+      }
+
+      .accordion-toggle-circle {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 15px !important;
+      }
+
+      /* On mobile, remove outer boxed frame border so cards use maximum width */
+      .accordion-body {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-top: 6px !important;
+      }
+
+      /* 2-Column Responsive Card Grid */
+      .accordion-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        padding: 4px 0 !important;
+      }
+
+      /* Card box on mobile */
+      .card-item-box {
+        border-radius: 16px !important;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, .07) !important;
+        border-width: 1.5px !important;
       }
 
       .card-item-image-wrap {
-        height: 132px !important;
+        aspect-ratio: 1 / 1 !important;
+        height: auto !important;
+        min-height: 120px !important;
+        max-height: 150px !important;
+        padding: 6px !important;
       }
 
-      .card-item-footer-bar {
-        padding: 8px 8px !important;
-        min-height: 48px !important;
-        align-items: center !important;
+      .card-item-image-wrap img {
+        border-radius: 50% !important;
       }
 
-      .card-item-name {
-        font-size: .82rem !important;
-        line-height: 1.25 !important;
-        white-space: normal !important;
-        overflow: hidden !important;
-        text-overflow: unset !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
-        max-width: 100% !important;
-      }
-
+      /* Favorite Heart Button on Mobile (Top-Left) */
       .card-item-fav-direct {
         width: 28px !important;
         height: 28px !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
         top: 6px !important;
         left: 6px !important;
       }
 
       .card-item-info {
-        width: 28px !important;
-        height: 28px !important;
-        font-size: 14px !important;
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 13px !important;
         top: 6px !important;
-        left: 38px !important;
+        left: 36px !important;
       }
 
-      /* Keep remaining badge as a small pill — never stretch top→bottom */
+      /* Badge on Mobile (Top-Right) */
       .card-item-badge,
       .card-item-badge--remaining {
         top: 6px !important;
-        left: 50% !important;
-        right: auto !important;
-        bottom: auto !important;
-        transform: translateX(-50%) !important;
+        right: 6px !important;
+        left: auto !important;
+        transform: none !important;
         width: auto !important;
         height: auto !important;
         min-height: 0 !important;
-        max-width: calc(100% - 72px) !important;
-        font-size: .65rem !important;
+        max-width: calc(100% - 40px) !important;
+        font-size: 0.68rem !important;
         font-weight: 800 !important;
-        padding: 3px 10px !important;
+        padding: 3px 8px !important;
         border-radius: 999px !important;
         line-height: 1.2 !important;
         white-space: nowrap !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+      }
+
+      /* Card Name Bar on Mobile */
+      .card-item-footer-bar {
+        padding: 8px 6px !important;
+        min-height: 40px !important;
+        border-bottom-left-radius: 14px !important;
+        border-bottom-right-radius: 14px !important;
+      }
+
+      .card-item-name {
+        font-size: 0.84rem !important;
+        line-height: 1.25 !important;
       }
     }
   </style>
@@ -1514,7 +1740,7 @@
       document.querySelectorAll('[data-top-filter]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var filterVal = btn.dataset.topFilter;
-          if (filterVal === 'فكر') {
+          if (filterVal === 'فكر' || filterVal === 'صممت لك') {
             openRandomPickerModal();
             return;
           }
@@ -1608,7 +1834,7 @@
         });
       });
 
-      /* ── Random Picker Modal (فكر وابدأ) ────────────────────────── */
+      /* ── Random Picker Modal (فكر وابدأ / صممت لك) ────────────────────────── */
       var randomModal = document.getElementById('randomPickerModal');
       var closeRandomBtn = document.getElementById('closeRandomModal');
       var backdrop = document.getElementById('randomPickerBackdrop');
@@ -1619,6 +1845,12 @@
       function openRandomPickerModal() {
         var cards = Array.from(document.querySelectorAll('.card-item-box:not(.is-locked)'));
         if (cards.length === 0) cards = Array.from(document.querySelectorAll('.card-item-box'));
+        var playableCards = cards.filter(function (c) {
+          var rem = parseInt(c.dataset.remainingQuestions || '0', 10);
+          var tot = parseInt(c.dataset.totalQuestions || c.dataset.questions || '0', 10);
+          return rem > 0 || tot > 0;
+        });
+        if (playableCards.length > 0) cards = playableCards;
         if (cards.length === 0) return;
 
         randomModal.hidden = false;
@@ -1631,8 +1863,19 @@
           var randomCard = cards[Math.floor(Math.random() * cards.length)];
           var name = randomCard.dataset.name || 'فئة عشوائية';
           var url = randomCard.dataset.cardUrl || '#';
+          var img = randomCard.querySelector('.card-item-image-wrap img');
+          var fallback = randomCard.querySelector('.card-item-fallback-icon')?.textContent || '🎯';
 
           document.getElementById('randomResultTitle').textContent = name;
+          var iconEl = document.getElementById('randomResultIcon');
+          if (iconEl) {
+            if (img && img.src) {
+              iconEl.innerHTML = '<img src="' + img.src + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;margin:0 auto;">';
+            } else {
+              iconEl.textContent = fallback;
+            }
+          }
+
           var playLink = document.getElementById('randomPlayLink');
           playLink.href = url;
           playLink.dataset.totalQuestions = randomCard.dataset.totalQuestions || '0';
@@ -1640,7 +1883,8 @@
 
           spinnerWrap.style.display = 'none';
           resultWrap.style.display = 'block';
-        }, 1100);
+          playSound('fanfare');
+        }, 900);
       }
 
       if (closeRandomBtn) closeRandomBtn.addEventListener('click', function () { randomModal.hidden = true; });

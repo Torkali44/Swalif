@@ -203,8 +203,8 @@ class CategoryPlayPoolService
                 $category->setAttribute(
                     'remaining_badge',
                     $remaining > 0
-                        ? "باقي {$remaining} سؤال"
-                        : ($total > 0 ? 'اكتملت · أعد اللعب' : 'قريبًا')
+                        ? "{$remaining} سؤال"
+                        : ($total > 0 ? 'مكتملة' : 'قريبًا')
                 );
             });
         } catch (\Throwable) {

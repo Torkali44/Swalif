@@ -123,4 +123,42 @@ class LetterGridGameFlowTest extends TestCase
 
         $this->actingAs($other)->get(route('letter-grid.play', $game))->assertForbidden();
     }
+
+    public function test_letter_grid_can_start_with_automatic_team_names_from_characters(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $characters = Character::query()->where('is_active', true)->orderBy('id')->take(2)->get();
+
+        $grid = LetterGrid::create([
+            'name_ar' => 'شبكة أسماء تلقائية',
+            'slug' => 'auto-names-grid',
+            'is_active' => true,
+            'sort_order' => 3,
+        ]);
+        $grid->cells()->create([
+            'letter' => 'س',
+            'row' => 0,
+            'col' => 0,
+            'question_text' => 'سؤال',
+            'answer_text' => 'جواب',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($player)->post(route('letter-grid.store'), [
+            'letter_grid_id' => $grid->id,
+            'team_one_character_id' => $characters[0]->id,
+            'team_two_character_id' => $characters[1]->id,
+        ]);
+
+        $response->assertRedirect();
+        $game = LetterGridGame::where('user_id', $player->id)->latest('id')->firstOrFail();
+        $teams = $game->teams()->orderBy('id')->get();
+
+        $this->assertCount(2, $teams);
+        $this->assertSame($characters[0]->name_ar, $teams[0]->name);
+        $this->assertSame($characters[1]->name_ar, $teams[1]->name);
+    }
 }

@@ -217,4 +217,29 @@ class GameFlowTest extends TestCase
         $response->assertJsonPath('score', 0);
         $this->assertSame(0, (int) $team->fresh()->score);
     }
+
+    public function test_player_can_start_game_with_automatic_team_names_from_characters(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+
+        $player = User::where('email', 'player@swalif.test')->firstOrFail();
+        $category = Category::where('slug', 'uae-malls')->firstOrFail();
+        $chars = Character::query()->orderBy('id')->take(2)->get();
+
+        $response = $this->actingAs($player)->post(route('game.start'), [
+            'category_id' => $category->id,
+            'name' => 'لعبة الشخصيات التلقائية',
+            'team_one_character_id' => $chars[0]->id,
+            'team_two_character_id' => $chars[1]->id,
+        ]);
+
+        $response->assertRedirect();
+        $game = Game::where('user_id', $player->id)->latest('id')->firstOrFail();
+        $teams = $game->teams()->orderBy('id')->get();
+
+        $this->assertCount(2, $teams);
+        $this->assertSame($chars[0]->name_ar, $teams[0]->name);
+        $this->assertSame($chars[1]->name_ar, $teams[1]->name);
+    }
 }
