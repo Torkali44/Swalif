@@ -37,6 +37,8 @@
       max-width: 480px;
       height: auto;
       object-fit: contain;
+      background: transparent !important;
+      border-radius: 0 !important;
       filter: drop-shadow(0 24px 38px rgba(0,0,0,0.18));
       transition: transform 0.3s ease, filter 0.3s ease;
       animation: heroFloat 4s ease-in-out infinite alternate;
@@ -95,12 +97,16 @@
       </div>
 
       <div class="hp-hero__art">
-        <img
-          src="{{ asset('images/mainPhoto.png') }}"
-          alt="منصة ألعاب سوالف"
-          width="800" height="600"
-          decoding="async" fetchpriority="high"
-          class="hero-main-img">
+        <picture>
+          <source srcset="{{ asset('images/mainPhoto.webp') }}" type="image/webp">
+          <img
+            src="{{ asset('images/mainPhoto.png') }}"
+            alt="منصة ألعاب سوالف"
+            width="800" height="600"
+            decoding="async" fetchpriority="high"
+            class="hero-main-img"
+            data-no-sw-img>
+        </picture>
       </div>
     </div>
   </section>
@@ -313,10 +319,13 @@
   <section class="hp-section hp-section--soft" id="faq">
     <div class="container hp-faq">
       <div class="hp-faq__art">
-        <img
-          src="{{ asset('images/faq-bubbles.webp') }}"
-          onerror="this.onerror=null;this.src='{{ asset('images/faq-bubbles.png') }}'"
-          alt="الأسئلة الشائعة" loading="lazy" decoding="async" width="640" height="480">
+        <picture>
+          <source srcset="{{ asset('images/faq-bubbles.webp') }}" type="image/webp">
+          <img
+            src="{{ asset('images/faq-bubbles.png') }}"
+            alt="الأسئلة الشائعة" loading="lazy" decoding="async" width="640" height="480"
+            data-no-sw-img>
+        </picture>
         <h2>الأسئلة الشائعة</h2>
         <p>كل ما تريد معرفته عن سوالف في مكان واحد</p>
       </div>
@@ -352,10 +361,13 @@
         <a href="{{ route('categories.index') }}" class="btn btn--white btn--lg">🚀 ابدأ مجانًا</a>
       </div>
       <div class="hp-cta__art">
-        <img
-          src="{{ asset('images/game-controller.webp') }}"
-          onerror="this.onerror=null;this.src='{{ asset('images/game-controller.png') }}'"
-          alt="ابدأ التحدي" loading="lazy" decoding="async" width="480" height="360">
+        <picture>
+          <source srcset="{{ asset('images/game-controller.webp') }}" type="image/webp">
+          <img
+            src="{{ asset('images/game-controller.png') }}"
+            alt="ابدأ التحدي" loading="lazy" decoding="async" width="480" height="360"
+            data-no-sw-img>
+        </picture>
       </div>
     </div>
   </section>

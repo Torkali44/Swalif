@@ -44,14 +44,10 @@ class OptimizeSiteImages extends Command
 
     private function optimizeSiteAssets(): int
     {
+        // Keep homepage art as transparent PNG/WebP — never bake a white JPEG background.
         $map = [
             'logo.png' => ['logo-nav.jpg', 220, 82],
             'logo.jpg' => ['logo-nav.jpg', 220, 82],
-            'hero-character-custom.png' => ['hero-light.jpg', 720, 78],
-            'hero-character-dark.png' => ['hero-dark.jpg', 720, 78],
-            'faq-bubbles.png' => ['faq-bubbles.jpg', 640, 78],
-            'game-controller.png' => ['game-controller.jpg', 480, 78],
-            'gift-box.png' => ['gift-box.jpg', 480, 78],
         ];
 
         $dir = public_path('images');
