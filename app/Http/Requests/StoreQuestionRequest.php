@@ -176,11 +176,6 @@ class StoreQuestionRequest extends FormRequest
                         break;
                     }
                 }
-
-                $timeLimit = (int) $this->input('time_limit', 15);
-                if ($timeLimit < 10 || $timeLimit > 15) {
-                    $validator->errors()->add('time_limit', 'مؤقت رتبها يجب أن يكون بين 10 و 15 ثانية.');
-                }
             } elseif ($type === 'match') {
                 $validPairs = $matchPairs->filter(fn ($pair) => filled($pair['left']) && filled($pair['right']));
                 if ($validPairs->count() < 2) {
@@ -230,7 +225,7 @@ class StoreQuestionRequest extends FormRequest
         ]);
 
         $defaultTimeLimit = match ($type) {
-            'word_build' => 15,
+            'word_build' => (int) config('game.word_build_time_limit', 15),
             'audio' => (int) config('game.audio_time_limit', 60),
             default => (int) config('game.default_time_limit', 30),
         };

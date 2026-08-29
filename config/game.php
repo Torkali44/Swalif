@@ -22,4 +22,5 @@ return [
     ],
     'default_time_limit' => 30,
     'audio_time_limit' => 60,
+    'word_build_time_limit' => 15,
 ];

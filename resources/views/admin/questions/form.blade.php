@@ -102,9 +102,9 @@
     <label>
       المؤقت (ثانية)
       <input type="number" name="time_limit" id="questionTimeLimit"
-        value="{{ old('time_limit', $question->time_limit ?? ($selectedType === 'word_build' ? 15 : ($selectedType === 'audio' ? 60 : 30))) }}" min="10"
+        value="{{ old('time_limit', $question->time_limit ?? ($selectedType === 'word_build' ? config('game.word_build_time_limit', 15) : ($selectedType === 'audio' ? config('game.audio_time_limit', 60) : config('game.default_time_limit', 30)))) }}" min="10"
         max="300">
-      <small class="muted" id="wordBuildTimerHint" hidden>لنوع «رتبها»: المؤقت بين 10 و 15 ثانية فقط.</small>
+      <small class="muted" id="wordBuildTimerHint" hidden>الافتراضي لرتبها {{ config('game.word_build_time_limit', 15) }} ثانية — يمكنك تعديله من 10 إلى 300 ثانية.</small>
       <small class="muted" id="defaultTimerHint">الافتراضي 30 ثانية — وللأسئلة الصوتية (مكالمة) 60 ثانية.</small>
     </label>
 
@@ -340,17 +340,17 @@
           const defaultTimerHint = document.getElementById('defaultTimerHint');
           if (defaultTimerHint) defaultTimerHint.hidden = isWordBuild;
           if (timeLimitInput) {
-            timeLimitInput.min = isWordBuild ? '10' : '10';
-            timeLimitInput.max = isWordBuild ? '15' : '300';
-            // عند تغيير النوع في إنشاء سؤال جديد: طبّق الافتراضي المناسب
+            timeLimitInput.min = '10';
+            timeLimitInput.max = '300';
             const isNewQuestion = !document.querySelector('input[name="_method"][value="PUT"]');
-            if (isWordBuild) {
-              const current = Number(timeLimitInput.value || 15);
-              if (current < 10 || current > 15 || isNewQuestion) {
-                timeLimitInput.value = '15';
+            if (isNewQuestion) {
+              if (isWordBuild) {
+                timeLimitInput.value = @json((int) config('game.word_build_time_limit', 15));
+              } else if (isAudio) {
+                timeLimitInput.value = @json((int) config('game.audio_time_limit', 60));
+              } else {
+                timeLimitInput.value = @json((int) config('game.default_time_limit', 30));
               }
-            } else if (isNewQuestion) {
-              timeLimitInput.value = isAudio ? '60' : '30';
             }
           }
         };
